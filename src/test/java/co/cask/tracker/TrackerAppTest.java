@@ -35,6 +35,7 @@ import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.TestConfiguration;
 import co.cask.tracker.entity.AuditLogResponse;
+import co.cask.tracker.entity.TopEntitiesResult;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
@@ -64,7 +65,8 @@ public class TrackerAppTest extends TestBase {
     .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
     .create();
   private static ApplicationManager testAppManager;
-  private static ServiceManager serviceManager;
+  private static ServiceManager auditLogServiceManager;
+  private static ServiceManager auditMetricsServiceManager;
 
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
@@ -75,8 +77,11 @@ public class TrackerAppTest extends TestBase {
     FlowManager testFlowManager = testAppManager.getFlowManager(StreamToAuditLogFlow.FLOW_NAME).start();
     testFlowManager.waitForStatus(true);
 
-    serviceManager = testAppManager.getServiceManager(AuditLogService.SERVICE_NAME).start();
-    serviceManager.waitForStatus(true);
+    auditLogServiceManager = testAppManager.getServiceManager(AuditLogService.SERVICE_NAME).start();
+    auditLogServiceManager.waitForStatus(true);
+
+    auditMetricsServiceManager = testAppManager.getServiceManager(AuditMetricsService.SERVICE_NAME).start();
+    auditMetricsServiceManager.waitForStatus(true);
 
     StreamManager streamManager = getStreamManager("testStream");
     List<AuditMessage> testData = generateTestData();
@@ -95,7 +100,8 @@ public class TrackerAppTest extends TestBase {
 
   @Test
   public void testSingleResult() throws Exception {
-    String response = getServiceResponse("auditlog/stream/stream1?startTime=1456956659467&endTime=1456956659469",
+    String response = getServiceResponse(auditLogServiceManager,
+                                         "auditlog/stream/stream1?startTime=1456956659467&endTime=1456956659469",
                                          HttpResponseStatus.OK.getCode());
     AuditLogResponse resp = GSON.fromJson(response, AuditLogResponse.class);
     Assert.assertEquals(1, resp.getTotalResults());
@@ -105,7 +111,8 @@ public class TrackerAppTest extends TestBase {
 
   @Test
   public void testMultipleResults() throws Exception {
-    String response = getServiceResponse("auditlog/stream/stream1",
+    String response = getServiceResponse(auditLogServiceManager,
+                                         "auditlog/stream/stream1",
                                          HttpResponseStatus.OK.getCode());
     AuditLogResponse resp = GSON.fromJson(response, AuditLogResponse.class);
     Assert.assertEquals(2, resp.getTotalResults());
@@ -119,7 +126,8 @@ public class TrackerAppTest extends TestBase {
 
   @Test
   public void testOffset() throws Exception {
-    String response = getServiceResponse("auditlog/stream/stream1?offset=1",
+    String response = getServiceResponse(auditLogServiceManager,
+                                         "auditlog/stream/stream1?offset=1",
                                          HttpResponseStatus.OK.getCode());
     AuditLogResponse resp = GSON.fromJson(response, AuditLogResponse.class);
     Assert.assertEquals(2, resp.getTotalResults());
@@ -131,7 +139,8 @@ public class TrackerAppTest extends TestBase {
 
   @Test
   public void testPageSize() throws Exception {
-    String response = getServiceResponse("auditlog/stream/stream1?limit=1",
+    String response = getServiceResponse(auditLogServiceManager,
+                                         "auditlog/stream/stream1?limit=1",
                                          HttpResponseStatus.OK.getCode());
     AuditLogResponse resp = GSON.fromJson(response, AuditLogResponse.class);
     Assert.assertEquals(2, resp.getTotalResults());
@@ -143,23 +152,36 @@ public class TrackerAppTest extends TestBase {
 
   @Test
   public void testInvalidDatesError() throws Exception {
-    String response = getServiceResponse("auditlog/stream/stream1?startTime=1&endTime=0",
+    String response = getServiceResponse(auditLogServiceManager,
+                                         "auditlog/stream/stream1?startTime=1&endTime=0",
                                          HttpResponseStatus.BAD_REQUEST.getCode());
     Assert.assertEquals("\"startTime must be before endTime.\"", response);
   }
 
   @Test
   public void testInvalidOffset() throws Exception {
-    String response = getServiceResponse("auditlog/stream/stream1?offset=-1",
+    String response = getServiceResponse(auditLogServiceManager,
+                                         "auditlog/stream/stream1?offset=-1",
                                          HttpResponseStatus.BAD_REQUEST.getCode());
     Assert.assertEquals("\"offset cannot be negative.\"", response);
   }
 
   @Test
   public void testInvalidLimit() throws Exception {
-    String response = getServiceResponse("auditlog/stream/stream1?limit=-1",
+    String response = getServiceResponse(auditLogServiceManager,
+                                         "auditlog/stream/stream1?limit=-1",
                                          HttpResponseStatus.BAD_REQUEST.getCode());
     Assert.assertEquals("\"limit cannot be negative.\"", response);
+  }
+
+  @Test
+  public void testTopNEntities() throws Exception {
+    String response = getServiceResponse(auditMetricsServiceManager,
+                                         "v1/auditmetrics/topEntities?limit=3",
+                                         HttpResponseStatus.OK.getCode());
+    TopEntitiesResult[] results = GSON.fromJson(response, TopEntitiesResult[].class);
+    Assert.assertEquals(3, results.length);
+    Assert.assertTrue(results[0].getColumnValues().get("count") > results[1].getColumnValues().get("count"));
   }
 
   private static ApplicationManager deployApplicationWithScalaJar(Class appClass, Config config) {
@@ -172,7 +194,9 @@ public class TrackerAppTest extends TestBase {
     }
   }
 
-  private String getServiceResponse(String request, int expectedResponseCode) throws Exception {
+  private String getServiceResponse(ServiceManager serviceManager,
+                                    String request,
+                                    int expectedResponseCode) throws Exception {
     URL url = new URL(serviceManager.getServiceURL(), request);
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
     Assert.assertEquals(expectedResponseCode, connection.getResponseCode());
@@ -225,8 +249,17 @@ public class TrackerAppTest extends TestBase {
                                   EntityId.fromString("dataset:default.ds1"),
                                   "user1",
                                   AuditType.CREATE,
-                                  AuditPayload.EMPTY_PAYLOAD)
-    );
+                                  AuditPayload.EMPTY_PAYLOAD));
+    testData.add(new AuditMessage(1456956659472L,
+                                  EntityId.fromString("dataset:default.ds1"),
+                                  "user1",
+                                  AuditType.CREATE,
+                                  AuditPayload.EMPTY_PAYLOAD));
+    testData.add(new AuditMessage(1456956659473L,
+                                  EntityId.fromString("dataset:default.ds1"),
+                                  "user1",
+                                  AuditType.CREATE,
+                                  AuditPayload.EMPTY_PAYLOAD));
     return testData;
   }
 }

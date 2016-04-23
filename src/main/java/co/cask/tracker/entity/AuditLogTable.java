@@ -50,6 +50,7 @@ import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.StreamViewId;
+import co.cask.tracker.utils.EntityIdHelper;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -86,10 +87,10 @@ public final class AuditLogTable extends AbstractDataset {
    * @return
    */
   public CloseableIterator<AuditMessage> scan(String namespace,
-                      String entityType,
-                      String entityName,
-                      long startTime,
-                      long endTime) {
+                                              String entityType,
+                                              String entityName,
+                                              long startTime,
+                                              long endTime) {
     // Data stored using inverted timestamp so start and end times are swapped
     Scanner scanner = auditLog.scan(
       new Scan(getScanKey(namespace, entityType, entityName, endTime),
@@ -104,52 +105,7 @@ public final class AuditLogTable extends AbstractDataset {
       String namespace = ((NamespacedId) entityId).getNamespace();
       EntityType entityType = entityId.getEntity();
       String type = entityType.name().toLowerCase();
-      String name;
-      // Unfortunately, there's no generic way to get the name of the entity
-      // so we need this switch statement and a bunch of casting.
-      switch (entityType) {
-        case APPLICATION:
-          name = ((ApplicationId) entityId).getApplication();
-          break;
-        case ARTIFACT:
-          name = ((NamespacedArtifactId) entityId).getArtifact();
-          break;
-        case DATASET:
-          name = ((DatasetId) entityId).getDataset();
-          break;
-        case DATASET_MODULE:
-          name = ((DatasetModuleId) entityId).getModule();
-          break;
-        case DATASET_TYPE:
-          name = ((DatasetTypeId) entityId).getType();
-          break;
-        case FLOWLET:
-          name = ((FlowletId) entityId).getFlowlet();
-          break;
-        case FLOWLET_QUEUE:
-          name = ((FlowletQueueId) entityId).getQueue();
-          break;
-        case NOTIFICATION_FEED:
-          name = ((NotificationFeedId) entityId).getFeed();
-          break;
-        case PROGRAM:
-          name = ((ProgramId) entityId).getProgram();
-          break;
-        case PROGRAM_RUN:
-          name = ((ProgramRunId) entityId).getRun();
-          break;
-        case SCHEDULE:
-          name = ((ScheduleId) entityId).getSchedule();
-          break;
-        case STREAM:
-          name = ((StreamId) entityId).getStream();
-          break;
-        case STREAM_VIEW:
-          name = ((StreamViewId) entityId).getView();
-          break;
-        default:
-          throw new IOException("Unknown entity type: " + entityType);
-      }
+      String name = EntityIdHelper.getEntityName(entityId);
       String user = auditMessage.getUser();
       if (user == null || user.isEmpty()) {
         user = DEFAULT_USER;

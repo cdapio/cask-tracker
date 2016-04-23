@@ -25,6 +25,7 @@ import co.cask.cdap.proto.codec.AuditMessageTypeAdapter;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.tracker.entity.AuditLogTable;
+import co.cask.tracker.entity.AuditMetricsCube;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
@@ -44,6 +45,8 @@ public final class AuditLogPublisher extends AbstractFlowlet {
 
   @UseDataSet(TrackerApp.AUDIT_LOG_DATASET_NAME)
   private AuditLogTable auditLog;
+  @UseDataSet(TrackerApp.AUDIT_METRICS_DATASET_NAME)
+  private AuditMetricsCube auditLogMetrics;
 
   @ProcessInput
   public void process(StreamEvent event) {
@@ -57,7 +60,12 @@ public final class AuditLogPublisher extends AbstractFlowlet {
       try {
         auditLog.write(message);
       } catch (IOException e) {
-        LOG.warn("Ignored audit event {} due to exception", event, e);
+        LOG.warn("Ignored writing audit event to log {} due to exception", event, e);
+      }
+      try {
+        auditLogMetrics.write(message);
+      } catch (IOException e) {
+        LOG.warn("Ignored writing audit event to metrics {} due to exception", event, e);
       }
     }
   }
