@@ -17,13 +17,8 @@
 package co.cask.tracker;
 
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.tracker.config.TrackerAppConfig;
 import co.cask.tracker.entity.AuditLogTable;
-import co.cask.tracker.entity.AuditMetricsCube;
-
-import java.util.concurrent.TimeUnit;
-
 
 /**
  * A CDAP Extension that provides the ability to track data ingested either through Cask Hydrator or Custom
@@ -31,34 +26,14 @@ import java.util.concurrent.TimeUnit;
  */
 public class TrackerApp extends AbstractApplication<TrackerAppConfig> {
   public static final String APP_NAME = "Tracker";
-  public static final String AUDIT_LOG_DATASET_NAME = "AuditLog";
-  public static final String AUDIT_METRICS_DATASET_NAME = "AuditMetrics";
+  public static final String AUDIT_LOG_DATASET_NAME = "_auditLog";
 
   @Override
   public void configure() {
     setName(APP_NAME);
     setDescription("A CDAP Extension that provides the ability to track data throughout the CDAP platform.");
     createDataset(AUDIT_LOG_DATASET_NAME, AuditLogTable.class);
-    String resolutions = String.format("%s,%s,%s,%s",
-            TimeUnit.MINUTES.toSeconds(1L),
-            TimeUnit.HOURS.toSeconds(1L),
-            TimeUnit.DAYS.toSeconds(1L),
-            TimeUnit.DAYS.toSeconds(365L));
-    createDataset(AUDIT_METRICS_DATASET_NAME,
-            AuditMetricsCube.class,
-            DatasetProperties.builder()
-                    .add("dataset.cube.resolutions", resolutions)
-                    .add("dataset.cube.aggregation.agg1.dimensions", "namespace")
-                    .add("dataset.cube.aggregation.agg2.dimensions", "namespace,entity_type,entity_name")
-                    .add("dataset.cube.aggregation.agg3.dimensions",
-                            "namespace,entity_type,entity_name,program_type,program_name")
-                    .build());
-
-
-
     addFlow(new AuditLogFlow(getConfig()));
     addService(new AuditLogService());
-    addService(new AuditMetricsService());
-
   }
 }

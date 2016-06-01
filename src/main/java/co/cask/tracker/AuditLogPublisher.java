@@ -25,7 +25,6 @@ import co.cask.cdap.proto.codec.AuditMessageTypeAdapter;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.tracker.entity.AuditLogTable;
-import co.cask.tracker.entity.AuditMetricsCube;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
@@ -34,7 +33,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 /**
- * A flowlet to write Audit Log data to a table (Audit Log) and a cube (Audit Metrics).
+ * A flowlet to write Audit Log data to a dataset.
  */
 public final class AuditLogPublisher extends AbstractFlowlet {
   private static final Logger LOG = LoggerFactory.getLogger(AuditLogPublisher.class);
@@ -46,10 +45,6 @@ public final class AuditLogPublisher extends AbstractFlowlet {
   @UseDataSet(TrackerApp.AUDIT_LOG_DATASET_NAME)
   private AuditLogTable auditLog;
 
-  @UseDataSet(TrackerApp.AUDIT_METRICS_DATASET_NAME)
-  private AuditMetricsCube auditMetrics;
-
-
   @ProcessInput
   public void process(StreamEvent event) {
     process(Bytes.toString(event.getBody()));
@@ -57,18 +52,12 @@ public final class AuditLogPublisher extends AbstractFlowlet {
 
   @ProcessInput
   public void process(String event) {
-    if (!event.isEmpty()) {
+    if (event.length() > 0) {
       AuditMessage message = GSON.fromJson(event, AuditMessage.class);
       try {
         auditLog.write(message);
       } catch (IOException e) {
-        LOG.warn("Writing audit event to audit log failed due to exception", event, e);
-      }
-
-      try {
-        auditMetrics.write(message);
-      } catch (IOException e) {
-        LOG.warn("Writing audit event to audit metrics {} failed due to exception", event, e);
+        LOG.warn("Ignored audit event {} due to exception", event, e);
       }
     }
   }
