@@ -35,7 +35,6 @@ import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.TestConfiguration;
 import co.cask.tracker.entity.AuditLogResponse;
-import co.cask.tracker.entity.TopEntitiesResult;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
@@ -61,12 +60,11 @@ import java.util.concurrent.TimeUnit;
  */
 public class TrackerAppTest extends TestBase {
   private static final Gson GSON = new GsonBuilder()
-          .registerTypeAdapter(AuditMessage.class, new AuditMessageTypeAdapter())
-          .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
-          .create();
+    .registerTypeAdapter(AuditMessage.class, new AuditMessageTypeAdapter())
+    .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
+    .create();
   private static ApplicationManager testAppManager;
-  private static ServiceManager auditLogServiceManager;
-  private static ServiceManager auditMetricsServiceManager;
+  private static ServiceManager serviceManager;
 
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
@@ -77,11 +75,8 @@ public class TrackerAppTest extends TestBase {
     FlowManager testFlowManager = testAppManager.getFlowManager(StreamToAuditLogFlow.FLOW_NAME).start();
     testFlowManager.waitForStatus(true);
 
-    auditLogServiceManager = testAppManager.getServiceManager(AuditLogService.SERVICE_NAME).start();
-    auditLogServiceManager.waitForStatus(true);
-
-    auditMetricsServiceManager = testAppManager.getServiceManager(AuditMetricsService.SERVICE_NAME).start();
-    auditMetricsServiceManager.waitForStatus(true);
+    serviceManager = testAppManager.getServiceManager(AuditLogService.SERVICE_NAME).start();
+    serviceManager.waitForStatus(true);
 
     StreamManager streamManager = getStreamManager("testStream");
     List<AuditMessage> testData = generateTestData();
@@ -100,25 +95,23 @@ public class TrackerAppTest extends TestBase {
 
   @Test
   public void testSingleResult() throws Exception {
-    String response = getServiceResponse(auditLogServiceManager,
-            "auditlog/stream/stream1?startTime=1456956659467&endTime=1456956659469",
-            HttpResponseStatus.OK.getCode());
+    String response = getServiceResponse("auditlog/stream/stream1?startTime=1456956659467&endTime=1456956659469",
+                                         HttpResponseStatus.OK.getCode());
     AuditLogResponse resp = GSON.fromJson(response, AuditLogResponse.class);
     Assert.assertEquals(1, resp.getTotalResults());
     Assert.assertEquals(NamespaceId.DEFAULT.stream("stream1"),
-            resp.getResults().get(0).getEntityId());
+                        resp.getResults().get(0).getEntityId());
   }
 
   @Test
   public void testMultipleResults() throws Exception {
-    String response = getServiceResponse(auditLogServiceManager,
-            "auditlog/stream/stream1",
-            HttpResponseStatus.OK.getCode());
+    String response = getServiceResponse("auditlog/stream/stream1",
+                                         HttpResponseStatus.OK.getCode());
     AuditLogResponse resp = GSON.fromJson(response, AuditLogResponse.class);
     Assert.assertEquals(2, resp.getTotalResults());
     for (int i = 0; i < resp.getResults().size(); i++) {
       Assert.assertEquals(NamespaceId.DEFAULT.stream("stream1"),
-              resp.getResults().get(i).getEntityId());
+                          resp.getResults().get(i).getEntityId());
     }
     // Assert the results are sorted most recent timestamp first
     Assert.assertTrue(resp.getResults().get(0).getTime() > resp.getResults().get(1).getTime());
@@ -126,62 +119,47 @@ public class TrackerAppTest extends TestBase {
 
   @Test
   public void testOffset() throws Exception {
-    String response = getServiceResponse(auditLogServiceManager,
-            "auditlog/stream/stream1?offset=1",
-            HttpResponseStatus.OK.getCode());
+    String response = getServiceResponse("auditlog/stream/stream1?offset=1",
+                                         HttpResponseStatus.OK.getCode());
     AuditLogResponse resp = GSON.fromJson(response, AuditLogResponse.class);
     Assert.assertEquals(2, resp.getTotalResults());
     Assert.assertEquals(1, resp.getOffset());
     Assert.assertEquals(1, resp.getResults().size());
     Assert.assertEquals(NamespaceId.DEFAULT.stream("stream1"),
-            resp.getResults().get(0).getEntityId());
+                        resp.getResults().get(0).getEntityId());
   }
 
   @Test
   public void testPageSize() throws Exception {
-    String response = getServiceResponse(auditLogServiceManager,
-            "auditlog/stream/stream1?limit=1",
-            HttpResponseStatus.OK.getCode());
+    String response = getServiceResponse("auditlog/stream/stream1?limit=1",
+                                         HttpResponseStatus.OK.getCode());
     AuditLogResponse resp = GSON.fromJson(response, AuditLogResponse.class);
     Assert.assertEquals(2, resp.getTotalResults());
     Assert.assertEquals(0, resp.getOffset());
     Assert.assertEquals(1, resp.getResults().size());
     Assert.assertEquals(NamespaceId.DEFAULT.stream("stream1"),
-            resp.getResults().get(0).getEntityId());
+                        resp.getResults().get(0).getEntityId());
   }
 
   @Test
   public void testInvalidDatesError() throws Exception {
-    String response = getServiceResponse(auditLogServiceManager,
-            "auditlog/stream/stream1?startTime=1&endTime=0",
-            HttpResponseStatus.BAD_REQUEST.getCode());
+    String response = getServiceResponse("auditlog/stream/stream1?startTime=1&endTime=0",
+                                         HttpResponseStatus.BAD_REQUEST.getCode());
     Assert.assertEquals("\"startTime must be before endTime.\"", response);
   }
 
   @Test
   public void testInvalidOffset() throws Exception {
-    String response = getServiceResponse(auditLogServiceManager,
-            "auditlog/stream/stream1?offset=-1",
-            HttpResponseStatus.BAD_REQUEST.getCode());
+    String response = getServiceResponse("auditlog/stream/stream1?offset=-1",
+                                         HttpResponseStatus.BAD_REQUEST.getCode());
     Assert.assertEquals("\"offset cannot be negative.\"", response);
   }
 
   @Test
   public void testInvalidLimit() throws Exception {
-    String response = getServiceResponse(auditLogServiceManager,
-            "auditlog/stream/stream1?limit=-1",
-            HttpResponseStatus.BAD_REQUEST.getCode());
+    String response = getServiceResponse("auditlog/stream/stream1?limit=-1",
+                                         HttpResponseStatus.BAD_REQUEST.getCode());
     Assert.assertEquals("\"limit cannot be negative.\"", response);
-  }
-
-  @Test
-  public void testTopNEntities() throws Exception {
-    String response = getServiceResponse(auditMetricsServiceManager,
-            "v1/auditmetrics/topEntities?limit=3",
-            HttpResponseStatus.OK.getCode());
-    TopEntitiesResult[] results = GSON.fromJson(response, TopEntitiesResult[].class);
-    Assert.assertEquals(3, results.length);
-    Assert.assertTrue(results[0].getColumnValues().get("count") > results[1].getColumnValues().get("count"));
   }
 
   private static ApplicationManager deployApplicationWithScalaJar(Class appClass, Config config) {
@@ -194,9 +172,7 @@ public class TrackerAppTest extends TestBase {
     }
   }
 
-  private String getServiceResponse(ServiceManager serviceManager,
-                                    String request,
-                                    int expectedResponseCode) throws Exception {
+  private String getServiceResponse(String request, int expectedResponseCode) throws Exception {
     URL url = new URL(serviceManager.getServiceURL(), request);
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
     Assert.assertEquals(expectedResponseCode, connection.getResponseCode());
@@ -219,47 +195,38 @@ public class TrackerAppTest extends TestBase {
   private List<AuditMessage> generateTestData() {
     List<AuditMessage> testData = new ArrayList<>();
     testData.add(new AuditMessage(1456956659468L,
-                    NamespaceId.DEFAULT.stream("stream1"),
-                    "user1",
-                    AuditType.ACCESS,
-                    new AccessPayload(AccessType.WRITE,
-                            EntityId.fromString("program_run:ns1.app1.flow.flow1.run1"))
-            )
+                                  NamespaceId.DEFAULT.stream("stream1"),
+                                  "user1",
+                                  AuditType.ACCESS,
+                                  new AccessPayload(AccessType.WRITE,
+                                                    EntityId.fromString("program_run:ns1.app1.flow.flow1.run1"))
+                 )
     );
     testData.add(new AuditMessage(1456956659469L,
-                    NamespaceId.DEFAULT.stream("stream1"),
-                    "user1",
-                    AuditType.ACCESS,
-                    new AccessPayload(AccessType.UNKNOWN,
-                            EntityId.fromString("system_service:explore"))
-            )
+                                  NamespaceId.DEFAULT.stream("stream1"),
+                                  "user1",
+                                  AuditType.ACCESS,
+                                  new AccessPayload(AccessType.UNKNOWN,
+                                                    EntityId.fromString("system_service:explore"))
+                 )
     );
     String metadataPayload = "{ \"previous\": { \"USER\": { \"properties\": { \"uk\": \"uv\", \"uk1\": \"uv2\" }, " +
-            "\"tags\": [ \"ut1\", \"ut2\" ] }, \"SYSTEM\": { \"properties\": { \"sk\": \"sv\" }, \"tags\": [] } }, " +
-            "\"additions\": { \"SYSTEM\": { \"properties\": { \"sk\": \"sv\" }, \"tags\": [ \"t1\", \"t2\" ] } }, " +
-            "\"deletions\": { \"USER\": { \"properties\": { \"uk\": \"uv\" }, \"tags\": [ \"ut1\" ] } } }";
+      "\"tags\": [ \"ut1\", \"ut2\" ] }, \"SYSTEM\": { \"properties\": { \"sk\": \"sv\" }, \"tags\": [] } }, " +
+      "\"additions\": { \"SYSTEM\": { \"properties\": { \"sk\": \"sv\" }, \"tags\": [ \"t1\", \"t2\" ] } }, " +
+      "\"deletions\": { \"USER\": { \"properties\": { \"uk\": \"uv\" }, \"tags\": [ \"ut1\" ] } } }";
     MetadataPayload payload = GSON.fromJson(metadataPayload, MetadataPayload.class);
     testData.add(new AuditMessage(1456956659470L,
-            EntityId.fromString("application:default.app1"),
-            "user1",
-            AuditType.METADATA_CHANGE,
-            payload)
+                                  EntityId.fromString("application:default.app1"),
+                                  "user1",
+                                  AuditType.METADATA_CHANGE,
+                                  payload)
     );
     testData.add(new AuditMessage(1456956659471L,
-            EntityId.fromString("dataset:default.ds1"),
-            "user1",
-            AuditType.CREATE,
-            AuditPayload.EMPTY_PAYLOAD));
-    testData.add(new AuditMessage(1456956659472L,
-            EntityId.fromString("dataset:default.ds1"),
-            "user1",
-            AuditType.CREATE,
-            AuditPayload.EMPTY_PAYLOAD));
-    testData.add(new AuditMessage(1456956659473L,
-            EntityId.fromString("dataset:default.ds1"),
-            "user1",
-            AuditType.CREATE,
-            AuditPayload.EMPTY_PAYLOAD));
+                                  EntityId.fromString("dataset:default.ds1"),
+                                  "user1",
+                                  AuditType.CREATE,
+                                  AuditPayload.EMPTY_PAYLOAD)
+    );
     return testData;
   }
 }
