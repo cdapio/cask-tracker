@@ -61,7 +61,7 @@ public final class AuditLogConsumer extends Kafka08ConsumerFlowlet<ByteBuffer, S
     if (Strings.isNullOrEmpty(auditLogKafkaConfig.getBrokerString()) &&
       Strings.isNullOrEmpty(auditLogKafkaConfig.getZookeeperString())) {
       throw new IllegalArgumentException("Should provide either a broker string or a zookeeper string for " +
-                                           "Kafka Audit Log subscription!");
+                                         "Kafka Audit Log subscription!");
     }
 
     if (Strings.isNullOrEmpty(auditLogKafkaConfig.getTopic())) {

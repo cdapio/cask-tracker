@@ -23,40 +23,35 @@ import java.util.Map;
  * A POJO to hold the results for the TopN query.
  */
 public class TopEntitiesResult implements Comparable<TopEntitiesResult> {
-    private final String namespace;
-    private final String entityType;
-    private final String entityName;
-    private final Map<String, Long> columnValues;
+  private final Map<String, String> columnValues;
 
-    public TopEntitiesResult(String namespace, String entityType, String entityName) {
-        this.namespace = namespace;
-        this.entityType = entityType;
-        this.entityName = entityName;
-        this.columnValues = new HashMap<>();
-    }
+  public TopEntitiesResult(String entityName) {
+    this.columnValues = new HashMap<>();
+    columnValues.put("label", entityName);
+    columnValues.put("read", "0");
+    columnValues.put("write", "0");
+  }
 
-    public String getNamespace() {
-        return namespace;
-    }
+  public Map<String, String> getColumnValues() {
+    return columnValues;
+  }
 
-    public String getEntityType() {
-        return entityType;
-    }
+  public void addAccessType(String type, String value) {
+    this.columnValues.put(type, value);
+  }
 
-    public String getEntityName() {
-        return entityName;
-    }
+  public void formatDataByTotal() {
+    columnValues.put("value",
+      String.valueOf(Long.parseLong(columnValues.get("read")) + Long.parseLong(columnValues.get("write"))));
+    columnValues.remove("read");
+    columnValues.remove("write");
+  }
 
-    public Map<String, Long> getColumnValues() {
-        return columnValues;
-    }
-
-    public void addAccessType(String type, long value) {
-        this.columnValues.put(type, value);
-    }
-
-    @Override
-    public int compareTo(TopEntitiesResult o) {
-        return o.getColumnValues().get("count").compareTo(this.getColumnValues().get("count"));
-    }
+  @Override
+  public int compareTo(TopEntitiesResult o) {
+    Long thisTotal = Long.parseLong(columnValues.get("read")) + Long.parseLong(columnValues.get("write"));
+    Long thatTotal = Long.parseLong(o.getColumnValues().get("read"))
+      + Long.parseLong(o.getColumnValues().get("write"));
+    return thatTotal.compareTo(thisTotal);
+  }
 }
