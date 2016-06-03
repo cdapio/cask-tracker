@@ -45,7 +45,11 @@ import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Collections;
+import java.util.UUID;
+import java.util.ArrayList;
 
 /**
  * Creates the key and scan key for storing data in the AuditLog table.
