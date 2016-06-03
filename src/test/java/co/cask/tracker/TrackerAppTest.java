@@ -177,7 +177,7 @@ public class TrackerAppTest extends TestBase {
   @Test
   public void testTopNEntities() throws Exception {
     String response = getServiceResponse(auditMetricsServiceManager,
-            "v1/auditmetrics/topEntities?limit=3",
+            "v1/auditmetrics/topEntities/datasets?limit=3",
             HttpResponseStatus.OK.getCode());
     TopEntitiesResult[] results = GSON.fromJson(response, TopEntitiesResult[].class);
     Assert.assertEquals(3, results.length);

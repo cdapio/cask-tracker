@@ -64,7 +64,7 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
             responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), "limit cannot be negative.");
             return;
         }
-        responder.sendJson(200, auditMetricsCube.getTopNPrograms(limit));
+        responder.sendJson(200, auditLogTable.getTopNPrograms(limit));
     }
 
 
@@ -75,7 +75,7 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
             responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), "limit cannot be negative.");
             return;
         }
-        responder.sendJson(200, auditMetricsCube.getTopNApplications(limit));
+        responder.sendJson(200, auditLogTable.getTopNApplications(limit));
     }
 
     @Path("v1/auditmetrics/timeSince/program_read")

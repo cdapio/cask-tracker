@@ -45,8 +45,7 @@ import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Creates the key and scan key for storing data in the AuditLog table.
@@ -67,8 +66,8 @@ public final class AuditLogTable extends AbstractDataset {
   private long mostRecentTruncate;
   private long mostRecentMetadataChange;
 
-  private HashMap<EntityId, Long> apps = new HashMap<>();
-  private HashMap<EntityId, Long> programs = new HashMap<>();
+  private HashMap<String, TopEntitiesResult> apps = new HashMap<>();
+  private HashMap<String, TopEntitiesResult> programs = new HashMap<>();
 
   public AuditLogTable(DatasetSpecification spec, @EmbeddedDataset("auditLog") Table auditLogDataset) {
     super(spec.getName(), auditLogDataset);
@@ -128,6 +127,48 @@ public final class AuditLogTable extends AbstractDataset {
         } else if (accessPayload.getAccessType() == AccessType.WRITE) {
           mostRecentProgramWrite = auditMessage.getTime();
         }
+        EntityId accessEntityId = accessPayload.getAccessor();
+        if (accessEntityId.getEntity() == EntityType.APPLICATION) {
+          String nSpace = ((NamespacedId) accessEntityId).getNamespace();
+          String eType = accessEntityId.getEntity().name().toLowerCase();
+          String eName = EntityIdHelper.getEntityName(accessEntityId);
+          String key = String.format("%s-%s-%s", nSpace, eType, eName);
+          TopEntitiesResult result;
+          if (!apps.containsKey(key)) {
+            apps.put(key, result = new TopEntitiesResult(nSpace, eType, eName));
+            result.addAccessType("count", 1L);
+            result.addAccessType(accessPayload.getAccessType().name().toLowerCase(), 1L);
+          } else {
+            result = apps.get(key);
+            result.getColumnValues().put("count",result.getColumnValues().get("count") + 1L);
+            String accessType = accessPayload.getAccessType().name().toLowerCase();
+            if (result.getColumnValues().containsKey(accessType)) {
+              result.getColumnValues().put(accessType, result.getColumnValues().get(accessType) + 1L);
+            } else {
+              result.getColumnValues().put(accessType, 1L);
+            }
+          }
+        } else if (accessEntityId.getEntity() == EntityType.PROGRAM) {
+          String nSpace = ((NamespacedId) accessEntityId).getNamespace();
+          String eType = accessEntityId.getEntity().name().toLowerCase();
+          String eName = EntityIdHelper.getEntityName(accessEntityId);
+          String key = String.format("%s-%s-%s", nSpace, eType, eName);
+          TopEntitiesResult result;
+          if (!programs.containsKey(key)) {
+            programs.put(key, result = new TopEntitiesResult(nSpace, eType, eName));
+            result.addAccessType("count", 1L);
+            result.addAccessType(accessPayload.getAccessType().name().toLowerCase(), 1L);
+          } else {
+            result = programs.get(key);
+            result.getColumnValues().put("count",result.getColumnValues().get("count") + 1L);
+            String accessType = accessPayload.getAccessType().name().toLowerCase();
+            if (result.getColumnValues().containsKey(accessType)) {
+              result.getColumnValues().put(accessType, result.getColumnValues().get(accessType) + 1L);
+            } else {
+              result.getColumnValues().put(accessType, 1L);
+            }
+          }
+        }
       } else if (auditType == AuditType.TRUNCATE) {
         mostRecentTruncate = auditMessage.getTime();
       } else if (auditType == AuditType.UPDATE) {
@@ -139,6 +180,18 @@ public final class AuditLogTable extends AbstractDataset {
     } else {
       throw new IOException("Entity does not have a namespace and was not written to the auditLog: " + entityId);
     }
+  }
+
+  public List<TopEntitiesResult> getTopNPrograms (int topN) {
+    List<TopEntitiesResult> list = new ArrayList<>( programs.values());
+    Collections.sort(list);
+    return (topN > list.size()) ? list : list.subList(0,topN);
+  }
+
+  public List<TopEntitiesResult> getTopNApplications (int topN) {
+    List<TopEntitiesResult> list = new ArrayList<>( apps.values());
+    Collections.sort(list);
+    return (topN >= list.size()) ? list : list.subList(0,topN);
   }
 
   public long timeSinceProgramRead() {

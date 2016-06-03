@@ -83,7 +83,7 @@ public class AuditMetricsCube extends AbstractDataset {
                 String programName = EntityIdHelper.getEntityName(accessPayload.getAccessor());
                 fact.addDimensionValue("program_name", programName);
                 fact.addDimensionValue("program_type", accessPayload.getAccessor().getEntity().name().toLowerCase());
-                fact.addMeasurement(accessPayload.getAccessType().name(), MeasureType.COUNTER, 1L);
+                //fact.addMeasurement(accessPayload.getAccessType().name(), MeasureType.COUNTER, 1L);
                 // Adds column for READ/WRITE/UNKNOWN access
                 fact.addMeasurement(accessPayload.getAccessType().name().toLowerCase(), MeasureType.COUNTER, 1L);
             }
@@ -121,11 +121,7 @@ public class AuditMetricsCube extends AbstractDataset {
                 .build();
         Collection<TimeSeries> results = auditMetrics.query(query);
         List<TopEntitiesResult> auditStats = transformTopNDatasetResult(results);
-        if (auditStats.size() <= topN) {
-            return auditStats;
-        } else {
-            return auditStats.subList(0, topN);
-        }
+        return (topN >= auditStats.size()) ? auditStats : auditStats.subList(0,topN);
     }
 
     private List<TopEntitiesResult> transformTopNDatasetResult(Collection<TimeSeries> results) {
@@ -144,14 +140,4 @@ public class AuditMetricsCube extends AbstractDataset {
         Collections.sort(auditStats);
         return auditStats;
     }
-
-    public List<TopEntitiesResult> getTopNPrograms (int topN) {
-        throw new RuntimeException("Method not implemented");
-    }
-
-    public List<TopEntitiesResult> getTopNApplications (int topN) {
-        throw new RuntimeException("Method not implemented");
-    }
-
-
 }
