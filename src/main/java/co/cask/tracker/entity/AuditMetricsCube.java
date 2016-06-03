@@ -96,7 +96,7 @@ public class AuditMetricsCube extends AbstractDataset {
      * @param topN the number of results to return
      * @return A list of entities and their stats sorted in DESC order by count
      */
-    public List<TopEntitiesResult> getTopNEntities(int topN) {
+    public List<TopEntitiesResult> getTopNDatasets(int topN) {
         Map<String, AggregationFunction> measurements = new HashMap<>();
         for (AuditType auditType : AuditType.values()) {
             measurements.put(auditType.name().toLowerCase(), AggregationFunction.SUM);
@@ -120,7 +120,7 @@ public class AuditMetricsCube extends AbstractDataset {
                 .limit(1000)
                 .build();
         Collection<TimeSeries> results = auditMetrics.query(query);
-        List<TopEntitiesResult> auditStats = transformTopNEntitiesResult(results);
+        List<TopEntitiesResult> auditStats = transformTopNDatasetResult(results);
         if (auditStats.size() <= topN) {
             return auditStats;
         } else {
@@ -128,7 +128,7 @@ public class AuditMetricsCube extends AbstractDataset {
         }
     }
 
-    private List<TopEntitiesResult> transformTopNEntitiesResult(Collection<TimeSeries> results) {
+    private List<TopEntitiesResult> transformTopNDatasetResult(Collection<TimeSeries> results) {
         Map<String, TopEntitiesResult> resultsMap = new HashMap<>();
         for (TimeSeries t : results) {
             String namespace = t.getDimensionValues().get("namespace");
@@ -144,4 +144,14 @@ public class AuditMetricsCube extends AbstractDataset {
         Collections.sort(auditStats);
         return auditStats;
     }
+
+    public List<TopEntitiesResult> getTopNPrograms (int topN) {
+        throw new RuntimeException("Method not implemented");
+    }
+
+    public List<TopEntitiesResult> getTopNApplications (int topN) {
+        throw new RuntimeException("Method not implemented");
+    }
+
+
 }

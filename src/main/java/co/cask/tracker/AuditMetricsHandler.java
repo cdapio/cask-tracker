@@ -20,6 +20,7 @@ import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import co.cask.tracker.entity.AuditLogTable;
 import co.cask.tracker.entity.AuditMetricsCube;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
@@ -35,6 +36,8 @@ import javax.ws.rs.QueryParam;
 public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
     @UseDataSet(TrackerApp.AUDIT_METRICS_DATASET_NAME)
     private AuditMetricsCube auditMetricsCube;
+    @UseDataSet(TrackerApp.AUDIT_LOG_DATASET_NAME)
+    private AuditLogTable auditLogTable;
     private String namespace;
 
     @Override
@@ -43,14 +46,66 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
         namespace = context.getNamespace();
     }
 
-    @Path("v1/auditmetrics/topEntities")
+    @Path("v1/auditmetrics/topEntities/datasets")
     @GET
-    public void query(HttpServiceRequest request, HttpServiceResponder responder,
+    public void topNDatasets(HttpServiceRequest request, HttpServiceResponder responder,
                       @QueryParam("limit") @DefaultValue("10") int limit) {
         if (limit < 0) {
             responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), "limit cannot be negative.");
             return;
         }
-        responder.sendJson(200, auditMetricsCube.getTopNEntities(limit));
+        responder.sendJson(200, auditMetricsCube.getTopNDatasets(limit));
     }
+
+    @Path("v1/auditmetrics/topEntities/programs")
+    @GET
+    public void topNPrograms(HttpServiceRequest request, HttpServiceResponder responder, @QueryParam("limit") @DefaultValue("10") int limit) {
+        if (limit < 0) {
+            responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), "limit cannot be negative.");
+            return;
+        }
+        responder.sendJson(200, auditMetricsCube.getTopNPrograms(limit));
+    }
+
+
+    @Path("v1/auditmetrics/topEntities/applications")
+    @GET
+    public void topNApplications(HttpServiceRequest request, HttpServiceResponder responder, @QueryParam("limit") @DefaultValue("10") int limit) {
+        if (limit < 0) {
+            responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), "limit cannot be negative.");
+            return;
+        }
+        responder.sendJson(200, auditMetricsCube.getTopNApplications(limit));
+    }
+
+    @Path("v1/auditmetrics/timeSince/program_read")
+    @GET
+    public void timeSinceProgramRead(HttpServiceRequest request, HttpServiceResponder responder) {
+        responder.sendJson(200,auditLogTable.timeSinceProgramRead());
+    }
+
+    @Path("v1/auditmetrics/timeSince/program_write")
+    @GET
+    public void timeSinceProgramWrite(HttpServiceRequest request, HttpServiceResponder responder) {
+        responder.sendJson(200,auditLogTable.timeSinceProgramWrite());
+    }
+
+    @Path("v1/auditmetrics/timeSince/update")
+    @GET
+    public void timeSinceUpdate(HttpServiceRequest request, HttpServiceResponder responder) {
+        responder.sendJson(200,auditLogTable.timeSinceUpdate());
+    }
+
+    @Path("v1/auditmetrics/timeSince/truncate")
+    @GET
+    public void timeSinceTruncate(HttpServiceRequest request, HttpServiceResponder responder) {
+        responder.sendJson(200,auditLogTable.timeSinceTruncate());
+    }
+
+    @Path("v1/auditmetrics/timeSince/metadata_change")
+    @GET
+    public void timeSinceMetadataChange(HttpServiceRequest request, HttpServiceResponder responder) {
+        responder.sendJson(200,auditLogTable.timeSinceMetadataChange());
+    }
+
 }
