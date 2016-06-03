@@ -123,7 +123,7 @@ public class AuditMetricsCube extends AbstractDataset {
                 .build();
         Collection<TimeSeries> results = auditMetrics.query(query);
         List<TopEntitiesResult> auditStats = transformTopNDatasetResult(results);
-        return (topN >= auditStats.size()) ? auditStats : auditStats.subList(0,topN);
+        return (topN >= auditStats.size()) ? auditStats : auditStats.subList(0, topN);
     }
 
     private List<TopEntitiesResult> transformTopNDatasetResult(Collection<TimeSeries> results) {

@@ -59,7 +59,8 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
 
     @Path("v1/auditmetrics/topEntities/programs")
     @GET
-    public void topNPrograms(HttpServiceRequest request, HttpServiceResponder responder, @QueryParam("limit") @DefaultValue("10") int limit) {
+    public void topNPrograms(HttpServiceRequest request, HttpServiceResponder responder,
+                             @QueryParam("limit") @DefaultValue("10") int limit) {
         if (limit < 0) {
             responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), "limit cannot be negative.");
             return;
@@ -70,7 +71,8 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
 
     @Path("v1/auditmetrics/topEntities/applications")
     @GET
-    public void topNApplications(HttpServiceRequest request, HttpServiceResponder responder, @QueryParam("limit") @DefaultValue("10") int limit) {
+    public void topNApplications(HttpServiceRequest request, HttpServiceResponder responder,
+                                 @QueryParam("limit") @DefaultValue("10") int limit) {
         if (limit < 0) {
             responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), "limit cannot be negative.");
             return;
@@ -81,31 +83,31 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
     @Path("v1/auditmetrics/timeSince/program_read")
     @GET
     public void timeSinceProgramRead(HttpServiceRequest request, HttpServiceResponder responder) {
-        responder.sendJson(200,auditLogTable.timeSinceProgramRead());
+        responder.sendJson(200, auditLogTable.timeSinceProgramRead());
     }
 
     @Path("v1/auditmetrics/timeSince/program_write")
     @GET
     public void timeSinceProgramWrite(HttpServiceRequest request, HttpServiceResponder responder) {
-        responder.sendJson(200,auditLogTable.timeSinceProgramWrite());
+        responder.sendJson(200, auditLogTable.timeSinceProgramWrite());
     }
 
     @Path("v1/auditmetrics/timeSince/update")
     @GET
     public void timeSinceUpdate(HttpServiceRequest request, HttpServiceResponder responder) {
-        responder.sendJson(200,auditLogTable.timeSinceUpdate());
+        responder.sendJson(200, auditLogTable.timeSinceUpdate());
     }
 
     @Path("v1/auditmetrics/timeSince/truncate")
     @GET
     public void timeSinceTruncate(HttpServiceRequest request, HttpServiceResponder responder) {
-        responder.sendJson(200,auditLogTable.timeSinceTruncate());
+        responder.sendJson(200, auditLogTable.timeSinceTruncate());
     }
 
     @Path("v1/auditmetrics/timeSince/metadata_change")
     @GET
     public void timeSinceMetadataChange(HttpServiceRequest request, HttpServiceResponder responder) {
-        responder.sendJson(200,auditLogTable.timeSinceMetadataChange());
+        responder.sendJson(200, auditLogTable.timeSinceMetadataChange());
     }
 
 }

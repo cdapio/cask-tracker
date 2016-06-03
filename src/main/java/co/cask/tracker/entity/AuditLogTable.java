@@ -45,11 +45,11 @@ import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Collections;
 import java.util.UUID;
-import java.util.ArrayList;
 
 /**
  * Creates the key and scan key for storing data in the AuditLog table.
@@ -144,7 +144,7 @@ public final class AuditLogTable extends AbstractDataset {
             result.addAccessType(accessPayload.getAccessType().name().toLowerCase(), 1L);
           } else {
             result = apps.get(key);
-            result.getColumnValues().put("count",result.getColumnValues().get("count") + 1L);
+            result.getColumnValues().put("count", result.getColumnValues().get("count") + 1L);
             String accessType = accessPayload.getAccessType().name().toLowerCase();
             if (result.getColumnValues().containsKey(accessType)) {
               result.getColumnValues().put(accessType, result.getColumnValues().get(accessType) + 1L);
@@ -164,7 +164,7 @@ public final class AuditLogTable extends AbstractDataset {
             result.addAccessType(accessPayload.getAccessType().name().toLowerCase(), 1L);
           } else {
             result = programs.get(key);
-            result.getColumnValues().put("count",result.getColumnValues().get("count") + 1L);
+            result.getColumnValues().put("count", result.getColumnValues().get("count") + 1L);
             String accessType = accessPayload.getAccessType().name().toLowerCase();
             if (result.getColumnValues().containsKey(accessType)) {
               result.getColumnValues().put(accessType, result.getColumnValues().get(accessType) + 1L);
@@ -187,15 +187,15 @@ public final class AuditLogTable extends AbstractDataset {
   }
 
   public List<TopEntitiesResult> getTopNPrograms (int topN) {
-    List<TopEntitiesResult> list = new ArrayList<>( programs.values());
+    List<TopEntitiesResult> list = new ArrayList<>(programs.values());
     Collections.sort(list);
-    return (topN > list.size()) ? list : list.subList(0,topN);
+    return (topN > list.size()) ? list : list.subList(0, topN);
   }
 
   public List<TopEntitiesResult> getTopNApplications (int topN) {
-    List<TopEntitiesResult> list = new ArrayList<>( apps.values());
+    List<TopEntitiesResult> list = new ArrayList<>(apps.values());
     Collections.sort(list);
-    return (topN >= list.size()) ? list : list.subList(0,topN);
+    return (topN >= list.size()) ? list : list.subList(0, topN);
   }
 
   public long timeSinceProgramRead() {
