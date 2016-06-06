@@ -45,11 +45,7 @@ import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Creates the key and scan key for storing data in the AuditLog table.
@@ -64,14 +60,10 @@ public final class AuditLogTable extends AbstractDataset {
     .create();
 
   private final Table auditLog;
-  private long mostRecentProgramRead;
-  private long mostRecentProgramWrite;
-  private long mostRecentUpdate;
-  private long mostRecentTruncate;
-  private long mostRecentMetadataChange;
 
   private HashMap<String, TopEntitiesResult> apps = new HashMap<>();
   private HashMap<String, TopEntitiesResult> programs = new HashMap<>();
+  private HashMap<String, TimeSinceResult> timeSinceMap = new HashMap<>();
 
   public AuditLogTable(DatasetSpecification spec, @EmbeddedDataset("auditLog") Table auditLogDataset) {
     super(spec.getName(), auditLogDataset);
@@ -124,63 +116,59 @@ public final class AuditLogTable extends AbstractDataset {
           .add("entityName", name)
           .add("metadata", GSON.toJson(auditMessage.getPayload())));
 
+      String entityKey = String.format("%s-%s-%s", namespace.toLowerCase(), type.toLowerCase(), name.toLowerCase());
+      if (!timeSinceMap.containsKey(entityKey)) {
+        timeSinceMap.put(entityKey, new TimeSinceResult(namespace, type, name));
+      }
+      timeSinceMap.get(entityKey).addEventTime(auditType, System.currentTimeMillis());
+
       if (auditType == AuditType.ACCESS) {
         AccessPayload accessPayload = (AccessPayload) auditMessage.getPayload();
-        if (accessPayload.getAccessType() == AccessType.READ) {
-          mostRecentProgramRead = auditMessage.getTime();
-        } else if (accessPayload.getAccessType() == AccessType.WRITE) {
-          mostRecentProgramWrite = auditMessage.getTime();
-        }
         EntityId accessEntityId = accessPayload.getAccessor();
         if (accessEntityId.getEntity() == EntityType.APPLICATION) {
           String nSpace = ((NamespacedId) accessEntityId).getNamespace();
           String eType = accessEntityId.getEntity().name().toLowerCase();
           String eName = EntityIdHelper.getEntityName(accessEntityId);
-          String key = String.format("%s-%s-%s", nSpace, eType, eName);
-          TopEntitiesResult result;
+          String key = String.format("%s-%s-%s", nSpace.toLowerCase(), eType.toLowerCase(), eName.toLowerCase());
+          Map<String, Long> result;
+          TopEntitiesResult topEntitiesResult;
           if (!apps.containsKey(key)) {
-            apps.put(key, result = new TopEntitiesResult(nSpace, eType, eName));
-            result.addAccessType("count", 1L);
-            result.addAccessType(accessPayload.getAccessType().name().toLowerCase(), 1L);
+            apps.put(key, topEntitiesResult = new TopEntitiesResult(nSpace, eType, eName));
+            topEntitiesResult.addAccessType("count", 1L);
+            topEntitiesResult.addAccessType(accessPayload.getAccessType().name().toLowerCase(), 1L);
           } else {
-            result = apps.get(key);
-            result.getColumnValues().put("count", result.getColumnValues().get("count") + 1L);
+            result = apps.get(key).getColumnValues();
+            result.put("count", result.get("count") + 1L);
             String accessType = accessPayload.getAccessType().name().toLowerCase();
-            if (result.getColumnValues().containsKey(accessType)) {
-              result.getColumnValues().put(accessType, result.getColumnValues().get(accessType) + 1L);
+            if (result.containsKey(accessType)) {
+              result.put(accessType, result.get(accessType) + 1L);
             } else {
-              result.getColumnValues().put(accessType, 1L);
+              result.put(accessType, 1L);
             }
           }
         } else if (accessEntityId.getEntity() == EntityType.PROGRAM) {
           String nSpace = ((NamespacedId) accessEntityId).getNamespace();
           String eType = accessEntityId.getEntity().name().toLowerCase();
           String eName = EntityIdHelper.getEntityName(accessEntityId);
-          String key = String.format("%s-%s-%s", nSpace, eType, eName);
-          TopEntitiesResult result;
+          String key = String.format("%s-%s-%s", nSpace.toLowerCase(), eType.toLowerCase(), eName.toLowerCase());
+          Map<String, Long> result;
+          TopEntitiesResult topEntitiesResult;
           if (!programs.containsKey(key)) {
-            programs.put(key, result = new TopEntitiesResult(nSpace, eType, eName));
-            result.addAccessType("count", 1L);
-            result.addAccessType(accessPayload.getAccessType().name().toLowerCase(), 1L);
+            programs.put(key, topEntitiesResult = new TopEntitiesResult(nSpace, eType, eName));
+            topEntitiesResult.addAccessType("count", 1L);
+            topEntitiesResult.addAccessType(accessPayload.getAccessType().name().toLowerCase(), 1L);
           } else {
-            result = programs.get(key);
-            result.getColumnValues().put("count", result.getColumnValues().get("count") + 1L);
+            result = programs.get(key).getColumnValues();
+            result.put("count", result.get("count") + 1L);
             String accessType = accessPayload.getAccessType().name().toLowerCase();
-            if (result.getColumnValues().containsKey(accessType)) {
-              result.getColumnValues().put(accessType, result.getColumnValues().get(accessType) + 1L);
+            if (result.containsKey(accessType)) {
+              result.put(accessType, result.get(accessType) + 1L);
             } else {
-              result.getColumnValues().put(accessType, 1L);
+              result.put(accessType, 1L);
             }
           }
         }
-      } else if (auditType == AuditType.TRUNCATE) {
-        mostRecentTruncate = auditMessage.getTime();
-      } else if (auditType == AuditType.UPDATE) {
-        mostRecentUpdate = auditMessage.getTime();
-      } else if (auditType == AuditType.METADATA_CHANGE) {
-        mostRecentMetadataChange = auditMessage.getTime();
       }
-
     } else {
       throw new IOException("Entity does not have a namespace and was not written to the auditLog: " + entityId);
     }
@@ -198,24 +186,9 @@ public final class AuditLogTable extends AbstractDataset {
     return (topN >= list.size()) ? list : list.subList(0, topN);
   }
 
-  public long timeSinceProgramRead() {
-    return ((System.currentTimeMillis() - mostRecentProgramRead) / 1000);
-  }
-
-  public long timeSinceProgramWrite() {
-    return ((System.currentTimeMillis() - mostRecentProgramWrite) / 1000);
-  }
-
-  public long timeSinceUpdate() {
-    return ((System.currentTimeMillis() - mostRecentUpdate) / 1000);
-  }
-
-  public long timeSinceTruncate() {
-    return ((System.currentTimeMillis() - mostRecentTruncate) / 1000);
-  }
-
-  public long timeSinceMetadataChange() {
-    return ((System.currentTimeMillis() - mostRecentMetadataChange) / 1000);
+  public TimeSinceResult getTimeSinceResult(String namespace, String type, String name) {
+    String entityKey = String.format("%s-%s-%s", namespace.toLowerCase(), type.toLowerCase(), name.toLowerCase());
+    return timeSinceMap.get(entityKey);
   }
 
   /**

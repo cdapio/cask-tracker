@@ -62,7 +62,7 @@ public class AuditMetricsCube extends AbstractDataset {
      */
     public void write(AuditMessage auditMessage) throws IOException {
         EntityId entityId = auditMessage.getEntityId();
-        if (entityId instanceof NamespacedId) {
+        if (entityId instanceof NamespacedId && entityId.getEntity() == EntityType.DATASET) {
             String namespace = ((NamespacedId) entityId).getNamespace();
             long ts = System.currentTimeMillis() / 1000;
             CubeFact fact = new CubeFact(ts);
@@ -110,7 +110,7 @@ public class AuditMetricsCube extends AbstractDataset {
         CubeQuery query = CubeQuery.builder()
                 .select()
                 .measurement("count", AggregationFunction.SUM)
-                .measurements(measurements)
+                .measurement(AuditType.ACCESS.name().toLowerCase(), AggregationFunction.SUM)
                 .from()
                 .resolution(TimeUnit.DAYS.toSeconds(365L), TimeUnit.SECONDS)
                 .where()
@@ -132,7 +132,8 @@ public class AuditMetricsCube extends AbstractDataset {
             String namespace = t.getDimensionValues().get("namespace");
             String entityType = t.getDimensionValues().get("entity_type");
             String entityName = t.getDimensionValues().get("entity_name");
-            String key = String.format("%s-%s-%s", namespace, entityType, entityName);
+            String key = String.format("%s-%s-%s", namespace.toLowerCase(), entityType.toLowerCase(),
+                    entityName.toLowerCase());
             if (!resultsMap.containsKey(key)) {
                 resultsMap.put(key, new TopEntitiesResult(namespace, entityType, entityName));
             }

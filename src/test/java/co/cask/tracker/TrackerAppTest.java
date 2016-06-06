@@ -175,9 +175,27 @@ public class TrackerAppTest extends TestBase {
   }
 
   @Test
-  public void testTopNEntities() throws Exception {
+  public void testTopNDatasets() throws Exception {
     String response = getServiceResponse(auditMetricsServiceManager,
             "v1/auditmetrics/topEntities/datasets?limit=3",
+            HttpResponseStatus.OK.getCode());
+    TopEntitiesResult[] results = GSON.fromJson(response, TopEntitiesResult[].class);
+    Assert.assertEquals(3, results.length);
+    Assert.assertTrue(results[0].getColumnValues().get("count") > results[1].getColumnValues().get("count"));
+  }
+
+  @Test
+  public void testTopNPrograms() throws Exception {
+    String response = getServiceResponse(auditMetricsServiceManager, "v1/auditmetrics/topEntities/programs?limit=3",
+            HttpResponseStatus.OK.getCode());
+    TopEntitiesResult[] results = GSON.fromJson(response, TopEntitiesResult[].class);
+    Assert.assertEquals(3, results.length);
+    Assert.assertTrue(results[0].getColumnValues().get("count") > results[1].getColumnValues().get("count"));
+  }
+
+  @Test
+  public void testTopNApplications() throws Exception {
+    String response = getServiceResponse(auditMetricsServiceManager, "v1/auditmetrics/topEntities/applications?limit=3",
             HttpResponseStatus.OK.getCode());
     TopEntitiesResult[] results = GSON.fromJson(response, TopEntitiesResult[].class);
     Assert.assertEquals(3, results.length);
@@ -193,6 +211,7 @@ public class TrackerAppTest extends TestBase {
       return deployApplication(appClass, new File(URI.create(path.substring(0, path.indexOf("!/")))));
     }
   }
+
 
   private String getServiceResponse(ServiceManager serviceManager,
                                     String request,

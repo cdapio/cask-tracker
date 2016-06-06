@@ -80,34 +80,11 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
         responder.sendJson(200, auditLogTable.getTopNApplications(limit));
     }
 
-    @Path("v1/auditmetrics/timeSince/program_read")
+    @Path("v1/auditmetrics/timeSince")
     @GET
-    public void timeSinceProgramRead(HttpServiceRequest request, HttpServiceResponder responder) {
-        responder.sendJson(200, auditLogTable.timeSinceProgramRead());
+    public void timeSinceMetadataChange(HttpServiceRequest request, HttpServiceResponder responder,
+                                        @QueryParam("entityType") String entityType,
+                                        @QueryParam("entityName") String entityName) {
+            responder.sendJson(200, auditLogTable.getTimeSinceResult(namespace, entityType, entityName));
     }
-
-    @Path("v1/auditmetrics/timeSince/program_write")
-    @GET
-    public void timeSinceProgramWrite(HttpServiceRequest request, HttpServiceResponder responder) {
-        responder.sendJson(200, auditLogTable.timeSinceProgramWrite());
-    }
-
-    @Path("v1/auditmetrics/timeSince/update")
-    @GET
-    public void timeSinceUpdate(HttpServiceRequest request, HttpServiceResponder responder) {
-        responder.sendJson(200, auditLogTable.timeSinceUpdate());
-    }
-
-    @Path("v1/auditmetrics/timeSince/truncate")
-    @GET
-    public void timeSinceTruncate(HttpServiceRequest request, HttpServiceResponder responder) {
-        responder.sendJson(200, auditLogTable.timeSinceTruncate());
-    }
-
-    @Path("v1/auditmetrics/timeSince/metadata_change")
-    @GET
-    public void timeSinceMetadataChange(HttpServiceRequest request, HttpServiceResponder responder) {
-        responder.sendJson(200, auditLogTable.timeSinceMetadataChange());
-    }
-
 }
