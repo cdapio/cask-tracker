@@ -52,7 +52,7 @@ public class TimeSinceResult {
     }
 
     public Map<String, Long> getTimeSinceEvents() {
-        HashMap<String, Long> results = new HashMap<>();
+        Map<String, Long> results = new HashMap<>();
         for (Map.Entry<String, Long> entry : columnValues.entrySet()) {
             results.put(entry.getKey(), (System.currentTimeMillis() - entry.getValue()) / 1000);
         }

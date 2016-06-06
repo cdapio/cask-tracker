@@ -61,9 +61,9 @@ public final class AuditLogTable extends AbstractDataset {
 
   private final Table auditLog;
 
-  private HashMap<String, TopEntitiesResult> apps = new HashMap<>();
-  private HashMap<String, TopEntitiesResult> programs = new HashMap<>();
-  private HashMap<String, TimeSinceResult> timeSinceMap = new HashMap<>();
+  private Map<String, TopEntitiesResult> apps = new HashMap<>();
+  private Map<String, TopEntitiesResult> programs = new HashMap<>();
+  private Map<String, TimeSinceResult> timeSinceMap = new HashMap<>();
 
   public AuditLogTable(DatasetSpecification spec, @EmbeddedDataset("auditLog") Table auditLogDataset) {
     super(spec.getName(), auditLogDataset);
