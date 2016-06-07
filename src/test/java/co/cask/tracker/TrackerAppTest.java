@@ -186,7 +186,8 @@ public class TrackerAppTest extends TestBase {
 
   @Test
   public void testTopNPrograms() throws Exception {
-    String response = getServiceResponse(auditMetricsServiceManager, "v1/auditmetrics/topEntities/programs?limit=3",
+    String response = getServiceResponse(auditMetricsServiceManager,
+            "v1/auditmetrics/topEntities/programs?limit=3",
             HttpResponseStatus.OK.getCode());
     TopEntitiesResult[] results = GSON.fromJson(response, TopEntitiesResult[].class);
     Assert.assertEquals(0, results.length);

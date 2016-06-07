@@ -49,42 +49,110 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
     @Path("v1/auditmetrics/topEntities/datasets")
     @GET
     public void topNDatasets(HttpServiceRequest request, HttpServiceResponder responder,
-                      @QueryParam("limit") @DefaultValue("10") int limit) {
+                      @QueryParam("limit") @DefaultValue("10") int limit,
+                             @QueryParam("startTime") @DefaultValue("0") Long startTime,
+                             @QueryParam("endTime") @DefaultValue("0") Long endTime) {
         if (limit < 0) {
             responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), "limit cannot be negative.");
             return;
         }
-        responder.sendJson(200, auditMetricsCube.getTopNDatasets(limit));
+        if (endTime == 0) {
+            endTime = System.currentTimeMillis() / 1000;
+        }
+        responder.sendJson(200, auditMetricsCube.getTopNDatasets(limit, startTime, endTime));
     }
 
     @Path("v1/auditmetrics/topEntities/programs")
     @GET
     public void topNPrograms(HttpServiceRequest request, HttpServiceResponder responder,
-                             @QueryParam("limit") @DefaultValue("10") int limit) {
+                             @QueryParam("limit") @DefaultValue("10") int limit,
+                             @QueryParam("startTime") @DefaultValue("0") Long startTime,
+                             @QueryParam("endTime") @DefaultValue("0") Long endTime) {
         if (limit < 0) {
             responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), "limit cannot be negative.");
             return;
         }
-        responder.sendJson(200, auditLogTable.getTopNPrograms(limit));
+        if (endTime == 0) {
+            endTime = System.currentTimeMillis() / 1000;
+        }
+        responder.sendJson(200, auditMetricsCube.getTopNPrograms(limit, startTime, endTime));
     }
 
 
     @Path("v1/auditmetrics/topEntities/applications")
     @GET
     public void topNApplications(HttpServiceRequest request, HttpServiceResponder responder,
-                                 @QueryParam("limit") @DefaultValue("10") int limit) {
+                                 @QueryParam("limit") @DefaultValue("10") int limit,
+                                 @QueryParam("startTime") @DefaultValue("0") Long startTime,
+                                 @QueryParam("endTime") @DefaultValue("0") Long endTime) {
         if (limit < 0) {
             responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), "limit cannot be negative.");
             return;
         }
-        responder.sendJson(200, auditLogTable.getTopNApplications(limit));
+        if (endTime == 0) {
+            endTime = System.currentTimeMillis() / 1000;
+        }
+        responder.sendJson(200, auditMetricsCube.getTopNApplications(limit, startTime, endTime));
+    }
+
+    @Path("v1/auditMetrics/topEntities/applications/byDataset")
+    @GET
+    public void topNapplicationsByDataset(HttpServiceRequest request, HttpServiceResponder responder,
+                                          @QueryParam("limit") @DefaultValue("10") int limit,
+                                          @QueryParam("startTime") @DefaultValue("0") Long startTime,
+                                          @QueryParam("endTime") @DefaultValue("0") Long endTime,
+                                          @QueryParam("entityType") String entityType,
+                                          @QueryParam("entityName") String entityName) {
+        if (limit < 0) {
+            responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), "limit cannot be negative.");
+            return;
+        }
+        if (endTime == 0) {
+            endTime = System.currentTimeMillis() / 1000;
+        }
+        responder.sendJson(200, auditMetricsCube.getTopNApplicationsByDataset(limit, startTime, endTime, namespace,
+                entityType, entityName));
+    }
+
+
+    @Path("v1/auditMetrics/topEntities/programs/byDataset")
+    @GET
+    public void topProgramsByDataset(HttpServiceRequest request, HttpServiceResponder responder,
+                                          @QueryParam("limit") @DefaultValue("10") int limit,
+                                          @QueryParam("startTime") @DefaultValue("0") Long startTime,
+                                          @QueryParam("endTime") @DefaultValue("0") Long endTime,
+                                          @QueryParam("entityType") String entityType,
+                                          @QueryParam("entityName") String entityName) {
+        if (limit < 0) {
+            responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), "limit cannot be negative.");
+            return;
+        }
+        if (endTime == 0) {
+            endTime = System.currentTimeMillis() / 1000;
+        }
+        responder.sendJson(200, auditMetricsCube.getTopNProgramsByDataset(limit, startTime, endTime, namespace,
+                entityType, entityName));
     }
 
     @Path("v1/auditmetrics/timeSince")
     @GET
-    public void timeSinceMetadataChange(HttpServiceRequest request, HttpServiceResponder responder,
+    public void timeSinceChange(HttpServiceRequest request, HttpServiceResponder responder,
                                         @QueryParam("entityType") String entityType,
                                         @QueryParam("entityName") String entityName) {
             responder.sendJson(200, auditLogTable.getTimeSinceResult(namespace, entityType, entityName));
+    }
+    @Path("v1/auditmetrics/auditLog")
+    @GET
+    public void auditLog(HttpServiceRequest request, HttpServiceResponder responder,
+                         @QueryParam("bucketSize") @DefaultValue("1") Long bucketSize,
+                         @QueryParam("startTime") @DefaultValue("0") Long startTime,
+                         @QueryParam("endTime") @DefaultValue("0") Long endTime,
+                         @QueryParam("entityType") String entityType,
+                         @QueryParam("entityName") String entityName) {
+        if (endTime == 0) {
+            endTime = System.currentTimeMillis() / 1000;
+        }
+        responder.sendJson(200, auditMetricsCube.getAuditLog(bucketSize, startTime, endTime, namespace, entityType,
+                entityName));
     }
 }
