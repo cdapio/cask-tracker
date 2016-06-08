@@ -177,7 +177,7 @@ public class TrackerAppTest extends TestBase {
   @Test
   public void testTopNDatasets() throws Exception {
     String response = getServiceResponse(auditMetricsServiceManager,
-            "v1/auditmetrics/topEntities/datasets?limit=3",
+            "v1/auditmetrics/topEntities/datasets?limit=20",
             HttpResponseStatus.OK.getCode());
     TopEntitiesResult[] results = GSON.fromJson(response, TopEntitiesResult[].class);
     Assert.assertEquals(1, results.length);
@@ -201,6 +201,13 @@ public class TrackerAppTest extends TestBase {
     Assert.assertEquals(0, results.length);
   }
 
+  /*
+  @Test
+  public void testTimeSince() throws Exception {
+    String response = getServiceResponse(auditMetricsServiceManager,
+    "v1/auditmetrics/timeSince?entityType=dataset&entityName=")
+  }
+  */
   private static ApplicationManager deployApplicationWithScalaJar(Class appClass, Config config) {
     URL classUrl = Product.class.getClassLoader().getResource("scala/Product.class");
     String path = classUrl.getFile();
@@ -245,10 +252,10 @@ public class TrackerAppTest extends TestBase {
             )
     );
     testData.add(new AuditMessage(1456956659469L,
-                    NamespaceId.DEFAULT.stream("stream1"),
+                    NamespaceId.DEFAULT.dataset("ds1"),
                     "user1",
                     AuditType.ACCESS,
-                    new AccessPayload(AccessType.UNKNOWN,
+                    new AccessPayload(AccessType.WRITE,
                             EntityId.fromString("system_service:explore"))
             )
     );
@@ -267,17 +274,22 @@ public class TrackerAppTest extends TestBase {
             EntityId.fromString("dataset:default.ds1"),
             "user1",
             AuditType.CREATE,
-            AuditPayload.EMPTY_PAYLOAD));
+            new AccessPayload(AccessType.READ, EntityId.fromString("program_run:ns1.app1.flow.flow1.run1"))));
     testData.add(new AuditMessage(1456956659472L,
             EntityId.fromString("dataset:default.ds1"),
             "user1",
             AuditType.CREATE,
             AuditPayload.EMPTY_PAYLOAD));
     testData.add(new AuditMessage(1456956659473L,
-            EntityId.fromString("dataset:default.ds1"),
+            EntityId.fromString("dataset:default.ds6"),
             "user1",
             AuditType.CREATE,
             AuditPayload.EMPTY_PAYLOAD));
+    testData.add(new AuditMessage(456956659474L,
+            NamespaceId.DEFAULT.dataset("dset1"),
+            "user1",
+            AuditType.CREATE,
+            new AccessPayload(AccessType.READ, EntityId.fromString("program_run:ns1.app1.flow.flow1.run1"))));
     return testData;
   }
 }

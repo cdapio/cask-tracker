@@ -23,24 +23,12 @@ import java.util.Map;
  * A POJO to hold the results for the TopN query.
  */
 public class TopEntitiesResult implements Comparable<TopEntitiesResult> {
-    private final String namespace;
-    private final String entityType;
     private final String entityName;
     private final Map<String, Long> columnValues;
 
-    public TopEntitiesResult(String namespace, String entityType, String entityName) {
-        this.namespace = namespace;
-        this.entityType = entityType;
+    public TopEntitiesResult(String entityName) {
         this.entityName = entityName;
         this.columnValues = new HashMap<>();
-    }
-
-    public String getNamespace() {
-        return namespace;
-    }
-
-    public String getEntityType() {
-        return entityType;
     }
 
     public String getEntityName() {

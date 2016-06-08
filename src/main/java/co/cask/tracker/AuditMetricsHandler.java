@@ -20,8 +20,8 @@ import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
-import co.cask.tracker.entity.AuditLogTable;
 import co.cask.tracker.entity.AuditMetricsCube;
+import com.google.common.base.Strings;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import javax.ws.rs.DefaultValue;
@@ -36,8 +36,6 @@ import javax.ws.rs.QueryParam;
 public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
     @UseDataSet(TrackerApp.AUDIT_METRICS_DATASET_NAME)
     private AuditMetricsCube auditMetricsCube;
-    @UseDataSet(TrackerApp.AUDIT_LOG_DATASET_NAME)
-    private AuditLogTable auditLogTable;
     private String namespace;
 
     @Override
@@ -95,7 +93,7 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
         responder.sendJson(200, auditMetricsCube.getTopNApplications(limit, startTime, endTime));
     }
 
-    @Path("v1/auditMetrics/topEntities/applications/byDataset")
+    @Path("v1/auditmetrics/topEntities/applications/byDataset")
     @GET
     public void topNapplicationsByDataset(HttpServiceRequest request, HttpServiceResponder responder,
                                           @QueryParam("limit") @DefaultValue("10") int limit,
@@ -115,7 +113,7 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
     }
 
 
-    @Path("v1/auditMetrics/topEntities/programs/byDataset")
+    @Path("v1/auditmetrics/topEntities/programs/byDataset")
     @GET
     public void topProgramsByDataset(HttpServiceRequest request, HttpServiceResponder responder,
                                           @QueryParam("limit") @DefaultValue("10") int limit,
@@ -139,7 +137,10 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
     public void timeSinceChange(HttpServiceRequest request, HttpServiceResponder responder,
                                         @QueryParam("entityType") String entityType,
                                         @QueryParam("entityName") String entityName) {
-            responder.sendJson(200, auditLogTable.getTimeSinceResult(namespace, entityType, entityName));
+        if (Strings.isNullOrEmpty(entityName) || Strings.isNullOrEmpty(entityType)) {
+            responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), "EntityName or EntityType cannot be empty");
+        }
+        responder.sendJson(200, auditMetricsCube.getTimeSinceResult(namespace, entityType, entityName));
     }
     @Path("v1/auditmetrics/auditLog")
     @GET

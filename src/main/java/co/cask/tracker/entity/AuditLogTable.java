@@ -66,8 +66,6 @@ public final class AuditLogTable extends AbstractDataset {
 
   private final Table auditLog;
 
-  private Map<String, TimeSinceResult> timeSinceMap = new HashMap<>();
-
   public AuditLogTable(DatasetSpecification spec, @EmbeddedDataset("auditLog") Table auditLogDataset) {
     super(spec.getName(), auditLogDataset);
     this.auditLog = auditLogDataset;
@@ -119,20 +117,12 @@ public final class AuditLogTable extends AbstractDataset {
           .add("entityName", name)
           .add("metadata", GSON.toJson(auditMessage.getPayload())));
 
-      String entityKey = String.format("%s-%s-%s", namespace.toLowerCase(), type.toLowerCase(), name.toLowerCase());
-      if (!timeSinceMap.containsKey(entityKey)) {
-        timeSinceMap.put(entityKey, new TimeSinceResult(namespace, type, name));
-      }
-      timeSinceMap.get(entityKey).addEventTime(auditType, System.currentTimeMillis());
+
     } else {
       throw new IOException("Entity does not have a namespace and was not written to the auditLog: " + entityId);
     }
   }
 
-  public TimeSinceResult getTimeSinceResult(String namespace, String type, String name) {
-    String entityKey = String.format("%s-%s-%s", namespace.toLowerCase(), type.toLowerCase(), name.toLowerCase());
-    return timeSinceMap.get(entityKey);
-  }
 
   /**
    * This method generates a unique key to use for the data table.

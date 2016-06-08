@@ -59,8 +59,8 @@ public class TimeSinceResult {
         return results;
     }
 
-    public void addEventTime(AuditType type, long time) {
-        columnValues.put(type.name().toLowerCase(), time);
+    public void addEventTime(String type, long time) {
+        columnValues.put(type, time);
     }
 
     @Override
