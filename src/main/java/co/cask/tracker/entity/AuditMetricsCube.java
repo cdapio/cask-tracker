@@ -85,7 +85,6 @@ public class AuditMetricsCube extends AbstractDataset {
 
                 fact.addDimensionValue("program_name", programName);
                 fact.addDimensionValue("program_type", accessPayload.getAccessor().getEntity().name().toLowerCase());
-                // Adds column for READ/WRITE/UNKNOWN access
                 fact.addMeasurement(accessPayload.getAccessType().name().toLowerCase(), MeasureType.COUNTER, 1L);
             }
             auditMetrics.add(fact);
@@ -130,36 +129,25 @@ public class AuditMetricsCube extends AbstractDataset {
                 .build();
 
         try {
-            Collection<TimeSeries> datasetResults = auditMetrics.query(datasetQuery);
-            Collection<TimeSeries> streamResults = auditMetrics.query(streamQuery);
-            List<TopEntitiesResult> auditStats = transformTopNDatasetResult(datasetResults, streamResults);
-            return (topN >= auditStats.size()) ? auditStats : auditStats.subList(0, topN);
+            Map<String, TopEntitiesResult> auditStats = transformTopNDatasetResult(auditMetrics.query(datasetQuery),
+                                                            new HashMap<String, TopEntitiesResult>());
+            auditStats = transformTopNDatasetResult( auditMetrics.query(streamQuery), auditStats);
+            List<TopEntitiesResult> resultList = new ArrayList<>(auditStats.values());
+            Collections.sort(resultList);
+            return (topN >= resultList.size()) ? resultList : resultList.subList(0, topN);
         } catch (IllegalArgumentException e) {
             return new ArrayList<>();
-
         }
     }
 
-    private List<TopEntitiesResult> transformTopNDatasetResult(Collection<TimeSeries> datasetResults,
-                                                               Collection<TimeSeries> streamResults) {
-        Map<String, TopEntitiesResult> resultsMap = new HashMap<>();
-        for (TimeSeries t : datasetResults) {
+    private Map<String, TopEntitiesResult> transformTopNDatasetResult(Collection<TimeSeries> results, Map<String, TopEntitiesResult> resultsMap) {
+        for (TimeSeries t : results) {
             String entityName = t.getDimensionValues().get("entity_name");
             if (!resultsMap.containsKey(entityName)) {
                 resultsMap.put(entityName, new TopEntitiesResult(entityName));
             }
-            resultsMap.get(entityName).addAccessType(t.getMeasureName(), t.getTimeValues().get(0).getValue() + "");
+            resultsMap.get(entityName).addAccessType(t.getMeasureName(), String.valueOf(t.getTimeValues().get(0).getValue()));
         }
-
-        for (TimeSeries t : streamResults) {
-            String entityName = t.getDimensionValues().get("entity_name");
-            if (!resultsMap.containsKey(entityName)) {
-                resultsMap.put(entityName, new TopEntitiesResult(entityName));
-            }
-            resultsMap.get(entityName).addAccessType(t.getMeasureName(), t.getTimeValues().get(0).getValue() + "");
-        }
-        List<TopEntitiesResult> auditStats = new ArrayList<>(resultsMap.values());
-        Collections.sort(auditStats);
-        return auditStats;
+        return resultsMap;
     }
 }

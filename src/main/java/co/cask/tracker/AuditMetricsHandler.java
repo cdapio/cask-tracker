@@ -48,7 +48,7 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
     @Path("v1/auditmetrics/topEntities/datasets")
     @GET
     public void topNDatasets(HttpServiceRequest request, HttpServiceResponder responder,
-                      @QueryParam("limit") @DefaultValue("10") int limit,
+                      @QueryParam("limit") @DefaultValue("5") int limit,
                              @QueryParam("startTime") @DefaultValue("0") Long startTime,
                              @QueryParam("endTime") @DefaultValue("0") Long endTime) {
         if (limit < 0) {
@@ -57,6 +57,10 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
         }
         if (endTime == 0) {
             endTime = System.currentTimeMillis() / 1000;
+        }
+        if (startTime > endTime) {
+            responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), "Invalid timeframe");
+            return;
         }
         responder.sendJson(200,
                 new TopEntitiesResultWrapper(auditMetricsCube.getTopNDatasets(limit, startTime, endTime)));
