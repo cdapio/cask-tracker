@@ -36,6 +36,7 @@ import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.TestConfiguration;
 import co.cask.tracker.entity.AuditLogResponse;
 import co.cask.tracker.entity.TopEntitiesResult;
+import co.cask.tracker.entity.TopEntitiesResultWrapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
@@ -179,35 +180,12 @@ public class TrackerAppTest extends TestBase {
     String response = getServiceResponse(auditMetricsServiceManager,
             "v1/auditmetrics/topEntities/datasets?limit=20",
             HttpResponseStatus.OK.getCode());
-    TopEntitiesResult[] results = GSON.fromJson(response, TopEntitiesResult[].class);
-    Assert.assertEquals(1, results.length);
+    TopEntitiesResultWrapper result = GSON.fromJson(response, TopEntitiesResultWrapper.class);
+    Assert.assertEquals(4, result.getTotal());
     //Assert.assertTrue(results[0].getColumnValues().get("count") > results[1].getColumnValues().get("count"));
   }
 
-  @Test
-  public void testTopNPrograms() throws Exception {
-    String response = getServiceResponse(auditMetricsServiceManager,
-            "v1/auditmetrics/topEntities/programs?limit=3",
-            HttpResponseStatus.OK.getCode());
-    TopEntitiesResult[] results = GSON.fromJson(response, TopEntitiesResult[].class);
-    Assert.assertEquals(0, results.length);
-  }
 
-  @Test
-  public void testTopNApplications() throws Exception {
-    String response = getServiceResponse(auditMetricsServiceManager, "v1/auditmetrics/topEntities/applications?limit=3",
-            HttpResponseStatus.OK.getCode());
-    TopEntitiesResult[] results = GSON.fromJson(response, TopEntitiesResult[].class);
-    Assert.assertEquals(0, results.length);
-  }
-
-  /*
-  @Test
-  public void testTimeSince() throws Exception {
-    String response = getServiceResponse(auditMetricsServiceManager,
-    "v1/auditmetrics/timeSince?entityType=dataset&entityName=")
-  }
-  */
   private static ApplicationManager deployApplicationWithScalaJar(Class appClass, Config config) {
     URL classUrl = Product.class.getClassLoader().getResource("scala/Product.class");
     String path = classUrl.getFile();
@@ -274,7 +252,7 @@ public class TrackerAppTest extends TestBase {
             EntityId.fromString("dataset:default.ds1"),
             "user1",
             AuditType.CREATE,
-            new AccessPayload(AccessType.READ, EntityId.fromString("program_run:ns1.app1.flow.flow1.run1"))));
+            AuditPayload.EMPTY_PAYLOAD));
     testData.add(new AuditMessage(1456956659472L,
             EntityId.fromString("dataset:default.ds1"),
             "user1",
@@ -285,11 +263,46 @@ public class TrackerAppTest extends TestBase {
             "user1",
             AuditType.CREATE,
             AuditPayload.EMPTY_PAYLOAD));
-    testData.add(new AuditMessage(456956659474L,
-            NamespaceId.DEFAULT.dataset("dset1"),
-            "user1",
-            AuditType.CREATE,
-            new AccessPayload(AccessType.READ, EntityId.fromString("program_run:ns1.app1.flow.flow1.run1"))));
+    testData.add(new AuditMessage(1456956659468L,
+                    NamespaceId.DEFAULT.stream("strm123"),
+                    "user1",
+                    AuditType.ACCESS,
+                    new AccessPayload(AccessType.READ,
+                            EntityId.fromString("program_run:ns1.app1.flow.flow1.run1"))
+            )
+    );
+    testData.add(new AuditMessage(1456956659469L,
+            NamespaceId.DEFAULT.dataset("ds3"),
+            "user4",
+            AuditType.ACCESS,
+            new AccessPayload(AccessType.READ,
+                    EntityId.fromString("system_service:explore"))
+            )
+    );
+    testData.add(new AuditMessage(1456956659469L,
+                    NamespaceId.DEFAULT.dataset("ds3"),
+                    "user4",
+                    AuditType.ACCESS,
+                    new AccessPayload(AccessType.READ,
+                            EntityId.fromString("system_service:explore"))
+            )
+    );
+    testData.add(new AuditMessage(1456956659469L,
+                    NamespaceId.DEFAULT.dataset("ds3"),
+                    "user4",
+                    AuditType.ACCESS,
+                    new AccessPayload(AccessType.WRITE,
+                            EntityId.fromString("system_service:explore"))
+            )
+    );
+    testData.add(new AuditMessage(1456956659469L,
+                    NamespaceId.DEFAULT.dataset("ds3"),
+                    "user4",
+                    AuditType.ACCESS,
+                    new AccessPayload(AccessType.UNKNOWN,
+                            EntityId.fromString("system_service:explore"))
+            )
+    );
     return testData;
   }
 }
