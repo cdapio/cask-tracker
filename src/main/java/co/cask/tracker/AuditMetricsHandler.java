@@ -21,6 +21,8 @@ import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.tracker.entity.AuditMetricsCube;
+import co.cask.tracker.entity.TopEntitiesResultWrapper;
+import com.google.common.base.Strings;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import javax.ws.rs.DefaultValue;
@@ -43,14 +45,24 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
         namespace = context.getNamespace();
     }
 
-    @Path("v1/auditmetrics/topEntities")
+    @Path("v1/auditmetrics/topEntities/datasets")
     @GET
-    public void query(HttpServiceRequest request, HttpServiceResponder responder,
-                      @QueryParam("limit") @DefaultValue("10") int limit) {
+    public void topNDatasets(HttpServiceRequest request, HttpServiceResponder responder,
+                      @QueryParam("limit") @DefaultValue("5") int limit,
+                             @QueryParam("startTime") @DefaultValue("0") Long startTime,
+                             @QueryParam("endTime") @DefaultValue("0") Long endTime) {
         if (limit < 0) {
             responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), "limit cannot be negative.");
             return;
         }
-        responder.sendJson(200, auditMetricsCube.getTopNEntities(limit));
+        if (endTime == 0) {
+            endTime = System.currentTimeMillis() / 1000;
+        }
+        if (startTime > endTime) {
+            responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), "Invalid timeframe");
+            return;
+        }
+        responder.sendJson(200,
+                new TopEntitiesResultWrapper(auditMetricsCube.getTopNDatasets(limit, startTime, endTime)));
     }
 }
