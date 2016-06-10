@@ -46,7 +46,7 @@ public class TrackerApp extends AbstractApplication<TrackerAppConfig> {
             TimeUnit.DAYS.toSeconds(365L));
     DatasetProperties prop =  DatasetProperties.builder()
             .add("dataset.cube.resolutions", resolutions)
-            .add("dataset.cube.aggregation.agg2.dimensions", "entity_type,entity_name,audit_type,app_name,program_name")
+            .add("dataset.cube.aggregation.agg2.dimensions", "entity_type,entity_name,app_name,audit_type,program_name")
             /*.add("dataset.cube.aggregation.agg3.dimensions",
                     "entity_type,entity_name,audit_type,program_name,app_name") */
             .build();

@@ -28,8 +28,8 @@ public class TopEntitiesResult implements Comparable<TopEntitiesResult> {
     public TopEntitiesResult(String entityName) {
         this.columnValues = new HashMap<>();
         columnValues.put("label", entityName);
-        columnValues.put("read", 0 + "");
-        columnValues.put("write", 0 + "");
+        columnValues.put("read", "0");
+        columnValues.put("write", "0");
     }
 
     public Map<String, String> getColumnValues() {

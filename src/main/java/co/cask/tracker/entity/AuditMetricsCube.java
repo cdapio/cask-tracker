@@ -33,7 +33,6 @@ import co.cask.cdap.proto.element.EntityType;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespacedId;
 import co.cask.tracker.utils.EntityIdHelper;
-import com.google.common.base.Strings;
 
 import java.io.IOException;
 import java.util.*;
@@ -76,8 +75,9 @@ public class AuditMetricsCube extends AbstractDataset {
                 AccessPayload accessPayload = ((AccessPayload) auditMessage.getPayload());
                 String programName = EntityIdHelper.getEntityName(accessPayload.getAccessor());
                 String appName = EntityIdHelper.getApplicationName(accessPayload.getAccessor());
-                if (appName.length() == 0) appName = "randomApp1";
-                fact.addDimensionValue("app_name", appName);
+                if (appName.length() != 0) {
+                    fact.addDimensionValue("app_name", appName);
+                }
                 fact.addDimensionValue("program_name", programName);
 
                 fact.addMeasurement(accessPayload.getAccessType().name().toLowerCase(), MeasureType.COUNTER, 1L);
@@ -94,7 +94,7 @@ public class AuditMetricsCube extends AbstractDataset {
      *
      * @return A list of entities and their stats sorted in DESC order by count
      */
-    public List<TopEntitiesResult> getTopNDatasets(int topN, Long startTime, Long endTime) {
+    public List<TopEntitiesResult> getTopNDatasets(int topN, long startTime, long endTime) {
         CubeQuery datasetQuery = CubeQuery.builder()
                 .select()
                 .measurement(AccessType.READ.name().toLowerCase(), AggregationFunction.SUM)
@@ -150,7 +150,7 @@ public class AuditMetricsCube extends AbstractDataset {
         return resultsMap;
     }
 
-    public List<TopEntitiesResult> getTopNPrograms(int topN, Long startTime, Long endTime) {
+    public List<TopEntitiesResult> getTopNPrograms(int topN, long startTime, long endTime) {
         CubeQuery programQuery = CubeQuery.builder()
                 .select()
                 .measurement(AccessType.READ.name().toLowerCase(), AggregationFunction.SUM)
@@ -187,29 +187,42 @@ public class AuditMetricsCube extends AbstractDataset {
         return resultsMap;
     }
 
-    public List<TopEntitiesResult> getTopNApplications(int topN, Long startTime, Long endTime) {
+
+    public List<TopEntitiesResult> getTopNApplications(int topN, long startTime, long endTime) {
         CubeQuery applicationQuery = CubeQuery.builder()
                 .select()
                 .measurement(AccessType.READ.name().toLowerCase(), AggregationFunction.SUM)
                 .measurement(AccessType.WRITE.name().toLowerCase(), AggregationFunction.SUM)
-                .measurement(AccessType.UNKNOWN.name().toLowerCase(), AggregationFunction.SUM)
                 .from("agg2")
                 .resolution(TimeUnit.DAYS.toSeconds(365L), TimeUnit.SECONDS)
                 .where()
-                //.dimension("audit_type", AuditType.ACCESS.name().toLowerCase())
+                .dimension("audit_type", AuditType.ACCESS.name().toLowerCase())
                 .timeRange(startTime, endTime)
                 .groupBy()
-                .dimension("entity_name")
+                .dimension("app_name")
                 .limit(1000)
                 .build();
         try {
-            Map<String, TopEntitiesResult> auditStats = transformTopNProgramResult(auditMetrics.query(applicationQuery));
+            Map<String, TopEntitiesResult> auditStats = transformTopNApplicationResult(auditMetrics.query(applicationQuery));
             List<TopEntitiesResult> resultList = new ArrayList<>(auditStats.values());
             Collections.sort(resultList);
             return (topN >= resultList.size()) ? resultList : resultList.subList(0, topN);
         } catch (IllegalArgumentException e) {
             return new ArrayList<>();
         }
+    }
+
+    private Map<String, TopEntitiesResult> transformTopNApplicationResult(Collection<TimeSeries> results) {
+        HashMap<String, TopEntitiesResult> resultsMap = new HashMap<>();
+        for (TimeSeries t : results) {
+            String appName = t.getDimensionValues().get("app_name");
+            if (!resultsMap.containsKey(appName)) {
+                resultsMap.put(appName, new TopEntitiesResult(appName));
+            }
+            resultsMap.get(appName).addAccessType(t.getMeasureName(),
+                    String.valueOf(t.getTimeValues().get(0).getValue()));
+        }
+        return resultsMap;
     }
 
 }
