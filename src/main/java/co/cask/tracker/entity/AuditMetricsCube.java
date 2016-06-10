@@ -52,7 +52,6 @@ public class AuditMetricsCube extends AbstractDataset {
 
     /**
      * Updates cube metrics based on information in the audit message
-     *
      * @param auditMessage the message to update the stats for
      * @throws IOException if for some reason, it cannot find the name of the entity
      */
@@ -87,7 +86,6 @@ public class AuditMetricsCube extends AbstractDataset {
             auditMetrics.add(fact);
         }
     }
-
 
     /**
      * Returns the top N datasets with the most audit messages
@@ -187,7 +185,6 @@ public class AuditMetricsCube extends AbstractDataset {
         return resultsMap;
     }
 
-
     public List<TopEntitiesResult> getTopNApplications(int topN, long startTime, long endTime) {
         CubeQuery applicationQuery = CubeQuery.builder()
                 .select()
@@ -224,5 +221,4 @@ public class AuditMetricsCube extends AbstractDataset {
         }
         return resultsMap;
     }
-
 }

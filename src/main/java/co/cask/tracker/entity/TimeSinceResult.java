@@ -16,7 +16,6 @@
 
 package co.cask.tracker.entity;
 
-import co.cask.cdap.proto.audit.AuditType;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,7 +31,6 @@ public class TimeSinceResult {
     private final Map<String, Long> columnValues;
 
     public TimeSinceResult(String namespace, String entityType, String entityName) {
-
         this.namespace = namespace;
         this.entityType = entityType;
         this.entityName = entityName;

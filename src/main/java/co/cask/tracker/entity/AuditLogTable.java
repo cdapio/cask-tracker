@@ -111,8 +111,6 @@ public final class AuditLogTable extends AbstractDataset {
           .add("entityType", type)
           .add("entityName", name)
           .add("metadata", GSON.toJson(auditMessage.getPayload())));
-
-
     } else {
       throw new IOException("Entity does not have a namespace and was not written to the auditLog: " + entityId);
     }
