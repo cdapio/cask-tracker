@@ -40,6 +40,13 @@ public class TopEntitiesResult implements Comparable<TopEntitiesResult> {
         this.columnValues.put(type, value);
     }
 
+    public void formatDataByTotal() {
+        columnValues.put("value",
+                String.valueOf(Long.parseLong(columnValues.get("read")) + Long.parseLong(columnValues.get("write"))));
+                columnValues.remove("read");
+                columnValues.remove("write");
+    }
+
     @Override
     public int compareTo(TopEntitiesResult o) {
         Long thisTotal = Long.parseLong(columnValues.get("read")) + Long.parseLong(columnValues.get("write"));

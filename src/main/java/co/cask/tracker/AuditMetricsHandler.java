@@ -22,7 +22,6 @@ import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.tracker.entity.AuditMetricsCube;
 import co.cask.tracker.entity.TopEntitiesResultWrapper;
-import com.google.common.base.Strings;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import javax.ws.rs.DefaultValue;
@@ -65,4 +64,53 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
         responder.sendJson(200,
                 new TopEntitiesResultWrapper(auditMetricsCube.getTopNDatasets(limit, startTime, endTime)));
     }
+
+    @Path("v1/auditmetrics/topEntities/programs")
+    @GET
+    public void topNPrograms(HttpServiceRequest request, HttpServiceResponder responder,
+                             @QueryParam("limit") @DefaultValue("5") int limit,
+                             @QueryParam("startTime") @DefaultValue("0") Long startTime,
+                             @QueryParam("endTime") @DefaultValue("0") Long endTime) {
+        if (limit < 0) {
+            responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), "limit cannot be negative.");
+            return;
+        }
+        if (endTime == 0) {
+            endTime = System.currentTimeMillis() / 1000;
+        }
+        if (startTime > endTime) {
+            responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), "Invalid timeframe");
+            return;
+        }
+        TopEntitiesResultWrapper result
+                = new TopEntitiesResultWrapper(auditMetricsCube.getTopNPrograms(limit, startTime, endTime));
+        result.formatDataByTotal();
+        responder.sendJson(200, result);
+    }
+
+
+    @Path("v1/auditmetrics/topEntities/applications")
+    @GET
+    public void topNApplications(HttpServiceRequest request, HttpServiceResponder responder,
+                             @QueryParam("limit") @DefaultValue("5") int limit,
+                             @QueryParam("startTime") @DefaultValue("0") Long startTime,
+                             @QueryParam("endTime") @DefaultValue("0") Long endTime) {
+        if (limit < 0) {
+            responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), "limit cannot be negative.");
+            return;
+        }
+        if (endTime == 0) {
+            endTime = System.currentTimeMillis() / 1000;
+        }
+        if (startTime > endTime) {
+            responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), "Invalid timeframe");
+            return;
+        }
+        TopEntitiesResultWrapper result
+                = new TopEntitiesResultWrapper(auditMetricsCube.getTopNApplications(limit, startTime, endTime));
+        result.formatDataByTotal();
+        responder.sendJson(200, result);
+    }
+
+
 }

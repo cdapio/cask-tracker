@@ -38,4 +38,10 @@ public class TopEntitiesResultWrapper  {
         return results;
     }
 
+    public void formatDataByTotal() {
+        for (TopEntitiesResult result: results) {
+            result.formatDataByTotal();
+        }
+    }
+
 }

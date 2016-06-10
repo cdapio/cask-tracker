@@ -33,14 +33,10 @@ import co.cask.cdap.proto.element.EntityType;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespacedId;
 import co.cask.tracker.utils.EntityIdHelper;
+import com.google.common.base.Strings;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -57,6 +53,7 @@ public class AuditMetricsCube extends AbstractDataset {
 
     /**
      * Updates cube metrics based on information in the audit message
+     *
      * @param auditMessage the message to update the stats for
      * @throws IOException if for some reason, it cannot find the name of the entity
      */
@@ -75,26 +72,26 @@ public class AuditMetricsCube extends AbstractDataset {
             fact.addDimensionValue("namespace", namespace);
             fact.addDimensionValue("entity_name", name);
             fact.addDimensionValue("audit_type", auditMessage.getType().name().toLowerCase());
-
-            fact.addMeasurement("count", MeasureType.COUNTER, 1L);
-            fact.addMeasurement(auditMessage.getType().name().toLowerCase(), MeasureType.COUNTER, 1L);
-
             if (auditMessage.getPayload() instanceof AccessPayload) {
                 AccessPayload accessPayload = ((AccessPayload) auditMessage.getPayload());
                 String programName = EntityIdHelper.getEntityName(accessPayload.getAccessor());
-
+                String appName = EntityIdHelper.getApplicationName(accessPayload.getAccessor());
+                if (appName.length() == 0) appName = "randomApp1";
+                fact.addDimensionValue("app_name", appName);
                 fact.addDimensionValue("program_name", programName);
-                fact.addDimensionValue("program_type", accessPayload.getAccessor().getEntity().name().toLowerCase());
+
                 fact.addMeasurement(accessPayload.getAccessType().name().toLowerCase(), MeasureType.COUNTER, 1L);
             }
+            fact.addMeasurement("count", MeasureType.COUNTER, 1L);
+
             auditMetrics.add(fact);
         }
     }
 
 
-
     /**
      * Returns the top N datasets with the most audit messages
+     *
      * @return A list of entities and their stats sorted in DESC order by count
      */
     public List<TopEntitiesResult> getTopNDatasets(int topN, Long startTime, Long endTime) {
@@ -102,7 +99,7 @@ public class AuditMetricsCube extends AbstractDataset {
                 .select()
                 .measurement(AccessType.READ.name().toLowerCase(), AggregationFunction.SUM)
                 .measurement(AccessType.WRITE.name().toLowerCase(), AggregationFunction.SUM)
-                .from("agg3")
+                .from("agg2")
                 .resolution(TimeUnit.DAYS.toSeconds(365L), TimeUnit.SECONDS)
                 .where()
                 .dimension("entity_type", EntityType.DATASET.name().toLowerCase())
@@ -117,7 +114,7 @@ public class AuditMetricsCube extends AbstractDataset {
                 .select()
                 .measurement(AccessType.READ.name().toLowerCase(), AggregationFunction.SUM)
                 .measurement(AccessType.WRITE.name().toLowerCase(), AggregationFunction.SUM)
-                .from("agg3")
+                .from("agg2")
                 .resolution(TimeUnit.DAYS.toSeconds(365L), TimeUnit.SECONDS)
                 .where()
                 .dimension("entity_type", EntityType.STREAM.name().toLowerCase())
@@ -130,8 +127,8 @@ public class AuditMetricsCube extends AbstractDataset {
 
         try {
             Map<String, TopEntitiesResult> auditStats = transformTopNDatasetResult(auditMetrics.query(datasetQuery),
-                                                            new HashMap<String, TopEntitiesResult>());
-            auditStats = transformTopNDatasetResult( auditMetrics.query(streamQuery), auditStats);
+                    new HashMap<String, TopEntitiesResult>());
+            auditStats = transformTopNDatasetResult(auditMetrics.query(streamQuery), auditStats);
             List<TopEntitiesResult> resultList = new ArrayList<>(auditStats.values());
             Collections.sort(resultList);
             return (topN >= resultList.size()) ? resultList : resultList.subList(0, topN);
@@ -140,14 +137,79 @@ public class AuditMetricsCube extends AbstractDataset {
         }
     }
 
-    private Map<String, TopEntitiesResult> transformTopNDatasetResult(Collection<TimeSeries> results, Map<String, TopEntitiesResult> resultsMap) {
+    private Map<String, TopEntitiesResult> transformTopNDatasetResult(Collection<TimeSeries> results,
+                                                                      Map<String, TopEntitiesResult> resultsMap) {
         for (TimeSeries t : results) {
             String entityName = t.getDimensionValues().get("entity_name");
             if (!resultsMap.containsKey(entityName)) {
                 resultsMap.put(entityName, new TopEntitiesResult(entityName));
             }
-            resultsMap.get(entityName).addAccessType(t.getMeasureName(), String.valueOf(t.getTimeValues().get(0).getValue()));
+            resultsMap.get(entityName).addAccessType(t.getMeasureName(),
+                    String.valueOf(t.getTimeValues().get(0).getValue()));
         }
         return resultsMap;
     }
+
+    public List<TopEntitiesResult> getTopNPrograms(int topN, Long startTime, Long endTime) {
+        CubeQuery programQuery = CubeQuery.builder()
+                .select()
+                .measurement(AccessType.READ.name().toLowerCase(), AggregationFunction.SUM)
+                .measurement(AccessType.WRITE.name().toLowerCase(), AggregationFunction.SUM)
+                .from("agg2")
+                .resolution(TimeUnit.DAYS.toSeconds(365L), TimeUnit.SECONDS)
+                .where()
+                .dimension("audit_type", AuditType.ACCESS.name().toLowerCase())
+                .timeRange(startTime, endTime)
+                .groupBy()
+                .dimension("program_name")
+                .limit(1000)
+                .build();
+        try {
+            Map<String, TopEntitiesResult> auditStats = transformTopNProgramResult(auditMetrics.query(programQuery));
+            List<TopEntitiesResult> resultList = new ArrayList<>(auditStats.values());
+            Collections.sort(resultList);
+            return (topN >= resultList.size()) ? resultList : resultList.subList(0, topN);
+        } catch (IllegalArgumentException e) {
+            return new ArrayList<>();
+        }
+    }
+
+    private Map<String, TopEntitiesResult> transformTopNProgramResult(Collection<TimeSeries> results) {
+        HashMap<String, TopEntitiesResult> resultsMap = new HashMap<>();
+        for (TimeSeries t : results) {
+            String programName = t.getDimensionValues().get("program_name");
+            if (!resultsMap.containsKey(programName)) {
+                resultsMap.put(programName, new TopEntitiesResult(programName));
+            }
+            resultsMap.get(programName).addAccessType(t.getMeasureName(),
+                    String.valueOf(t.getTimeValues().get(0).getValue()));
+        }
+        return resultsMap;
+    }
+
+    public List<TopEntitiesResult> getTopNApplications(int topN, Long startTime, Long endTime) {
+        CubeQuery applicationQuery = CubeQuery.builder()
+                .select()
+                .measurement(AccessType.READ.name().toLowerCase(), AggregationFunction.SUM)
+                .measurement(AccessType.WRITE.name().toLowerCase(), AggregationFunction.SUM)
+                .measurement(AccessType.UNKNOWN.name().toLowerCase(), AggregationFunction.SUM)
+                .from("agg2")
+                .resolution(TimeUnit.DAYS.toSeconds(365L), TimeUnit.SECONDS)
+                .where()
+                //.dimension("audit_type", AuditType.ACCESS.name().toLowerCase())
+                .timeRange(startTime, endTime)
+                .groupBy()
+                .dimension("entity_name")
+                .limit(1000)
+                .build();
+        try {
+            Map<String, TopEntitiesResult> auditStats = transformTopNProgramResult(auditMetrics.query(applicationQuery));
+            List<TopEntitiesResult> resultList = new ArrayList<>(auditStats.values());
+            Collections.sort(resultList);
+            return (topN >= resultList.size()) ? resultList : resultList.subList(0, topN);
+        } catch (IllegalArgumentException e) {
+            return new ArrayList<>();
+        }
+    }
+
 }
