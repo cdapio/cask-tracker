@@ -100,58 +100,6 @@ public class TrackerAppTest extends TestBase {
   }
 
   @Test
-  public void testSingleResult() throws Exception {
-    String response = getServiceResponse(auditLogServiceManager,
-            "auditlog/stream/stream1?startTime=1456956659467&endTime=1456956659469",
-            HttpResponseStatus.OK.getCode());
-    AuditLogResponse resp = GSON.fromJson(response, AuditLogResponse.class);
-    Assert.assertEquals(1, resp.getTotalResults());
-    Assert.assertEquals(NamespaceId.DEFAULT.stream("stream1"),
-            resp.getResults().get(0).getEntityId());
-  }
-
-  @Test
-  public void testMultipleResults() throws Exception {
-    String response = getServiceResponse(auditLogServiceManager,
-            "auditlog/stream/stream1",
-            HttpResponseStatus.OK.getCode());
-    AuditLogResponse resp = GSON.fromJson(response, AuditLogResponse.class);
-    Assert.assertEquals(2, resp.getTotalResults());
-    for (int i = 0; i < resp.getResults().size(); i++) {
-      Assert.assertEquals(NamespaceId.DEFAULT.stream("stream1"),
-              resp.getResults().get(i).getEntityId());
-    }
-    // Assert the results are sorted most recent timestamp first
-    Assert.assertTrue(resp.getResults().get(0).getTime() > resp.getResults().get(1).getTime());
-  }
-
-  @Test
-  public void testOffset() throws Exception {
-    String response = getServiceResponse(auditLogServiceManager,
-            "auditlog/stream/stream1?offset=1",
-            HttpResponseStatus.OK.getCode());
-    AuditLogResponse resp = GSON.fromJson(response, AuditLogResponse.class);
-    Assert.assertEquals(2, resp.getTotalResults());
-    Assert.assertEquals(1, resp.getOffset());
-    Assert.assertEquals(1, resp.getResults().size());
-    Assert.assertEquals(NamespaceId.DEFAULT.stream("stream1"),
-            resp.getResults().get(0).getEntityId());
-  }
-
-  @Test
-  public void testPageSize() throws Exception {
-    String response = getServiceResponse(auditLogServiceManager,
-            "auditlog/stream/stream1?limit=1",
-            HttpResponseStatus.OK.getCode());
-    AuditLogResponse resp = GSON.fromJson(response, AuditLogResponse.class);
-    Assert.assertEquals(2, resp.getTotalResults());
-    Assert.assertEquals(0, resp.getOffset());
-    Assert.assertEquals(1, resp.getResults().size());
-    Assert.assertEquals(NamespaceId.DEFAULT.stream("stream1"),
-            resp.getResults().get(0).getEntityId());
-  }
-
-  @Test
   public void testInvalidDatesError() throws Exception {
     String response = getServiceResponse(auditLogServiceManager,
             "auditlog/stream/stream1?startTime=1&endTime=0",
@@ -191,7 +139,7 @@ public class TrackerAppTest extends TestBase {
             "v1/auditmetrics/topEntities/programs?limit=20",
             HttpResponseStatus.OK.getCode());
     TopEntitiesResultWrapper result = GSON.fromJson(response, TopEntitiesResultWrapper.class);
-    Assert.assertEquals(1, result.getTotal());
+    Assert.assertEquals(4, result.getTotal());
     //Assert.assertTrue(results[0].getColumnValues().get("count") > results[1].getColumnValues().get("count"));
   }
 
@@ -201,7 +149,7 @@ public class TrackerAppTest extends TestBase {
             "v1/auditmetrics/topEntities/applications?limit=20",
             HttpResponseStatus.OK.getCode());
     TopEntitiesResultWrapper result = GSON.fromJson(response, TopEntitiesResultWrapper.class);
-    Assert.assertEquals(1, result.getTotal());
+    Assert.assertEquals(4, result.getTotal());
     //Assert.assertTrue(results[0].getColumnValues().get("count") > results[1].getColumnValues().get("count"));
   }
 
