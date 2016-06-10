@@ -36,6 +36,7 @@ import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.TestConfiguration;
 import co.cask.tracker.entity.AuditLogResponse;
 import co.cask.tracker.entity.TopEntitiesResult;
+import co.cask.tracker.entity.TopEntitiesResultWrapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
@@ -175,13 +176,33 @@ public class TrackerAppTest extends TestBase {
   }
 
   @Test
-  public void testTopNEntities() throws Exception {
+  public void testTopNDatasets() throws Exception {
     String response = getServiceResponse(auditMetricsServiceManager,
-            "v1/auditmetrics/topEntities?limit=3",
+            "v1/auditmetrics/topEntities/datasets?limit=20",
             HttpResponseStatus.OK.getCode());
-    TopEntitiesResult[] results = GSON.fromJson(response, TopEntitiesResult[].class);
-    Assert.assertEquals(3, results.length);
-    Assert.assertTrue(results[0].getColumnValues().get("count") > results[1].getColumnValues().get("count"));
+    TopEntitiesResultWrapper result = GSON.fromJson(response, TopEntitiesResultWrapper.class);
+    Assert.assertEquals(5, result.getTotal());
+  }
+
+
+  @Test
+  public void testTopNPrograms() throws Exception {
+    String response = getServiceResponse(auditMetricsServiceManager,
+            "v1/auditmetrics/topEntities/programs?limit=20",
+            HttpResponseStatus.OK.getCode());
+    TopEntitiesResultWrapper result = GSON.fromJson(response, TopEntitiesResultWrapper.class);
+    Assert.assertEquals(1, result.getTotal());
+    //Assert.assertTrue(results[0].getColumnValues().get("count") > results[1].getColumnValues().get("count"));
+  }
+
+  @Test
+  public void testTopNApplications() throws Exception {
+    String response = getServiceResponse(auditMetricsServiceManager,
+            "v1/auditmetrics/topEntities/applications?limit=20",
+            HttpResponseStatus.OK.getCode());
+    TopEntitiesResultWrapper result = GSON.fromJson(response, TopEntitiesResultWrapper.class);
+    Assert.assertEquals(1, result.getTotal());
+    //Assert.assertTrue(results[0].getColumnValues().get("count") > results[1].getColumnValues().get("count"));
   }
 
   private static ApplicationManager deployApplicationWithScalaJar(Class appClass, Config config) {
@@ -193,6 +214,7 @@ public class TrackerAppTest extends TestBase {
       return deployApplication(appClass, new File(URI.create(path.substring(0, path.indexOf("!/")))));
     }
   }
+
 
   private String getServiceResponse(ServiceManager serviceManager,
                                     String request,
@@ -218,19 +240,19 @@ public class TrackerAppTest extends TestBase {
   // Adapted from https://wiki.cask.co/display/CE/Audit+information+publishing
   private List<AuditMessage> generateTestData() {
     List<AuditMessage> testData = new ArrayList<>();
-    testData.add(new AuditMessage(1456956659468L,
+    testData.add(new AuditMessage(1456956659461L,
                     NamespaceId.DEFAULT.stream("stream1"),
                     "user1",
                     AuditType.ACCESS,
                     new AccessPayload(AccessType.WRITE,
-                            EntityId.fromString("program_run:ns1.app1.flow.flow1.run1"))
+                            EntityId.fromString("program_run:ns1.app2.flow.flow1.run1"))
             )
     );
     testData.add(new AuditMessage(1456956659469L,
-                    NamespaceId.DEFAULT.stream("stream1"),
+                    NamespaceId.DEFAULT.dataset("ds1"),
                     "user1",
                     AuditType.ACCESS,
-                    new AccessPayload(AccessType.UNKNOWN,
+                    new AccessPayload(AccessType.WRITE,
                             EntityId.fromString("system_service:explore"))
             )
     );
@@ -256,10 +278,74 @@ public class TrackerAppTest extends TestBase {
             AuditType.CREATE,
             AuditPayload.EMPTY_PAYLOAD));
     testData.add(new AuditMessage(1456956659473L,
-            EntityId.fromString("dataset:default.ds1"),
+            EntityId.fromString("dataset:default.ds6"),
             "user1",
             AuditType.CREATE,
             AuditPayload.EMPTY_PAYLOAD));
+    testData.add(new AuditMessage(1456956659468L,
+                    NamespaceId.DEFAULT.stream("strm123"),
+                    "user1",
+                    AuditType.ACCESS,
+                    new AccessPayload(AccessType.READ,
+                            EntityId.fromString("program_run:ns1.app1.flow.flow1.run1"))
+            )
+    );
+    testData.add(new AuditMessage(1456956659460L,
+            NamespaceId.DEFAULT.dataset("ds3"),
+            "user4",
+            AuditType.ACCESS,
+            new AccessPayload(AccessType.READ,
+                    EntityId.fromString("system_service:explore"))
+            )
+    );
+    testData.add(new AuditMessage(1456956659502L,
+                    NamespaceId.DEFAULT.dataset("ds3"),
+                    "user4",
+                    AuditType.ACCESS,
+                    new AccessPayload(AccessType.READ,
+                            EntityId.fromString("system_service:explore"))
+            )
+    );
+    testData.add(new AuditMessage(1456956659500L,
+                    NamespaceId.DEFAULT.dataset("ds3"),
+                    "user4",
+                    AuditType.ACCESS,
+                    new AccessPayload(AccessType.WRITE,
+                            EntityId.fromString("system_service:explore"))
+            )
+    );
+    testData.add(new AuditMessage(1456956659504L,
+                    NamespaceId.DEFAULT.dataset("ds3"),
+                    "user4",
+                    AuditType.ACCESS,
+                    new AccessPayload(AccessType.UNKNOWN,
+                            EntityId.fromString("system_service:explore"))
+            )
+    );
+    testData.add(new AuditMessage(1456956659505L,
+                    NamespaceId.DEFAULT.dataset("ds3"),
+                    "user4",
+                    AuditType.ACCESS,
+                    new AccessPayload(AccessType.WRITE,
+                            EntityId.fromString("program:spark.b.SERVICE.program1"))
+            )
+    );
+    testData.add(new AuditMessage(1456956659506L,
+                    NamespaceId.DEFAULT.dataset("ds4"),
+                    "user4",
+                    AuditType.ACCESS,
+                    new AccessPayload(AccessType.WRITE,
+                            EntityId.fromString("program:spark.a.SERVICE.program2"))
+            )
+    );
+    testData.add(new AuditMessage(1456956659507L,
+                    NamespaceId.DEFAULT.dataset("ds4"),
+                    "user4",
+                    AuditType.ACCESS,
+                    new AccessPayload(AccessType.READ,
+                            EntityId.fromString("program:spark.b.SERVICE.program2"))
+            )
+    );
     return testData;
   }
 }
