@@ -83,7 +83,7 @@ public final class AuditLogTable extends AbstractDataset {
     // Data stored using inverted timestamp so start and end times are swapped
     Scanner scanner = auditLog.scan(
       new Scan(getScanKey(namespace, entityType, entityName, endTime),
-               getScanKey(namespace, entityType, entityName, startTime))
+        getScanKey(namespace, entityType, entityName, startTime))
     );
     return new AuditMessageIterator(scanner);
   }
@@ -131,11 +131,11 @@ public final class AuditLogTable extends AbstractDataset {
                         long timestamp) {
     String uuid = UUID.randomUUID().toString();
     int byteBufferSize = namespace.length() +
-                         entityType.length() +
-                         entityName.length() +
-                         Bytes.SIZEOF_LONG +
-                         uuid.length() +
-                         (4 * KEY_DELIMITER.length);
+      entityType.length() +
+      entityName.length() +
+      Bytes.SIZEOF_LONG +
+      uuid.length() +
+      (4 * KEY_DELIMITER.length);
     ByteBuffer bb = createEntityKeyPart(byteBufferSize, namespace, entityType, entityName);
     bb.putLong(getInvertedTsKeyPart(timestamp))
       .put(KEY_DELIMITER)
@@ -156,10 +156,10 @@ public final class AuditLogTable extends AbstractDataset {
                             String entityName,
                             long timestamp) {
     int byteBufferSize = namespace.length() +
-                         entityType.length() +
-                         entityName.length() +
-                         Bytes.SIZEOF_LONG +
-                         (3 * KEY_DELIMITER.length);
+      entityType.length() +
+      entityName.length() +
+      Bytes.SIZEOF_LONG +
+      (3 * KEY_DELIMITER.length);
     ByteBuffer bb = createEntityKeyPart(byteBufferSize, namespace, entityType, entityName);
     bb.putLong(getInvertedTsScanKeyPart(timestamp));
     return bb.array();
@@ -218,10 +218,10 @@ public final class AuditLogTable extends AbstractDataset {
         payload = AuditPayload.EMPTY_PAYLOAD;
     }
     return new AuditMessage(row.getLong("timestamp"),
-                            entityId,
-                            row.getString("user"),
-                            messageType,
-                            payload);
+      entityId,
+      row.getString("user"),
+      messageType,
+      payload);
   }
 
   /**

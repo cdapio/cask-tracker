@@ -22,26 +22,26 @@ import java.util.List;
  * A POJO to hold the results for the TopN query in format expected by the api
  */
 public class TopEntitiesResultWrapper {
-    private final List<TopEntitiesResult> results;
-    private final int total;
+  private final List<TopEntitiesResult> results;
+  private final int total;
 
-    public TopEntitiesResultWrapper(List<TopEntitiesResult> resultList) {
-        this.results = resultList;
-        this.total = resultList.size();
-    }
+  public TopEntitiesResultWrapper(List<TopEntitiesResult> resultList) {
+    this.results = resultList;
+    this.total = resultList.size();
+  }
 
-    public int getTotal() {
-        return total;
-    }
+  public int getTotal() {
+    return total;
+  }
 
-    public List<TopEntitiesResult> getResultList() {
-        return results;
-    }
+  public List<TopEntitiesResult> getResultList() {
+    return results;
+  }
 
-    public void formatDataByTotal() {
-        for (TopEntitiesResult result: results) {
-            result.formatDataByTotal();
-        }
+  public void formatDataByTotal() {
+    for (TopEntitiesResult result: results) {
+      result.formatDataByTotal();
     }
+  }
 
 }

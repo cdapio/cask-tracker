@@ -61,7 +61,7 @@ public final class AuditLogConsumer extends Kafka08ConsumerFlowlet<ByteBuffer, S
     if (Strings.isNullOrEmpty(auditLogKafkaConfig.getBrokerString()) &&
       Strings.isNullOrEmpty(auditLogKafkaConfig.getZookeeperString())) {
       throw new IllegalArgumentException("Should provide either a broker string or a zookeeper string for " +
-                                           "Kafka Audit Log subscription!");
+        "Kafka Audit Log subscription!");
     }
 
     if (Strings.isNullOrEmpty(auditLogKafkaConfig.getTopic())) {
@@ -86,7 +86,7 @@ public final class AuditLogConsumer extends Kafka08ConsumerFlowlet<ByteBuffer, S
   @Override
   protected void configureKafka(KafkaConfigurer kafkaConfigurer) {
     TrackerAppConfig appConfig = GSON.fromJson(getContext().getApplicationSpecification().getConfiguration(),
-                                               TrackerAppConfig.class);
+      TrackerAppConfig.class);
     auditLogKafkaConfig = appConfig.getAuditLogKafkaConfig();
     LOG.info("Configuring Audit Log Kafka Consumer : {}", auditLogKafkaConfig);
     offsetStore = getContext().getDataset(auditLogKafkaConfig.getOffsetDataset());

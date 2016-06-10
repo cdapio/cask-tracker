@@ -25,49 +25,49 @@ import java.util.Map;
  *
  */
 public class TimeSinceResult {
-    private final String namespace;
-    private final String entityType;
-    private final String entityName;
-    private final Map<String, Long> columnValues;
+  private final String namespace;
+  private final String entityType;
+  private final String entityName;
+  private final Map<String, Long> columnValues;
 
-    public TimeSinceResult(String namespace, String entityType, String entityName) {
-        this.namespace = namespace;
-        this.entityType = entityType;
-        this.entityName = entityName;
-        this.columnValues = new HashMap<>();
-    }
+  public TimeSinceResult(String namespace, String entityType, String entityName) {
+    this.namespace = namespace;
+    this.entityType = entityType;
+    this.entityName = entityName;
+    this.columnValues = new HashMap<>();
+  }
 
-    public String getNamespace() {
-        return namespace;
-    }
+  public String getNamespace() {
+    return namespace;
+  }
 
-    public String getEntityType() {
-        return entityType;
-    }
+  public String getEntityType() {
+    return entityType;
+  }
 
-    public String getEntityName() {
-        return entityName;
-    }
+  public String getEntityName() {
+    return entityName;
+  }
 
-    public Map<String, Long> getTimeSinceEvents() {
-        Map<String, Long> results = new HashMap<>();
-        long now = System.currentTimeMillis();
-        for (Map.Entry<String, Long> entry : columnValues.entrySet()) {
-            results.put(entry.getKey(), (now - entry.getValue()) / 1000);
-        }
-        return results;
+  public Map<String, Long> getTimeSinceEvents() {
+    Map<String, Long> results = new HashMap<>();
+    long now = System.currentTimeMillis();
+    for (Map.Entry<String, Long> entry : columnValues.entrySet()) {
+      results.put(entry.getKey(), (now - entry.getValue()) / 1000);
     }
+    return results;
+  }
 
-    public void addEventTime(String type, long time) {
-        columnValues.put(type, time);
-    }
+  public void addEventTime(String type, long time) {
+    columnValues.put(type, time);
+  }
 
-    @Override
-    public String toString() {
-        String result = String.format("%s %s %s\n", namespace, entityType, entityName);
-        for (Map.Entry<String, Long> entry: columnValues.entrySet()) {
-            result += (entry.getKey() + " " + entry.getValue() + "\n");
-        }
-        return result;
+  @Override
+  public String toString() {
+    String result = String.format("%s %s %s\n", namespace, entityType, entityName);
+    for (Map.Entry<String, Long> entry: columnValues.entrySet()) {
+      result += (entry.getKey() + " " + entry.getValue() + "\n");
     }
+    return result;
+  }
 }

@@ -40,16 +40,17 @@ public class TrackerApp extends AbstractApplication<TrackerAppConfig> {
     setDescription("A CDAP Extension that provides the ability to track data throughout the CDAP platform.");
     createDataset(AUDIT_LOG_DATASET_NAME, AuditLogTable.class);
     String resolutions = String.format("%s,%s,%s,%s",
-            TimeUnit.MINUTES.toSeconds(1L),
-            TimeUnit.HOURS.toSeconds(1L),
-            TimeUnit.DAYS.toSeconds(1L),
-            TimeUnit.DAYS.toSeconds(365L));
+      TimeUnit.MINUTES.toSeconds(1L),
+      TimeUnit.HOURS.toSeconds(1L),
+      TimeUnit.DAYS.toSeconds(1L),
+      TimeUnit.DAYS.toSeconds(365L));
     DatasetProperties prop =  DatasetProperties.builder()
-            .add("dataset.cube.resolutions", resolutions)
-            .add("dataset.cube.aggregation.agg2.dimensions", "entity_type,entity_name,app_name,audit_type,program_name")
+      .add("dataset.cube.resolutions", resolutions)
+      .add("dataset.cube.aggregation.agg2.dimensions",
+        "namespace,entity_type,entity_name,app_name,audit_type,program_name")
             /*.add("dataset.cube.aggregation.agg3.dimensions",
                     "entity_type,entity_name,audit_type,program_name,app_name") */
-            .build();
+      .build();
     createDataset(AUDIT_METRICS_DATASET_NAME, AuditMetricsCube.class, prop);
 
     addFlow(new AuditLogFlow(getConfig()));
