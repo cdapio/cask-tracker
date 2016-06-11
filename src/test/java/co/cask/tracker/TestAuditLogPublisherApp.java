@@ -34,18 +34,17 @@ public class TestAuditLogPublisherApp extends AbstractApplication {
     setDescription("A temp app to test the AuditLogPublisher flowlet");
     createDataset(TrackerApp.AUDIT_LOG_DATASET_NAME, AuditLogTable.class);
     String resolutions = String.format("%s,%s,%s,%s",
-            TimeUnit.MINUTES.toSeconds(1L),
-            TimeUnit.HOURS.toSeconds(1L),
-            TimeUnit.DAYS.toSeconds(1L),
-            TimeUnit.DAYS.toSeconds(365L));
+      TimeUnit.MINUTES.toSeconds(1L),
+      TimeUnit.HOURS.toSeconds(1L),
+      TimeUnit.DAYS.toSeconds(1L),
+      TimeUnit.DAYS.toSeconds(365L));
     createDataset(TrackerApp.AUDIT_METRICS_DATASET_NAME,
-            AuditMetricsCube.class,
-            DatasetProperties.builder()
-                    .add("dataset.cube.resolutions", resolutions)
-                    .add("dataset.cube.aggregation.agg1.dimensions", "namespace")
-                    .add("dataset.cube.aggregation.agg2.dimensions", "namespace,entity_type,entity_name")
-                    .add("dataset.cube.aggregation.agg3.dimensions", "namespace,entity_type,entity_name,program")
-                    .build());
+      AuditMetricsCube.class,
+      DatasetProperties.builder()
+        .add("dataset.cube.resolutions", resolutions)
+        .add("dataset.cube.aggregation.agg2.dimensions",
+          "namespace,entity_type,entity_name,app_name,audit_type,program_name")
+        .build());
     addFlow(new StreamToAuditLogFlow());
     addService(new AuditLogService());
     addService(new AuditMetricsService());

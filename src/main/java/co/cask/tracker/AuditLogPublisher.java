@@ -39,9 +39,9 @@ import java.io.IOException;
 public final class AuditLogPublisher extends AbstractFlowlet {
   private static final Logger LOG = LoggerFactory.getLogger(AuditLogPublisher.class);
   private static final Gson GSON = new GsonBuilder()
-        .registerTypeAdapter(AuditMessage.class, new AuditMessageTypeAdapter())
-        .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
-        .create();
+    .registerTypeAdapter(AuditMessage.class, new AuditMessageTypeAdapter())
+    .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
+    .create();
 
   @UseDataSet(TrackerApp.AUDIT_LOG_DATASET_NAME)
   private AuditLogTable auditLog;
