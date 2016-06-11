@@ -88,6 +88,7 @@ public class TrackerAppTest extends TestBase {
     List<AuditMessage> testData = generateTestData();
     for (AuditMessage auditMessage : testData) {
       streamManager.send(GSON.toJson(auditMessage));
+
     }
     RuntimeMetrics metrics = testFlowManager.getFlowletMetrics("auditLogPublisher");
     metrics.waitForProcessed(testData.size(), 60L, TimeUnit.SECONDS);
@@ -149,6 +150,7 @@ public class TrackerAppTest extends TestBase {
       HttpResponseStatus.OK.getCode());
     TopEntitiesResultWrapper result = GSON.fromJson(response, TopEntitiesResultWrapper.class);
     Assert.assertEquals(4, result.getTotal());
+
   }
 
 

@@ -72,7 +72,7 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
                            @QueryParam("limit") @DefaultValue("5") int limit,
                            @QueryParam("startTime") @DefaultValue("0") long startTime,
                            @QueryParam("endTime") @DefaultValue("0") long endTime,
-                           @QueryParam("namespace") @DefaultValue("") String namespace,
+                           @QueryParam("entityType") @DefaultValue("") String entityType,
                            @QueryParam("entityName") @DefaultValue("") String entityName) {
     if (limit < 0) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), "limit cannot be negative.");
@@ -86,11 +86,11 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
       return;
     }
     TopEntitiesResultWrapper result;
-    if (Strings.isNullOrEmpty(namespace) && Strings.isNullOrEmpty(entityName)) {
+    if (Strings.isNullOrEmpty(entityType) && Strings.isNullOrEmpty(entityName)) {
       result = new TopEntitiesResultWrapper(auditMetricsCube.getTopNPrograms(limit, startTime, endTime));
     } else {
       result = new TopEntitiesResultWrapper(auditMetricsCube.getTopNPrograms(limit, startTime, endTime,
-        namespace, entityName));
+        namespace, entityType, entityName));
     }
     result.formatDataByTotal();
     responder.sendJson(200, result);
@@ -103,7 +103,7 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
                                @QueryParam("limit") @DefaultValue("5") int limit,
                                @QueryParam("startTime") @DefaultValue("0") long startTime,
                                @QueryParam("endTime") @DefaultValue("0") long endTime,
-                               @QueryParam("namespace") @DefaultValue("") String namespace,
+                               @QueryParam("entityType") @DefaultValue("") String entityType,
                                @QueryParam("entityName") @DefaultValue("") String entityName) {
     if (limit < 0) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), "limit cannot be negative.");
@@ -117,11 +117,11 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
       return;
     }
     TopEntitiesResultWrapper result;
-    if (Strings.isNullOrEmpty(namespace) && Strings.isNullOrEmpty(entityName)) {
+    if (Strings.isNullOrEmpty(entityType) && Strings.isNullOrEmpty(entityName)) {
       result = new TopEntitiesResultWrapper(auditMetricsCube.getTopNApplications(limit, startTime, endTime));
     } else {
       result = new TopEntitiesResultWrapper(auditMetricsCube.getTopNApplications(limit, startTime, endTime,
-        namespace, entityName));
+        namespace, entityType, entityName));
     }
     result.formatDataByTotal();
     responder.sendJson(200, result);

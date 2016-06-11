@@ -75,7 +75,7 @@ public class EntityIdHelper {
                 name = ((ProgramId) entityId).getProgram();
                 break;
             case PROGRAM_RUN:
-                name = ((ProgramRunId) entityId).getRun();
+                name = ((ProgramRunId) entityId).getProgram();
                 break;
             case SCHEDULE:
                 name = ((ScheduleId) entityId).getSchedule();

@@ -182,7 +182,7 @@ public class AuditMetricsCube extends AbstractDataset {
   }
 
   public List<TopEntitiesResult> getTopNPrograms(int topN, long startTime, long endTime,
-                                                 String namespace, String entityName) {
+                                                 String namespace, String entityType, String entityName) {
     CubeQuery programQuery = CubeQuery.builder()
       .select()
       .measurement(AccessType.READ.name().toLowerCase(), AggregationFunction.SUM)
@@ -192,7 +192,7 @@ public class AuditMetricsCube extends AbstractDataset {
       .where()
       .dimension("namespace", namespace)
       .dimension("entity_name", entityName)
-      .dimension("entity_type", EntityType.DATASET.name().toLowerCase())
+      .dimension("entity_type", entityType)
       .dimension("audit_type", AuditType.ACCESS.name().toLowerCase())
       .timeRange(startTime, endTime)
       .groupBy()
@@ -226,7 +226,7 @@ public class AuditMetricsCube extends AbstractDataset {
   }
 
   public List<TopEntitiesResult> getTopNApplications(int topN, long startTime, long endTime,
-                                                     String namespace, String entityName) {
+                                                     String namespace, String entityType, String entityName) {
     CubeQuery applicationQuery = CubeQuery.builder()
       .select()
       .measurement(AccessType.READ.name().toLowerCase(), AggregationFunction.SUM)
@@ -236,7 +236,7 @@ public class AuditMetricsCube extends AbstractDataset {
       .where()
       .dimension("namespace", namespace)
       .dimension("entity_name", entityName)
-      .dimension("entity_type", EntityType.DATASET.name().toLowerCase())
+      .dimension("entity_type", entityType)
       .dimension("audit_type", AuditType.ACCESS.name().toLowerCase())
       .timeRange(startTime, endTime)
       .groupBy()
