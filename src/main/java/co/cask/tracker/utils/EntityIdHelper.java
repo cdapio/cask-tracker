@@ -75,7 +75,7 @@ public class EntityIdHelper {
                 name = ((ProgramId) entityId).getProgram();
                 break;
             case PROGRAM_RUN:
-                name = ((ProgramRunId) entityId).getRun();
+                name = ((ProgramRunId) entityId).getProgram();
                 break;
             case SCHEDULE:
                 name = ((ScheduleId) entityId).getSchedule();
@@ -94,4 +94,34 @@ public class EntityIdHelper {
         }
         return name;
     }
+
+    public static String getApplicationName(EntityId entityId) throws IOException {
+        EntityType entityType = entityId.getEntity();
+        String name;
+        switch (entityType) {
+            case APPLICATION:
+                name = ((ApplicationId) entityId).getApplication();
+                break;
+            case FLOWLET:
+                name = ((FlowletId) entityId).getApplication();
+                break;
+            case FLOWLET_QUEUE:
+                name = ((FlowletQueueId) entityId).getApplication();
+                break;
+            case PROGRAM:
+                name = ((ProgramId) entityId).getApplication();
+                break;
+            case PROGRAM_RUN:
+                name = ((ProgramRunId) entityId).getApplication();
+                break;
+            case SCHEDULE:
+                name = ((ScheduleId) entityId).getApplication();
+                break;
+            default:
+                name = "";
+        }
+        return name;
+
+    }
+
 }

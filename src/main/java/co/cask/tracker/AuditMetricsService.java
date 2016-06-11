@@ -21,12 +21,12 @@ import co.cask.cdap.api.service.AbstractService;
  * A service for accessing the Audit Metrics data through a RESTful API.
  */
 public class AuditMetricsService extends AbstractService {
-    public static final String SERVICE_NAME = "AuditMetrics";
+  public static final String SERVICE_NAME = "AuditMetrics";
 
-    @Override
-    protected void configure() {
-        setName(SERVICE_NAME);
-        setDescription("A service that exposes the Tracker audit metrics as an API.");
-        addHandler(new AuditMetricsHandler());
-    }
+  @Override
+  protected void configure() {
+    setName(SERVICE_NAME);
+    setDescription("A service that exposes the Tracker audit metrics as an API.");
+    addHandler(new AuditMetricsHandler());
+  }
 }
