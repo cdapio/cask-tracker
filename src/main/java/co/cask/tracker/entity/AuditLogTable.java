@@ -131,11 +131,11 @@ public final class AuditLogTable extends AbstractDataset {
                         long timestamp) {
     String uuid = UUID.randomUUID().toString();
     int byteBufferSize = namespace.length() +
-      entityType.length() +
-      entityName.length() +
-      Bytes.SIZEOF_LONG +
-      uuid.length() +
-      (4 * KEY_DELIMITER.length);
+                         entityType.length() +
+                         entityName.length() +
+                         Bytes.SIZEOF_LONG +
+                         uuid.length() +
+                         (4 * KEY_DELIMITER.length);
     ByteBuffer bb = createEntityKeyPart(byteBufferSize, namespace, entityType, entityName);
     bb.putLong(getInvertedTsKeyPart(timestamp))
       .put(KEY_DELIMITER)
@@ -218,10 +218,10 @@ public final class AuditLogTable extends AbstractDataset {
         payload = AuditPayload.EMPTY_PAYLOAD;
     }
     return new AuditMessage(row.getLong("timestamp"),
-      entityId,
-      row.getString("user"),
-      messageType,
-      payload);
+                            entityId,
+                            row.getString("user"),
+                            messageType,
+                            payload);
   }
 
   /**

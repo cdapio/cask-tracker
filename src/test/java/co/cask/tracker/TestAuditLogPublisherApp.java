@@ -42,8 +42,10 @@ public class TestAuditLogPublisherApp extends AbstractApplication {
       AuditMetricsCube.class,
       DatasetProperties.builder()
         .add("dataset.cube.resolutions", resolutions)
+        .add("dataset.cube.aggregation.agg1.dimensions",
+          "namespace,entity_type,entity_name,audit_type")
         .add("dataset.cube.aggregation.agg2.dimensions",
-          "namespace,entity_type,entity_name,app_name,audit_type,program_name")
+             "namespace,entity_type,entity_name,audit_type,program_name,app_name")
         .build());
     addFlow(new StreamToAuditLogFlow());
     addService(new AuditLogService());

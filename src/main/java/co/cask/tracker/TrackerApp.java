@@ -45,12 +45,12 @@ public class TrackerApp extends AbstractApplication<TrackerAppConfig> {
       TimeUnit.DAYS.toSeconds(1L),
       TimeUnit.DAYS.toSeconds(365L));
     DatasetProperties prop =  DatasetProperties.builder()
-      .add("dataset.cube.resolutions", resolutions)
-      .add("dataset.cube.aggregation.agg2.dimensions",
-        "namespace,entity_type,entity_name,app_name,audit_type,program_name")
-            /*.add("dataset.cube.aggregation.agg3.dimensions",
-                    "entity_type,entity_name,audit_type,program_name,app_name") */
-      .build();
+                                     .add("dataset.cube.resolutions", resolutions)
+                                     .add("dataset.cube.aggregation.agg1.dimensions",
+                                          "namespace,entity_type,entity_name,audit_type")
+                                     .add("dataset.cube.aggregation.agg2.dimensions",
+                                          "namespace,entity_type,entity_name,audit_type,program_name,app_name")
+                                     .build();
     createDataset(AUDIT_METRICS_DATASET_NAME, AuditMetricsCube.class, prop);
 
     addFlow(new AuditLogFlow(getConfig()));

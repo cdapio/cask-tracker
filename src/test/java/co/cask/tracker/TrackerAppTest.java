@@ -34,8 +34,6 @@ import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.TestConfiguration;
-import co.cask.tracker.entity.AuditLogResponse;
-import co.cask.tracker.entity.TopEntitiesResult;
 import co.cask.tracker.entity.TopEntitiesResultWrapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;

@@ -36,7 +36,7 @@ import co.cask.cdap.proto.id.SystemServiceId;
 import java.io.IOException;
 
 /**
- * A static class to make finding the name of an Entity easier.
+ * A static class to make finding the name and parent app of an Entity easier.
  * Hack (Class should be removed after a getEntityName method is added to the EntityId class and implemented for
  * each Entities: CDAP-5578)
  */

@@ -35,7 +35,6 @@ import javax.ws.rs.QueryParam;
  * This class handles requests to the AuditLog API.
  */
 public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
-  @UseDataSet(TrackerApp.AUDIT_METRICS_DATASET_NAME)
   private AuditMetricsCube auditMetricsCube;
   private String namespace;
 
@@ -43,6 +42,7 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
   public void initialize(HttpServiceContext context) throws Exception {
     super.initialize(context);
     namespace = context.getNamespace();
+    auditMetricsCube = context.getDataset(TrackerApp.AUDIT_METRICS_DATASET_NAME);
   }
 
   @Path("v1/auditmetrics/topEntities/datasets")
@@ -51,19 +51,17 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
                            @QueryParam("limit") @DefaultValue("5") int limit,
                            @QueryParam("startTime") @DefaultValue("0") long startTime,
                            @QueryParam("endTime") @DefaultValue("0") long endTime) {
-    if (limit < 0) {
+    if (!isLimitValid(limit)) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), "limit cannot be negative.");
       return;
     }
-    if (endTime == 0) {
-      endTime = System.currentTimeMillis() / 1000;
-    }
-    if (startTime > endTime) {
+    endTime = setEndTime(endTime);
+    if (!isTimeFrameValid(startTime, endTime)) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), "Invalid timeframe");
       return;
     }
-    responder.sendJson(200,
-      new TopEntitiesResultWrapper(auditMetricsCube.getTopNDatasets(limit, startTime, endTime)));
+    responder.sendJson(HttpResponseStatus.OK.getCode(),
+                       new TopEntitiesResultWrapper(auditMetricsCube.getTopNDatasets(limit, startTime, endTime)));
   }
 
   @Path("v1/auditmetrics/topEntities/programs")
@@ -74,26 +72,25 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
                            @QueryParam("endTime") @DefaultValue("0") long endTime,
                            @QueryParam("entityType") @DefaultValue("") String entityType,
                            @QueryParam("entityName") @DefaultValue("") String entityName) {
-    if (limit < 0) {
+    if (!isLimitValid(limit)) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), "limit cannot be negative.");
       return;
     }
-    if (endTime == 0) {
-      endTime = System.currentTimeMillis() / 1000;
-    }
-    if (startTime > endTime) {
+    endTime = setEndTime(endTime);
+
+    if (!isTimeFrameValid(startTime, endTime)) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), "Invalid timeframe");
       return;
     }
     TopEntitiesResultWrapper result;
-    if (Strings.isNullOrEmpty(entityType) && Strings.isNullOrEmpty(entityName)) {
+    if (!isDatasetSpecified(entityType,entityName)) {
       result = new TopEntitiesResultWrapper(auditMetricsCube.getTopNPrograms(limit, startTime, endTime));
     } else {
       result = new TopEntitiesResultWrapper(auditMetricsCube.getTopNPrograms(limit, startTime, endTime,
-        namespace, entityType, entityName));
+                                            namespace, entityType, entityName));
     }
     result.formatDataByTotal();
-    responder.sendJson(200, result);
+    responder.sendJson(HttpResponseStatus.OK.getCode(), result);
   }
 
 
@@ -105,25 +102,44 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
                                @QueryParam("endTime") @DefaultValue("0") long endTime,
                                @QueryParam("entityType") @DefaultValue("") String entityType,
                                @QueryParam("entityName") @DefaultValue("") String entityName) {
-    if (limit < 0) {
+    if (!isLimitValid(limit)) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), "limit cannot be negative.");
       return;
     }
-    if (endTime == 0) {
-      endTime = System.currentTimeMillis() / 1000;
-    }
-    if (startTime > endTime) {
+    endTime = setEndTime(endTime);
+
+    if (!isTimeFrameValid(startTime, endTime)) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), "Invalid timeframe");
       return;
     }
     TopEntitiesResultWrapper result;
-    if (Strings.isNullOrEmpty(entityType) && Strings.isNullOrEmpty(entityName)) {
+    if (!isDatasetSpecified(entityType, entityName)) {
       result = new TopEntitiesResultWrapper(auditMetricsCube.getTopNApplications(limit, startTime, endTime));
     } else {
       result = new TopEntitiesResultWrapper(auditMetricsCube.getTopNApplications(limit, startTime, endTime,
-        namespace, entityType, entityName));
+                                            namespace, entityType, entityName));
     }
     result.formatDataByTotal();
-    responder.sendJson(200, result);
+    responder.sendJson(HttpResponseStatus.OK.getCode(), result);
   }
+
+  private Boolean isLimitValid (int limit) {
+    return (limit >= 0);
+  }
+
+  private Boolean isTimeFrameValid (long startTime, long endTime) {
+      return (startTime < endTime);
+    }
+
+  private boolean isDatasetSpecified (String entityType, String entityName) {
+    return (!Strings.isNullOrEmpty(entityType) && !Strings.isNullOrEmpty(entityName));
+  }
+
+  private long setEndTime(long endTime) {
+    if (endTime == 0) {
+      return (System.currentTimeMillis() / 1000);
+    }
+    return endTime;
+  }
+
 }
