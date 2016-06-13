@@ -41,10 +41,14 @@ public class TrackerApp extends AbstractApplication<TrackerAppConfig> {
     createDataset(AUDIT_LOG_DATASET_NAME, AuditLogTable.class);
     String resolutions = String.format("%s,%s,%s,%s",
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 497f160... Fixed indentation
       TimeUnit.MINUTES.toSeconds(1L),
       TimeUnit.HOURS.toSeconds(1L),
       TimeUnit.DAYS.toSeconds(1L),
       TimeUnit.DAYS.toSeconds(365L));
+<<<<<<< HEAD
     DatasetProperties prop =  DatasetProperties.builder()
                                      .add("dataset.cube.resolutions", resolutions)
                                      .add("dataset.cube.aggregation.agg1.dimensions",
@@ -57,14 +61,29 @@ public class TrackerApp extends AbstractApplication<TrackerAppConfig> {
             TimeUnit.HOURS.toSeconds(1L),
             TimeUnit.DAYS.toSeconds(1L),
             TimeUnit.DAYS.toSeconds(365L));
+=======
+>>>>>>> 497f160... Fixed indentation
     DatasetProperties prop =  DatasetProperties.builder()
-            .add("dataset.cube.resolutions", resolutions)
-            .add("dataset.cube.aggregation.agg1.dimensions", "namespace")
-            .add("dataset.cube.aggregation.agg2.dimensions", "namespace,entity_type,entity_name")
-            .add("dataset.cube.aggregation.agg3.dimensions",
-                    "namespace,entity_type,entity_name,program_type,program_name")
+<<<<<<< HEAD
+      .add("dataset.cube.resolutions", resolutions)
+      .add("dataset.cube.aggregation.agg2.dimensions",
+        "namespace,entity_type,entity_name,app_name,audit_type,program_name")
+            /*.add("dataset.cube.aggregation.agg3.dimensions",
+                    "entity_type,entity_name,audit_type,program_name,app_name") */
+<<<<<<< HEAD
             .build();
 >>>>>>> 8fa1a08... Time since last update/truncate/program_read/program_write/metadata_change implemented
+=======
+      .build();
+>>>>>>> 497f160... Fixed indentation
+=======
+                                     .add("dataset.cube.resolutions", resolutions)
+                                     .add("dataset.cube.aggregation.agg1.dimensions",
+                                          "namespace,entity_type,entity_name,audit_type")
+                                     .add("dataset.cube.aggregation.agg2.dimensions",
+                                          "namespace,entity_type,entity_name,audit_type,program_name,app_name")
+                                     .build();
+>>>>>>> 3402650... Addressed code review comments
     createDataset(AUDIT_METRICS_DATASET_NAME, AuditMetricsCube.class, prop);
 
     addFlow(new AuditLogFlow(getConfig()));

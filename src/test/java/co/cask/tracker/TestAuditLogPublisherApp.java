@@ -39,6 +39,8 @@ public class TestAuditLogPublisherApp extends AbstractApplication {
       TimeUnit.DAYS.toSeconds(1L),
       TimeUnit.DAYS.toSeconds(365L));
     createDataset(TrackerApp.AUDIT_METRICS_DATASET_NAME,
+<<<<<<< HEAD
+<<<<<<< HEAD
       AuditMetricsCube.class,
       DatasetProperties.builder()
         .add("dataset.cube.resolutions", resolutions)
@@ -47,6 +49,23 @@ public class TestAuditLogPublisherApp extends AbstractApplication {
         .add("dataset.cube.aggregation.agg2.dimensions",
              "namespace,entity_type,entity_name,audit_type,program_name,app_name")
         .build());
+=======
+            AuditMetricsCube.class,
+            DatasetProperties.builder()
+                    .add("dataset.cube.resolutions", resolutions)
+                    .add("dataset.cube.aggregation.agg2.dimensions", "entity_type,entity_name,app_name,audit_type,program_name")
+                    .build());
+>>>>>>> 41096df... Working getTopNApp and getTopNPrograms
+=======
+      AuditMetricsCube.class,
+      DatasetProperties.builder()
+        .add("dataset.cube.resolutions", resolutions)
+        .add("dataset.cube.aggregation.agg1.dimensions",
+          "namespace,entity_type,entity_name,audit_type")
+        .add("dataset.cube.aggregation.agg2.dimensions",
+             "namespace,entity_type,entity_name,audit_type,program_name,app_name")
+        .build());
+>>>>>>> 497f160... Fixed indentation
     addFlow(new StreamToAuditLogFlow());
     addService(new AuditLogService());
     addService(new AuditMetricsService());

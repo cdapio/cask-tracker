@@ -43,6 +43,7 @@ import java.io.IOException;
 
 public class EntityIdHelper {
 
+<<<<<<< HEAD
   public static String getEntityName(EntityId entityId) throws IOException {
     EntityType entityType = entityId.getEntity();
     String name;
@@ -91,7 +92,60 @@ public class EntityIdHelper {
         break;
       default:
         throw new IOException("Unknown entity type: " + entityType);
+=======
+    public static String getEntityName(EntityId entityId) throws IOException {
+        EntityType entityType = entityId.getEntity();
+        String name;
+        switch (entityType) {
+            case APPLICATION:
+                name = ((ApplicationId) entityId).getApplication();
+                break;
+            case ARTIFACT:
+                name = ((ArtifactId) entityId).getArtifact(); //Changed to ArtifactID from NameSpacedArtifactID
+                break;
+            case DATASET:
+                name = ((DatasetId) entityId).getDataset();
+                break;
+            case DATASET_MODULE:
+                name = ((DatasetModuleId) entityId).getModule();
+                break;
+            case DATASET_TYPE:
+                name = ((DatasetTypeId) entityId).getType();
+                break;
+            case FLOWLET:
+                name = ((FlowletId) entityId).getFlowlet();
+                break;
+            case FLOWLET_QUEUE:
+                name = ((FlowletQueueId) entityId).getQueue();
+                break;
+            case NOTIFICATION_FEED:
+                name = ((NotificationFeedId) entityId).getFeed();
+                break;
+            case PROGRAM:
+                name = ((ProgramId) entityId).getProgram();
+                break;
+            case PROGRAM_RUN:
+                name = ((ProgramRunId) entityId).getProgram();
+                break;
+            case SCHEDULE:
+                name = ((ScheduleId) entityId).getSchedule();
+                break;
+            case STREAM:
+                name = ((StreamId) entityId).getStream();
+                break;
+            case STREAM_VIEW:
+                name = ((StreamViewId) entityId).getView();
+                break;
+            case SYSTEM_SERVICE:
+                name = ((SystemServiceId) entityId).getService();
+                break;
+            default:
+                throw new IOException("Unknown entity type: " + entityType);
+        }
+        return name;
+>>>>>>> 8640218... Fixed some bugs
     }
+<<<<<<< HEAD
     return name;
   }
 
@@ -123,5 +177,36 @@ public class EntityIdHelper {
     return name;
 
   }
+=======
+
+    public static String getApplicationName(EntityId entityId) throws IOException {
+        EntityType entityType = entityId.getEntity();
+        String name;
+        switch (entityType) {
+            case APPLICATION:
+                name = ((ApplicationId) entityId).getApplication();
+                break;
+            case FLOWLET:
+                name = ((FlowletId) entityId).getApplication();
+                break;
+            case FLOWLET_QUEUE:
+                name = ((FlowletQueueId) entityId).getApplication();
+                break;
+            case PROGRAM:
+                name = ((ProgramId) entityId).getApplication();
+                break;
+            case PROGRAM_RUN:
+                name = ((ProgramRunId) entityId).getApplication();
+                break;
+            case SCHEDULE:
+                name = ((ScheduleId) entityId).getApplication();
+                break;
+            default:
+                name = "";
+        }
+        return name;
+
+    }
+>>>>>>> 2d45a5b... trying to implement apps and programs. hopeless bug -_-
 
 }

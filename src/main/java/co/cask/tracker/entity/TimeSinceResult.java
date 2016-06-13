@@ -16,6 +16,13 @@
 
 package co.cask.tracker.entity;
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+import co.cask.cdap.proto.audit.AuditType;
+>>>>>>> 0779d97... Some changes to AuditLogTable. Updated tests.
+=======
+>>>>>>> 9d0d1c4... style changes
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,10 +32,15 @@ import java.util.Map;
  *
  */
 public class TimeSinceResult {
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 497f160... Fixed indentation
   private final String namespace;
   private final String entityType;
   private final String entityName;
   private final Map<String, Long> columnValues;
+<<<<<<< HEAD
 
   public TimeSinceResult(String namespace, String entityType, String entityName) {
     this.namespace = namespace;
@@ -71,3 +83,56 @@ public class TimeSinceResult {
     return result;
   }
 }
+=======
+    private final String namespace;
+    private final String entityType;
+    private final String entityName;
+    private final Map<String, Long> columnValues;
+=======
+>>>>>>> 497f160... Fixed indentation
+
+  public TimeSinceResult(String namespace, String entityType, String entityName) {
+    this.namespace = namespace;
+    this.entityType = entityType;
+    this.entityName = entityName;
+    this.columnValues = new HashMap<>();
+  }
+
+  public String getNamespace() {
+    return namespace;
+  }
+
+  public String getEntityType() {
+    return entityType;
+  }
+
+  public String getEntityName() {
+    return entityName;
+  }
+
+  public Map<String, Long> getTimeSinceEvents() {
+    Map<String, Long> results = new HashMap<>();
+    long now = System.currentTimeMillis();
+    for (Map.Entry<String, Long> entry : columnValues.entrySet()) {
+      results.put(entry.getKey(), (now - entry.getValue()) / 1000);
+    }
+    return results;
+  }
+
+  public void addEventTime(String type, long time) {
+    columnValues.put(type, time);
+  }
+
+  @Override
+  public String toString() {
+    String result = String.format("%s %s %s\n", namespace, entityType, entityName);
+    for (Map.Entry<String, Long> entry: columnValues.entrySet()) {
+      result += (entry.getKey() + " " + entry.getValue() + "\n");
+    }
+    return result;
+  }
+}
+<<<<<<< HEAD
+>>>>>>> 0779d97... Some changes to AuditLogTable. Updated tests.
+=======
+>>>>>>> 369a5f2... Fixed TopNDatasets to only query for entity_type = dataset

@@ -23,6 +23,11 @@ import java.util.Map;
  * A POJO to hold the results for the TopN query.
  */
 public class TopEntitiesResult implements Comparable<TopEntitiesResult> {
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 497f160... Fixed indentation
   private final Map<String, String> columnValues;
 
   public TopEntitiesResult(String entityName) {
@@ -54,4 +59,44 @@ public class TopEntitiesResult implements Comparable<TopEntitiesResult> {
       + Long.parseLong(o.getColumnValues().get("write"));
     return thatTotal.compareTo(thisTotal);
   }
+<<<<<<< HEAD
+=======
+    private final String entityName;
+    private final Map<String, Long> columnValues;
+=======
+    private final Map<String, String> columnValues;
+>>>>>>> 0e92e89... Rerolled all changes so far and reimplemented topNDataset. topNDataset returns result in the expected format
+
+    public TopEntitiesResult(String entityName) {
+        this.columnValues = new HashMap<>();
+        columnValues.put("label", entityName);
+        columnValues.put("read", "0");
+        columnValues.put("write", "0");
+    }
+
+    public Map<String, String> getColumnValues() {
+        return columnValues;
+    }
+
+    public void addAccessType(String type, String value) {
+        this.columnValues.put(type, value);
+    }
+
+    public void formatDataByTotal() {
+        columnValues.put("value",
+                String.valueOf(Long.parseLong(columnValues.get("read")) + Long.parseLong(columnValues.get("write"))));
+                columnValues.remove("read");
+                columnValues.remove("write");
+    }
+
+    @Override
+    public int compareTo(TopEntitiesResult o) {
+        Long thisTotal = Long.parseLong(columnValues.get("read")) + Long.parseLong(columnValues.get("write"));
+        Long thatTotal = Long.parseLong(o.getColumnValues().get("read"))
+                + Long.parseLong(o.getColumnValues().get("write"));
+        return thatTotal.compareTo(thisTotal);
+    }
+>>>>>>> 7812549... Changes to TopNEntities, Tests, Tests Data, Handler
+=======
+>>>>>>> 497f160... Fixed indentation
 }

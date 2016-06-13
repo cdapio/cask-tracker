@@ -31,6 +31,7 @@ import co.cask.cdap.proto.audit.AuditMessage;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.audit.payload.access.AccessPayload;
+import co.cask.cdap.proto.audit.payload.access.AccessType;
 import co.cask.cdap.proto.audit.payload.metadata.MetadataPayload;
 import co.cask.cdap.proto.codec.AuditMessageTypeAdapter;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
@@ -45,23 +46,13 @@ import com.google.gson.GsonBuilder;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 <<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-import java.util.UUID;
-=======
-import java.util.*;
->>>>>>> 0779d97... Some changes to AuditLogTable. Updated tests.
 =======
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-=======
->>>>>>> 35030f2... Style, updated based on code review
+>>>>>>> 2de96a7... Minor checkstyle corrections
 import java.util.UUID;
-
->>>>>>> 369a5f2... Fixed TopNDatasets to only query for entity_type = dataset
 
 /**
  * Creates the key and scan key for storing data in the AuditLog table.
@@ -75,16 +66,6 @@ public final class AuditLogTable extends AbstractDataset {
     .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
     .create();
 
-<<<<<<< HEAD
-=======
-  private final Table auditLog;
-
-<<<<<<< HEAD
-  private Map<String, TimeSinceResult> timeSinceMap = new HashMap<>();
-
->>>>>>> 0779d97... Some changes to AuditLogTable. Updated tests.
-=======
->>>>>>> 7812549... Changes to TopNEntities, Tests, Tests Data, Handler
   public AuditLogTable(DatasetSpecification spec, @EmbeddedDataset("auditLog") Table auditLogDataset) {
     super(spec.getName(), auditLogDataset);
     this.auditLog = auditLogDataset;
@@ -107,7 +88,7 @@ public final class AuditLogTable extends AbstractDataset {
     // Data stored using inverted timestamp so start and end times are swapped
     Scanner scanner = auditLog.scan(
       new Scan(getScanKey(namespace, entityType, entityName, endTime),
-        getScanKey(namespace, entityType, entityName, startTime))
+               getScanKey(namespace, entityType, entityName, startTime))
     );
     return new AuditMessageIterator(scanner);
   }
@@ -135,80 +116,72 @@ public final class AuditLogTable extends AbstractDataset {
           .add("entityType", type)
           .add("entityName", name)
           .add("metadata", GSON.toJson(auditMessage.getPayload())));
-<<<<<<< HEAD
 
-<<<<<<< HEAD
 <<<<<<< HEAD
 =======
-      String entityKey = String.format("%s-%s-%s", namespace.toLowerCase(), type.toLowerCase(), name.toLowerCase());
-      if (!timeSinceMap.containsKey(entityKey)) {
-        timeSinceMap.put(entityKey, new TimeSinceResult(namespace, type, name));
-      }
-      timeSinceMap.get(entityKey).addEventTime(auditType, System.currentTimeMillis());
-<<<<<<< HEAD
-
       if (auditType == AuditType.ACCESS) {
         AccessPayload accessPayload = (AccessPayload) auditMessage.getPayload();
+        if (accessPayload.getAccessType() == AccessType.READ) {
+          mostRecentProgramRead = auditMessage.getTime();
+        } else if (accessPayload.getAccessType() == AccessType.WRITE) {
+          mostRecentProgramWrite = auditMessage.getTime();
+        }
         EntityId accessEntityId = accessPayload.getAccessor();
         if (accessEntityId.getEntity() == EntityType.APPLICATION) {
           String nSpace = ((NamespacedId) accessEntityId).getNamespace();
           String eType = accessEntityId.getEntity().name().toLowerCase();
           String eName = EntityIdHelper.getEntityName(accessEntityId);
-          String key = String.format("%s-%s-%s", nSpace.toLowerCase(), eType.toLowerCase(), eName.toLowerCase());
-          Map<String, Long> result;
-          TopEntitiesResult topEntitiesResult;
+          String key = String.format("%s-%s-%s", nSpace, eType, eName);
+          TopEntitiesResult result;
           if (!apps.containsKey(key)) {
-            apps.put(key, topEntitiesResult = new TopEntitiesResult(nSpace, eType, eName));
-            topEntitiesResult.addAccessType("count", 1L);
-            topEntitiesResult.addAccessType(accessPayload.getAccessType().name().toLowerCase(), 1L);
+            apps.put(key, result = new TopEntitiesResult(nSpace, eType, eName));
+            result.addAccessType("count", 1L);
+            result.addAccessType(accessPayload.getAccessType().name().toLowerCase(), 1L);
           } else {
-            result = apps.get(key).getColumnValues();
-            result.put("count", result.get("count") + 1L);
+            result = apps.get(key);
+            result.getColumnValues().put("count", result.getColumnValues().get("count") + 1L);
             String accessType = accessPayload.getAccessType().name().toLowerCase();
-            if (result.containsKey(accessType)) {
-              result.put(accessType, result.get(accessType) + 1L);
+            if (result.getColumnValues().containsKey(accessType)) {
+              result.getColumnValues().put(accessType, result.getColumnValues().get(accessType) + 1L);
             } else {
-              result.put(accessType, 1L);
+              result.getColumnValues().put(accessType, 1L);
             }
           }
         } else if (accessEntityId.getEntity() == EntityType.PROGRAM) {
           String nSpace = ((NamespacedId) accessEntityId).getNamespace();
           String eType = accessEntityId.getEntity().name().toLowerCase();
           String eName = EntityIdHelper.getEntityName(accessEntityId);
-          String key = String.format("%s-%s-%s", nSpace.toLowerCase(), eType.toLowerCase(), eName.toLowerCase());
-          Map<String, Long> result;
-          TopEntitiesResult topEntitiesResult;
+          String key = String.format("%s-%s-%s", nSpace, eType, eName);
+          TopEntitiesResult result;
           if (!programs.containsKey(key)) {
-            programs.put(key, topEntitiesResult = new TopEntitiesResult(nSpace, eType, eName));
-            topEntitiesResult.addAccessType("count", 1L);
-            topEntitiesResult.addAccessType(accessPayload.getAccessType().name().toLowerCase(), 1L);
+            programs.put(key, result = new TopEntitiesResult(nSpace, eType, eName));
+            result.addAccessType("count", 1L);
+            result.addAccessType(accessPayload.getAccessType().name().toLowerCase(), 1L);
           } else {
-            result = programs.get(key).getColumnValues();
-            result.put("count", result.get("count") + 1L);
+            result = programs.get(key);
+            result.getColumnValues().put("count", result.getColumnValues().get("count") + 1L);
             String accessType = accessPayload.getAccessType().name().toLowerCase();
-            if (result.containsKey(accessType)) {
-              result.put(accessType, result.get(accessType) + 1L);
+            if (result.getColumnValues().containsKey(accessType)) {
+              result.getColumnValues().put(accessType, result.getColumnValues().get(accessType) + 1L);
             } else {
-              result.put(accessType, 1L);
+              result.getColumnValues().put(accessType, 1L);
             }
           }
         }
+      } else if (auditType == AuditType.TRUNCATE) {
+        mostRecentTruncate = auditMessage.getTime();
+      } else if (auditType == AuditType.UPDATE) {
+        mostRecentUpdate = auditMessage.getTime();
+      } else if (auditType == AuditType.METADATA_CHANGE) {
+        mostRecentMetadataChange = auditMessage.getTime();
       }
->>>>>>> 0779d97... Some changes to AuditLogTable. Updated tests.
-=======
->>>>>>> e418da7... Updated interfaces
-=======
 
->>>>>>> 7812549... Changes to TopNEntities, Tests, Tests Data, Handler
-=======
->>>>>>> 9d0d1c4... style changes
+>>>>>>> 2de96a7... Minor checkstyle corrections
     } else {
       throw new IOException("Entity does not have a namespace and was not written to the auditLog: " + entityId);
     }
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 <<<<<<< HEAD
 =======
   public List<TopEntitiesResult> getTopNPrograms (int topN) {
@@ -223,16 +196,27 @@ public final class AuditLogTable extends AbstractDataset {
     return (topN >= list.size()) ? list : list.subList(0, topN);
   }
 
-=======
->>>>>>> e418da7... Updated interfaces
-  public TimeSinceResult getTimeSinceResult(String namespace, String type, String name) {
-    String entityKey = String.format("%s-%s-%s", namespace.toLowerCase(), type.toLowerCase(), name.toLowerCase());
-    return timeSinceMap.get(entityKey);
+  public long timeSinceProgramRead() {
+    return ((System.currentTimeMillis() - mostRecentProgramRead) / 1000);
   }
-=======
->>>>>>> 7812549... Changes to TopNEntities, Tests, Tests Data, Handler
 
->>>>>>> 0779d97... Some changes to AuditLogTable. Updated tests.
+  public long timeSinceProgramWrite() {
+    return ((System.currentTimeMillis() - mostRecentProgramWrite) / 1000);
+  }
+
+  public long timeSinceUpdate() {
+    return ((System.currentTimeMillis() - mostRecentUpdate) / 1000);
+  }
+
+  public long timeSinceTruncate() {
+    return ((System.currentTimeMillis() - mostRecentTruncate) / 1000);
+  }
+
+  public long timeSinceMetadataChange() {
+    return ((System.currentTimeMillis() - mostRecentMetadataChange) / 1000);
+  }
+
+>>>>>>> 2de96a7... Minor checkstyle corrections
   /**
    * This method generates a unique key to use for the data table.
    * @param namespace the namespace where the entity exists
@@ -272,10 +256,10 @@ public final class AuditLogTable extends AbstractDataset {
                             String entityName,
                             long timestamp) {
     int byteBufferSize = namespace.length() +
-      entityType.length() +
-      entityName.length() +
-      Bytes.SIZEOF_LONG +
-      (3 * KEY_DELIMITER.length);
+                         entityType.length() +
+                         entityName.length() +
+                         Bytes.SIZEOF_LONG +
+                         (3 * KEY_DELIMITER.length);
     ByteBuffer bb = createEntityKeyPart(byteBufferSize, namespace, entityType, entityName);
     bb.putLong(getInvertedTsScanKeyPart(timestamp));
     return bb.array();

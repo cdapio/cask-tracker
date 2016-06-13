@@ -34,14 +34,6 @@ import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.TestConfiguration;
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-import co.cask.tracker.entity.AuditLogResponse;
-import co.cask.tracker.entity.TopEntitiesResult;
->>>>>>> 0e92e89... Rerolled all changes so far and reimplemented topNDataset. topNDataset returns result in the expected format
-=======
->>>>>>> 3402650... Addressed code review comments
 import co.cask.tracker.entity.TopEntitiesResultWrapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
@@ -132,25 +124,9 @@ public class TrackerAppTest extends TestBase {
 
   @Test
   public void testTopNDatasets() throws Exception {
-<<<<<<< HEAD
     String response = getServiceResponse(auditMetricsServiceManager,
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
       "v1/auditmetrics/topEntities/datasets?limit=20",
       HttpResponseStatus.OK.getCode());
-    TopEntitiesResultWrapper result = GSON.fromJson(response, TopEntitiesResultWrapper.class);
-    Assert.assertEquals(4, result.getTotal());
-=======
-            "v1/auditmetrics/topEntities/datasets?limit=3",
-=======
-            "v1/auditmetrics/topEntities/datasets?limit=20",
->>>>>>> 7812549... Changes to TopNEntities, Tests, Tests Data, Handler
-            HttpResponseStatus.OK.getCode());
-=======
-      "v1/auditmetrics/topEntities/datasets?limit=20",
-      HttpResponseStatus.OK.getCode());
->>>>>>> 497f160... Fixed indentation
     TopEntitiesResultWrapper result = GSON.fromJson(response, TopEntitiesResultWrapper.class);
     Assert.assertEquals(4, result.getTotal());
   }
@@ -163,67 +139,25 @@ public class TrackerAppTest extends TestBase {
       HttpResponseStatus.OK.getCode());
     TopEntitiesResultWrapper result = GSON.fromJson(response, TopEntitiesResultWrapper.class);
     Assert.assertEquals(4, result.getTotal());
-<<<<<<< HEAD
-    //Assert.assertTrue(results[0].getColumnValues().get("count") > results[1].getColumnValues().get("count"));
->>>>>>> 369a5f2... Fixed TopNDatasets to only query for entity_type = dataset
-  }
-
-<<<<<<< HEAD
-  @Test
-  public void testTopNPrograms() throws Exception {
-=======
->>>>>>> 0779d97... Some changes to AuditLogTable. Updated tests.
-    String response = getServiceResponse(auditMetricsServiceManager,
-      "v1/auditmetrics/topEntities/programs?limit=20",
-      HttpResponseStatus.OK.getCode());
-    TopEntitiesResultWrapper result = GSON.fromJson(response, TopEntitiesResultWrapper.class);
-    Assert.assertEquals(4, result.getTotal());
-=======
->>>>>>> 497f160... Fixed indentation
   }
 
   @Test
-<<<<<<< HEAD
   public void testTopNApplications() throws Exception {
     String response = getServiceResponse(auditMetricsServiceManager,
+<<<<<<< HEAD
       "v1/auditmetrics/topEntities/applications?limit=20",
       HttpResponseStatus.OK.getCode());
-<<<<<<< HEAD
-    TopEntitiesResultWrapper result = GSON.fromJson(response, TopEntitiesResultWrapper.class);
-    Assert.assertEquals(4, result.getTotal());
-  }
-
-=======
-  public void testTopNPrograms() throws Exception {
-    String response = getServiceResponse(auditMetricsServiceManager,
-            "v1/auditmetrics/topEntities/programs?limit=3",
-            HttpResponseStatus.OK.getCode());
-    TopEntitiesResult[] results = GSON.fromJson(response, TopEntitiesResult[].class);
-    Assert.assertEquals(0, results.length);
-  }
-
-  @Test
-  public void testTopNApplications() throws Exception {
-<<<<<<< HEAD
-    String response = getServiceResponse(auditMetricsServiceManager, "v1/auditmetrics/topEntities/applications?limit=3",
-            HttpResponseStatus.OK.getCode());
-    TopEntitiesResult[] results = GSON.fromJson(response, TopEntitiesResult[].class);
-    Assert.assertEquals(0, results.length);
-  }
->>>>>>> 0779d97... Some changes to AuditLogTable. Updated tests.
-=======
->>>>>>> 0e92e89... Rerolled all changes so far and reimplemented topNDataset. topNDataset returns result in the expected format
-=======
-    String response = getServiceResponse(auditMetricsServiceManager,
-            "v1/auditmetrics/topEntities/applications?limit=20",
-            HttpResponseStatus.OK.getCode());
-=======
->>>>>>> 497f160... Fixed indentation
     TopEntitiesResultWrapper result = GSON.fromJson(response, TopEntitiesResultWrapper.class);
     Assert.assertEquals(4, result.getTotal());
 
+=======
+            "v1/auditmetrics/topEntities/datasets?limit=3",
+            HttpResponseStatus.OK.getCode());
+    TopEntitiesResult[] results = GSON.fromJson(response, TopEntitiesResult[].class);
+    Assert.assertEquals(3, results.length);
+    Assert.assertTrue(results[0].getColumnValues().get("count") > results[1].getColumnValues().get("count"));
+>>>>>>> 0593dfe... Implemented getTopNApplications and getTopNPrograms. Methods now in AuditLogTable
   }
->>>>>>> 2d45a5b... trying to implement apps and programs. hopeless bug -_-
 
 
   private static ApplicationManager deployApplicationWithScalaJar(Class appClass, Config config) {
@@ -262,49 +196,20 @@ public class TrackerAppTest extends TestBase {
   private List<AuditMessage> generateTestData() {
     List<AuditMessage> testData = new ArrayList<>();
     testData.add(new AuditMessage(1456956659461L,
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 497f160... Fixed indentation
         NamespaceId.DEFAULT.stream("stream1"),
         "user1",
         AuditType.ACCESS,
         new AccessPayload(AccessType.WRITE,
           EntityId.fromString("program_run:ns1.app2.flow.flow1.run1"))
       )
-<<<<<<< HEAD
-=======
-                    NamespaceId.DEFAULT.stream("stream1"),
-                    "user1",
-                    AuditType.ACCESS,
-                    new AccessPayload(AccessType.WRITE,
-                            EntityId.fromString("program_run:ns1.app2.flow.flow1.run1"))
-            )
->>>>>>> 2d45a5b... trying to implement apps and programs. hopeless bug -_-
     );
     testData.add(new AuditMessage(1456956659469L,
-<<<<<<< HEAD
-=======
-    );
-    testData.add(new AuditMessage(1456956659469L,
->>>>>>> 497f160... Fixed indentation
         NamespaceId.DEFAULT.dataset("ds1"),
         "user1",
         AuditType.ACCESS,
         new AccessPayload(AccessType.WRITE,
           EntityId.fromString("system_service:explore"))
       )
-<<<<<<< HEAD
-=======
-                    NamespaceId.DEFAULT.dataset("ds1"),
-                    "user1",
-                    AuditType.ACCESS,
-                    new AccessPayload(AccessType.WRITE,
-                            EntityId.fromString("system_service:explore"))
-            )
->>>>>>> 7812549... Changes to TopNEntities, Tests, Tests Data, Handler
-=======
->>>>>>> 497f160... Fixed indentation
     );
     String metadataPayload = "{ \"previous\": { \"USER\": { \"properties\": { \"uk\": \"uv\", \"uk1\": \"uv2\" }, " +
       "\"tags\": [ \"ut1\", \"ut2\" ] }, \"SYSTEM\": { \"properties\": { \"sk\": \"sv\" }, \"tags\": [] } }, " +
@@ -318,42 +223,20 @@ public class TrackerAppTest extends TestBase {
       payload)
     );
     testData.add(new AuditMessage(1456956659471L,
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 497f160... Fixed indentation
       EntityId.fromString("dataset:default.ds1"),
       "user1",
       AuditType.CREATE,
       AuditPayload.EMPTY_PAYLOAD));
-<<<<<<< HEAD
-=======
-            EntityId.fromString("dataset:default.ds1"),
-            "user1",
-            AuditType.CREATE,
-<<<<<<< HEAD
-            new AccessPayload(AccessType.READ, EntityId.fromString("program_run:ns1.app1.flow.flow1.run1"))));
->>>>>>> 7812549... Changes to TopNEntities, Tests, Tests Data, Handler
-=======
-            AuditPayload.EMPTY_PAYLOAD));
->>>>>>> 0e92e89... Rerolled all changes so far and reimplemented topNDataset. topNDataset returns result in the expected format
-=======
->>>>>>> 497f160... Fixed indentation
     testData.add(new AuditMessage(1456956659472L,
       EntityId.fromString("dataset:default.ds1"),
       "user1",
       AuditType.CREATE,
       AuditPayload.EMPTY_PAYLOAD));
     testData.add(new AuditMessage(1456956659473L,
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 497f160... Fixed indentation
       EntityId.fromString("dataset:default.ds6"),
       "user1",
       AuditType.CREATE,
       AuditPayload.EMPTY_PAYLOAD));
-<<<<<<< HEAD
     testData.add(new AuditMessage(1456956659468L,
         NamespaceId.DEFAULT.stream("strm123"),
         "user1",
@@ -418,89 +301,6 @@ public class TrackerAppTest extends TestBase {
           EntityId.fromString("program:ns1.b.SERVICE.program2"))
       )
     );
-=======
-            EntityId.fromString("dataset:default.ds6"),
-            "user1",
-            AuditType.CREATE,
-            AuditPayload.EMPTY_PAYLOAD));
-<<<<<<< HEAD
-    testData.add(new AuditMessage(456956659474L,
-            NamespaceId.DEFAULT.dataset("dset1"),
-            "user1",
-            AuditType.CREATE,
-            new AccessPayload(AccessType.READ, EntityId.fromString("program_run:ns1.app1.flow.flow1.run1"))));
->>>>>>> 7812549... Changes to TopNEntities, Tests, Tests Data, Handler
-=======
-=======
->>>>>>> 497f160... Fixed indentation
-    testData.add(new AuditMessage(1456956659468L,
-        NamespaceId.DEFAULT.stream("strm123"),
-        "user1",
-        AuditType.ACCESS,
-        new AccessPayload(AccessType.READ,
-          EntityId.fromString("program_run:ns1.app1.flow.flow1.run1"))
-      )
-    );
-    testData.add(new AuditMessage(1456956659460L,
-        NamespaceId.DEFAULT.dataset("ds3"),
-        "user4",
-        AuditType.ACCESS,
-        new AccessPayload(AccessType.READ,
-          EntityId.fromString("system_service:explore"))
-      )
-    );
-    testData.add(new AuditMessage(1456956659502L,
-        NamespaceId.DEFAULT.dataset("ds3"),
-        "user4",
-        AuditType.ACCESS,
-        new AccessPayload(AccessType.READ,
-          EntityId.fromString("system_service:explore"))
-      )
-    );
-    testData.add(new AuditMessage(1456956659500L,
-        NamespaceId.DEFAULT.dataset("ds3"),
-        "user4",
-        AuditType.ACCESS,
-        new AccessPayload(AccessType.WRITE,
-          EntityId.fromString("system_service:explore"))
-      )
-    );
-    testData.add(new AuditMessage(1456956659504L,
-        NamespaceId.DEFAULT.dataset("ds3"),
-        "user4",
-        AuditType.ACCESS,
-        new AccessPayload(AccessType.UNKNOWN,
-          EntityId.fromString("system_service:explore"))
-      )
-    );
-<<<<<<< HEAD
->>>>>>> 0e92e89... Rerolled all changes so far and reimplemented topNDataset. topNDataset returns result in the expected format
-=======
-    testData.add(new AuditMessage(1456956659505L,
-        NamespaceId.DEFAULT.dataset("ds3"),
-        "user4",
-        AuditType.ACCESS,
-        new AccessPayload(AccessType.WRITE,
-          EntityId.fromString("program:ns1.b.SERVICE.program1"))
-      )
-    );
-    testData.add(new AuditMessage(1456956659506L,
-        NamespaceId.DEFAULT.dataset("ds1"),
-        "user4",
-        AuditType.ACCESS,
-        new AccessPayload(AccessType.WRITE,
-          EntityId.fromString("program:ns1.a.SERVICE.program2"))
-      )
-    );
-    testData.add(new AuditMessage(1456956659507L,
-        NamespaceId.DEFAULT.dataset("ds1"),
-        "user4",
-        AuditType.ACCESS,
-        new AccessPayload(AccessType.READ,
-          EntityId.fromString("program:ns1.b.SERVICE.program2"))
-      )
-    );
->>>>>>> 2d45a5b... trying to implement apps and programs. hopeless bug -_-
     return testData;
   }
 }
