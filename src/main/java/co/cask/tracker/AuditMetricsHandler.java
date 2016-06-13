@@ -83,7 +83,11 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
       return;
     }
     TopEntitiesResultWrapper result;
+<<<<<<< HEAD
     if (!isDatasetSpecified(entityType, entityName)) {
+=======
+    if (!isDatasetSpecified(entityType,entityName)) {
+>>>>>>> 3402650541149b022e6e9eb3aab4efe683356c59
       result = new TopEntitiesResultWrapper(auditMetricsCube.getTopNPrograms(limit, startTime, endTime));
     } else {
       result = new TopEntitiesResultWrapper(auditMetricsCube.getTopNPrograms(limit, startTime, endTime,
