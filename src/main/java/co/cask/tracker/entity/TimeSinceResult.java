@@ -18,11 +18,14 @@ package co.cask.tracker.entity;
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import co.cask.cdap.proto.audit.AuditType;
 >>>>>>> 0779d97... Some changes to AuditLogTable. Updated tests.
 =======
 >>>>>>> 9d0d1c4... style changes
+=======
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,13 +37,19 @@ import java.util.Map;
 public class TimeSinceResult {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 497f160... Fixed indentation
+=======
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
   private final String namespace;
   private final String entityType;
   private final String entityName;
   private final Map<String, Long> columnValues;
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
 
   public TimeSinceResult(String namespace, String entityType, String entityName) {
     this.namespace = namespace;
@@ -83,6 +92,7 @@ public class TimeSinceResult {
     return result;
   }
 }
+<<<<<<< HEAD
 =======
     private final String namespace;
     private final String entityType;
@@ -136,3 +146,5 @@ public class TimeSinceResult {
 >>>>>>> 0779d97... Some changes to AuditLogTable. Updated tests.
 =======
 >>>>>>> 369a5f2... Fixed TopNDatasets to only query for entity_type = dataset
+=======
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54

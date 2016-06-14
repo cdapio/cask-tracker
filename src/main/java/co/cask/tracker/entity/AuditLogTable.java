@@ -63,6 +63,7 @@ import java.util.UUID;
 
 >>>>>>> 369a5f2... Fixed TopNDatasets to only query for entity_type = dataset
 
+
 /**
  * Creates the key and scan key for storing data in the AuditLog table.
  */
@@ -210,6 +211,7 @@ public final class AuditLogTable extends AbstractDataset {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
   public List<TopEntitiesResult> getTopNPrograms (int topN) {
     List<TopEntitiesResult> list = new ArrayList<>(programs.values());
@@ -233,6 +235,9 @@ public final class AuditLogTable extends AbstractDataset {
 >>>>>>> 7812549... Changes to TopNEntities, Tests, Tests Data, Handler
 
 >>>>>>> 0779d97... Some changes to AuditLogTable. Updated tests.
+=======
+
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
   /**
    * This method generates a unique key to use for the data table.
    * @param namespace the namespace where the entity exists

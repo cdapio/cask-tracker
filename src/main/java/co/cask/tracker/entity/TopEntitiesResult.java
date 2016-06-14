@@ -26,8 +26,11 @@ public class TopEntitiesResult implements Comparable<TopEntitiesResult> {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 497f160... Fixed indentation
+=======
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
   private final Map<String, String> columnValues;
 
   public TopEntitiesResult(String entityName) {
@@ -59,6 +62,7 @@ public class TopEntitiesResult implements Comparable<TopEntitiesResult> {
       + Long.parseLong(o.getColumnValues().get("write"));
     return thatTotal.compareTo(thisTotal);
   }
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
     private final String entityName;
@@ -99,4 +103,6 @@ public class TopEntitiesResult implements Comparable<TopEntitiesResult> {
 >>>>>>> 7812549... Changes to TopNEntities, Tests, Tests Data, Handler
 =======
 >>>>>>> 497f160... Fixed indentation
+=======
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
 }

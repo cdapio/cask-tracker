@@ -42,13 +42,19 @@ public class TrackerApp extends AbstractApplication<TrackerAppConfig> {
     String resolutions = String.format("%s,%s,%s,%s",
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 497f160... Fixed indentation
+=======
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
       TimeUnit.MINUTES.toSeconds(1L),
       TimeUnit.HOURS.toSeconds(1L),
       TimeUnit.DAYS.toSeconds(1L),
       TimeUnit.DAYS.toSeconds(365L));
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
     DatasetProperties prop =  DatasetProperties.builder()
                                      .add("dataset.cube.resolutions", resolutions)
                                      .add("dataset.cube.aggregation.agg1.dimensions",
@@ -56,6 +62,7 @@ public class TrackerApp extends AbstractApplication<TrackerAppConfig> {
                                      .add("dataset.cube.aggregation.agg2.dimensions",
                                           "namespace,entity_type,entity_name,audit_type,program_name,app_name")
                                      .build();
+<<<<<<< HEAD
 =======
             TimeUnit.MINUTES.toSeconds(1L),
             TimeUnit.HOURS.toSeconds(1L),
@@ -84,6 +91,8 @@ public class TrackerApp extends AbstractApplication<TrackerAppConfig> {
                                           "namespace,entity_type,entity_name,audit_type,program_name,app_name")
                                      .build();
 >>>>>>> 3402650... Addressed code review comments
+=======
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
     createDataset(AUDIT_METRICS_DATASET_NAME, AuditMetricsCube.class, prop);
 
     addFlow(new AuditLogFlow(getConfig()));

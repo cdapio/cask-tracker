@@ -41,6 +41,9 @@ public class TestAuditLogPublisherApp extends AbstractApplication {
     createDataset(TrackerApp.AUDIT_METRICS_DATASET_NAME,
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
       AuditMetricsCube.class,
       DatasetProperties.builder()
         .add("dataset.cube.resolutions", resolutions)
@@ -49,6 +52,7 @@ public class TestAuditLogPublisherApp extends AbstractApplication {
         .add("dataset.cube.aggregation.agg2.dimensions",
              "namespace,entity_type,entity_name,audit_type,program_name,app_name")
         .build());
+<<<<<<< HEAD
 =======
             AuditMetricsCube.class,
             DatasetProperties.builder()
@@ -66,6 +70,8 @@ public class TestAuditLogPublisherApp extends AbstractApplication {
              "namespace,entity_type,entity_name,audit_type,program_name,app_name")
         .build());
 >>>>>>> 497f160... Fixed indentation
+=======
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
     addFlow(new StreamToAuditLogFlow());
     addService(new AuditLogService());
     addService(new AuditMetricsService());

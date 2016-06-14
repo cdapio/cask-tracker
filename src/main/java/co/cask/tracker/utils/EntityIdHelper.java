@@ -92,6 +92,41 @@ public class EntityIdHelper {
         break;
       default:
         throw new IOException("Unknown entity type: " + entityType);
+<<<<<<< HEAD
+=======
+    }
+    return name;
+  }
+
+  public static String getApplicationName(EntityId entityId) throws IOException {
+    EntityType entityType = entityId.getEntity();
+    String name;
+    switch (entityType) {
+      case APPLICATION:
+        name = ((ApplicationId) entityId).getApplication();
+        break;
+      case FLOWLET:
+        name = ((FlowletId) entityId).getApplication();
+        break;
+      case FLOWLET_QUEUE:
+        name = ((FlowletQueueId) entityId).getApplication();
+        break;
+      case PROGRAM:
+        name = ((ProgramId) entityId).getApplication();
+        break;
+      case PROGRAM_RUN:
+        name = ((ProgramRunId) entityId).getApplication();
+        break;
+      case SCHEDULE:
+        name = ((ScheduleId) entityId).getApplication();
+        break;
+      default:
+        name = "";
+    }
+    return name;
+
+  }
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
 =======
     public static String getEntityName(EntityId entityId) throws IOException {
         EntityType entityType = entityId.getEntity();
@@ -146,6 +181,7 @@ public class EntityIdHelper {
 >>>>>>> 8640218... Fixed some bugs
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
     return name;
   }
 
@@ -178,6 +214,8 @@ public class EntityIdHelper {
 
   }
 =======
+=======
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
 
     public static String getApplicationName(EntityId entityId) throws IOException {
         EntityType entityType = entityId.getEntity();
@@ -207,6 +245,10 @@ public class EntityIdHelper {
         return name;
 
     }
+<<<<<<< HEAD
 >>>>>>> 2d45a5b... trying to implement apps and programs. hopeless bug -_-
+=======
+>>>>>>> 3402650541149b022e6e9eb3aab4efe683356c59
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
 
 }

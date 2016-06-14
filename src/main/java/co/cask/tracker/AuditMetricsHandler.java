@@ -23,6 +23,7 @@ import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.tracker.entity.AuditMetricsCube;
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import co.cask.tracker.entity.TopEntitiesResultWrapper;
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -37,6 +38,10 @@ import com.google.common.base.Strings;
 =======
 import com.google.common.base.Strings;
 >>>>>>> 497f160... Fixed indentation
+=======
+import co.cask.tracker.entity.TopEntitiesResultWrapper;
+import com.google.common.base.Strings;
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import javax.ws.rs.DefaultValue;
@@ -52,6 +57,9 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
   private AuditMetricsCube auditMetricsCube;
   private String namespace;
 
@@ -100,7 +108,15 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
       return;
     }
     TopEntitiesResultWrapper result;
+<<<<<<< HEAD
     if (!isDatasetSpecified(entityType, entityName)) {
+=======
+<<<<<<< HEAD
+    if (!isDatasetSpecified(entityType, entityName)) {
+=======
+    if (!isDatasetSpecified(entityType,entityName)) {
+>>>>>>> 3402650541149b022e6e9eb3aab4efe683356c59
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
       result = new TopEntitiesResultWrapper(auditMetricsCube.getTopNPrograms(limit, startTime, endTime));
     } else {
       result = new TopEntitiesResultWrapper(auditMetricsCube.getTopNPrograms(limit, startTime, endTime,
@@ -122,6 +138,7 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
     if (!isLimitValid(limit)) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), "limit cannot be negative.");
       return;
+<<<<<<< HEAD
     }
     endTime = setEndTime(endTime);
 
@@ -399,6 +416,9 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), "limit cannot be negative.");
       return;
     }
+=======
+    }
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
     endTime = setEndTime(endTime);
 
     if (!isTimeFrameValid(startTime, endTime)) {
@@ -421,12 +441,15 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
   }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 
 >>>>>>> 2d45a5b... trying to implement apps and programs. hopeless bug -_-
 =======
 >>>>>>> 497f160... Fixed indentation
 =======
+=======
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
 
   private Boolean isTimeFrameValid (long startTime, long endTime) {
       return (startTime < endTime);
@@ -443,5 +466,8 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
     return endTime;
   }
 
+<<<<<<< HEAD
 >>>>>>> 3402650... Addressed code review comments
+=======
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
 }

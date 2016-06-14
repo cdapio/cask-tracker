@@ -23,6 +23,9 @@ import java.util.List;
  */
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
 public class TopEntitiesResultWrapper {
   private final List<TopEntitiesResult> results;
   private final int total;
@@ -45,6 +48,7 @@ public class TopEntitiesResultWrapper {
       result.formatDataByTotal();
     }
   }
+<<<<<<< HEAD
 =======
 public class TopEntitiesResultWrapper  {
     private List<TopEntitiesResult> results;
@@ -85,5 +89,7 @@ public class TopEntitiesResultWrapper {
       result.formatDataByTotal();
     }
   }
+=======
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
 
 }

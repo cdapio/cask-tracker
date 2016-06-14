@@ -36,12 +36,15 @@ import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.TestConfiguration;
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import co.cask.tracker.entity.AuditLogResponse;
 import co.cask.tracker.entity.TopEntitiesResult;
 >>>>>>> 0e92e89... Rerolled all changes so far and reimplemented topNDataset. topNDataset returns result in the expected format
 =======
 >>>>>>> 3402650... Addressed code review comments
+=======
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
 import co.cask.tracker.entity.TopEntitiesResultWrapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
@@ -108,6 +111,7 @@ public class TrackerAppTest extends TestBase {
 
   @Test
   public void testInvalidDatesError() throws Exception {
+<<<<<<< HEAD
     String response = getServiceResponse(auditLogServiceManager,
       "auditlog/stream/stream1?startTime=1&endTime=0",
       HttpResponseStatus.BAD_REQUEST.getCode());
@@ -153,10 +157,33 @@ public class TrackerAppTest extends TestBase {
 >>>>>>> 497f160... Fixed indentation
     TopEntitiesResultWrapper result = GSON.fromJson(response, TopEntitiesResultWrapper.class);
     Assert.assertEquals(4, result.getTotal());
+=======
+    String response = getServiceResponse(auditLogServiceManager,
+      "auditlog/stream/stream1?startTime=1&endTime=0",
+      HttpResponseStatus.BAD_REQUEST.getCode());
+    Assert.assertEquals("\"startTime must be before endTime.\"", response);
+  }
+
+  @Test
+  public void testInvalidOffset() throws Exception {
+    String response = getServiceResponse(auditLogServiceManager,
+      "auditlog/stream/stream1?offset=-1",
+      HttpResponseStatus.BAD_REQUEST.getCode());
+    Assert.assertEquals("\"offset cannot be negative.\"", response);
+  }
+
+  @Test
+  public void testInvalidLimit() throws Exception {
+    String response = getServiceResponse(auditLogServiceManager,
+      "auditlog/stream/stream1?limit=-1",
+      HttpResponseStatus.BAD_REQUEST.getCode());
+    Assert.assertEquals("\"limit cannot be negative.\"", response);
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
   }
 
 
   @Test
+<<<<<<< HEAD
   public void testTopNPrograms() throws Exception {
     String response = getServiceResponse(auditMetricsServiceManager,
       "v1/auditmetrics/topEntities/programs?limit=20",
@@ -189,10 +216,27 @@ public class TrackerAppTest extends TestBase {
       "v1/auditmetrics/topEntities/applications?limit=20",
       HttpResponseStatus.OK.getCode());
 <<<<<<< HEAD
+=======
+  public void testTopNDatasets() throws Exception {
+    String response = getServiceResponse(auditMetricsServiceManager,
+      "v1/auditmetrics/topEntities/datasets?limit=20",
+      HttpResponseStatus.OK.getCode());
     TopEntitiesResultWrapper result = GSON.fromJson(response, TopEntitiesResultWrapper.class);
     Assert.assertEquals(4, result.getTotal());
   }
 
+
+  @Test
+  public void testTopNPrograms() throws Exception {
+    String response = getServiceResponse(auditMetricsServiceManager,
+      "v1/auditmetrics/topEntities/programs?limit=20",
+      HttpResponseStatus.OK.getCode());
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
+    TopEntitiesResultWrapper result = GSON.fromJson(response, TopEntitiesResultWrapper.class);
+    Assert.assertEquals(4, result.getTotal());
+  }
+
+<<<<<<< HEAD
 =======
   public void testTopNPrograms() throws Exception {
     String response = getServiceResponse(auditMetricsServiceManager,
@@ -209,6 +253,16 @@ public class TrackerAppTest extends TestBase {
             HttpResponseStatus.OK.getCode());
     TopEntitiesResult[] results = GSON.fromJson(response, TopEntitiesResult[].class);
     Assert.assertEquals(0, results.length);
+=======
+  @Test
+  public void testTopNApplications() throws Exception {
+    String response = getServiceResponse(auditMetricsServiceManager,
+      "v1/auditmetrics/topEntities/applications?limit=20",
+      HttpResponseStatus.OK.getCode());
+    TopEntitiesResultWrapper result = GSON.fromJson(response, TopEntitiesResultWrapper.class);
+    Assert.assertEquals(4, result.getTotal());
+
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
   }
 >>>>>>> 0779d97... Some changes to AuditLogTable. Updated tests.
 =======
@@ -224,6 +278,7 @@ public class TrackerAppTest extends TestBase {
 
   }
 >>>>>>> 2d45a5b... trying to implement apps and programs. hopeless bug -_-
+
 
 
   private static ApplicationManager deployApplicationWithScalaJar(Class appClass, Config config) {
@@ -264,14 +319,18 @@ public class TrackerAppTest extends TestBase {
     testData.add(new AuditMessage(1456956659461L,
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 497f160... Fixed indentation
+=======
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
         NamespaceId.DEFAULT.stream("stream1"),
         "user1",
         AuditType.ACCESS,
         new AccessPayload(AccessType.WRITE,
           EntityId.fromString("program_run:ns1.app2.flow.flow1.run1"))
       )
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
                     NamespaceId.DEFAULT.stream("stream1"),
@@ -288,12 +347,17 @@ public class TrackerAppTest extends TestBase {
     );
     testData.add(new AuditMessage(1456956659469L,
 >>>>>>> 497f160... Fixed indentation
+=======
+    );
+    testData.add(new AuditMessage(1456956659469L,
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
         NamespaceId.DEFAULT.dataset("ds1"),
         "user1",
         AuditType.ACCESS,
         new AccessPayload(AccessType.WRITE,
           EntityId.fromString("system_service:explore"))
       )
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
                     NamespaceId.DEFAULT.dataset("ds1"),
@@ -305,6 +369,8 @@ public class TrackerAppTest extends TestBase {
 >>>>>>> 7812549... Changes to TopNEntities, Tests, Tests Data, Handler
 =======
 >>>>>>> 497f160... Fixed indentation
+=======
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
     );
     String metadataPayload = "{ \"previous\": { \"USER\": { \"properties\": { \"uk\": \"uv\", \"uk1\": \"uv2\" }, " +
       "\"tags\": [ \"ut1\", \"ut2\" ] }, \"SYSTEM\": { \"properties\": { \"sk\": \"sv\" }, \"tags\": [] } }, " +
@@ -320,12 +386,16 @@ public class TrackerAppTest extends TestBase {
     testData.add(new AuditMessage(1456956659471L,
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 497f160... Fixed indentation
+=======
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
       EntityId.fromString("dataset:default.ds1"),
       "user1",
       AuditType.CREATE,
       AuditPayload.EMPTY_PAYLOAD));
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
             EntityId.fromString("dataset:default.ds1"),
@@ -339,6 +409,8 @@ public class TrackerAppTest extends TestBase {
 >>>>>>> 0e92e89... Rerolled all changes so far and reimplemented topNDataset. topNDataset returns result in the expected format
 =======
 >>>>>>> 497f160... Fixed indentation
+=======
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
     testData.add(new AuditMessage(1456956659472L,
       EntityId.fromString("dataset:default.ds1"),
       "user1",
@@ -347,13 +419,19 @@ public class TrackerAppTest extends TestBase {
     testData.add(new AuditMessage(1456956659473L,
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 497f160... Fixed indentation
+=======
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
       EntityId.fromString("dataset:default.ds6"),
       "user1",
       AuditType.CREATE,
       AuditPayload.EMPTY_PAYLOAD));
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
     testData.add(new AuditMessage(1456956659468L,
         NamespaceId.DEFAULT.stream("strm123"),
         "user1",
@@ -418,6 +496,7 @@ public class TrackerAppTest extends TestBase {
           EntityId.fromString("program:ns1.b.SERVICE.program2"))
       )
     );
+<<<<<<< HEAD
 =======
             EntityId.fromString("dataset:default.ds6"),
             "user1",
@@ -501,6 +580,8 @@ public class TrackerAppTest extends TestBase {
       )
     );
 >>>>>>> 2d45a5b... trying to implement apps and programs. hopeless bug -_-
+=======
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
     return testData;
   }
 }

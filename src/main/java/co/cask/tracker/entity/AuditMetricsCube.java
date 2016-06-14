@@ -53,6 +53,7 @@ import java.util.concurrent.TimeUnit;
 public class AuditMetricsCube extends AbstractDataset {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   private final Cube auditMetrics;
 =======
     private final Cube auditMetrics;
@@ -66,11 +67,16 @@ public class AuditMetricsCube extends AbstractDataset {
   private final Cube auditMetrics;
 >>>>>>> 497f160... Fixed indentation
 
+=======
+  private final Cube auditMetrics;
+
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
   public AuditMetricsCube(DatasetSpecification spec,
                           @EmbeddedDataset("auditMetrics") Cube auditMetrics) {
     super(spec.getName(), auditMetrics);
     this.auditMetrics = auditMetrics;
   }
+<<<<<<< HEAD
 
   /**
    * Updates cube metrics based on information in the audit message
@@ -108,6 +114,25 @@ public class AuditMetricsCube extends AbstractDataset {
 
 =======
 >>>>>>> 497f160... Fixed indentation
+=======
+
+  /**
+   * Updates cube metrics based on information in the audit message
+   * @param auditMessage the message to update the stats for
+   * @throws IOException if for some reason, it cannot find the name of the entity
+   */
+  public void write(AuditMessage auditMessage) throws IOException {
+    EntityId entityId = auditMessage.getEntityId();
+    if (entityId instanceof NamespacedId) {
+      String namespace = ((NamespacedId) entityId).getNamespace();
+      EntityType entityType = entityId.getEntity();
+      String type = entityType.name().toLowerCase();
+      String name = EntityIdHelper.getEntityName(entityId);
+
+      long ts = System.currentTimeMillis() / 1000;
+      CubeFact fact = new CubeFact(ts);
+
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
       fact.addDimensionValue("namespace", namespace);
       fact.addDimensionValue("entity_type", type);
       fact.addDimensionValue("entity_name", name);
@@ -118,6 +143,7 @@ public class AuditMetricsCube extends AbstractDataset {
         String appName = EntityIdHelper.getApplicationName(accessPayload.getAccessor());
         if (appName.length() != 0) {
           fact.addDimensionValue("app_name", appName);
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
     /**
@@ -164,6 +190,8 @@ public class AuditMetricsCube extends AbstractDataset {
 >>>>>>> 0e92e89... Rerolled all changes so far and reimplemented topNDataset. topNDataset returns result in the expected format
 =======
 >>>>>>> 497f160... Fixed indentation
+=======
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
         }
         fact.addDimensionValue("program_name", programName);
 
@@ -172,6 +200,7 @@ public class AuditMetricsCube extends AbstractDataset {
       fact.addMeasurement("count", MeasureType.COUNTER, 1L);
 
       auditMetrics.add(fact);
+<<<<<<< HEAD
     }
   }
 
@@ -203,6 +232,11 @@ public class AuditMetricsCube extends AbstractDataset {
 <<<<<<< HEAD
 =======
 >>>>>>> 497f160... Fixed indentation
+=======
+    }
+  }
+
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
   /**
    * Returns the top N datasets with the most audit messages
    *
@@ -215,6 +249,7 @@ public class AuditMetricsCube extends AbstractDataset {
       .measurement(AccessType.WRITE.name().toLowerCase(), AggregationFunction.SUM)
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
       .from()
 =======
       .from("agg2")
@@ -222,6 +257,9 @@ public class AuditMetricsCube extends AbstractDataset {
 =======
       .from()
 >>>>>>> 3402650... Addressed code review comments
+=======
+      .from()
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
       .resolution(TimeUnit.DAYS.toSeconds(365L), TimeUnit.SECONDS)
       .where()
       .dimension("entity_type", EntityType.DATASET.name().toLowerCase())
@@ -231,6 +269,7 @@ public class AuditMetricsCube extends AbstractDataset {
       .dimension("entity_name")
       .limit(1000)
       .build();
+<<<<<<< HEAD
 
     CubeQuery streamQuery = CubeQuery.builder()
       .select()
@@ -381,6 +420,36 @@ public class AuditMetricsCube extends AbstractDataset {
   }
 
 <<<<<<< HEAD
+=======
+
+    CubeQuery streamQuery = CubeQuery.builder()
+      .select()
+      .measurement(AccessType.READ.name().toLowerCase(), AggregationFunction.SUM)
+      .measurement(AccessType.WRITE.name().toLowerCase(), AggregationFunction.SUM)
+      .from()
+      .resolution(TimeUnit.DAYS.toSeconds(365L), TimeUnit.SECONDS)
+      .where()
+      .dimension("entity_type", EntityType.STREAM.name().toLowerCase())
+      .dimension("audit_type", AuditType.ACCESS.name().toLowerCase())
+      .timeRange(startTime, endTime)
+      .groupBy()
+      .dimension("entity_name")
+      .limit(1000)
+      .build();
+
+    try {
+      Map<String, TopEntitiesResult> auditStats = transformTopNDatasetResult(auditMetrics.query(datasetQuery),
+        new HashMap<String, TopEntitiesResult>());
+      auditStats = transformTopNDatasetResult(auditMetrics.query(streamQuery), auditStats);
+      List<TopEntitiesResult> resultList = new ArrayList<>(auditStats.values());
+      Collections.sort(resultList);
+      return (topN >= resultList.size()) ? resultList : resultList.subList(0, topN);
+    } catch (IllegalArgumentException e) {
+      return new ArrayList<>();
+    }
+  }
+
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
   private Map<String, TopEntitiesResult> transformTopNDatasetResult(Collection<TimeSeries> results,
                                                                     Map<String, TopEntitiesResult> resultsMap) {
     for (TimeSeries t : results) {
@@ -394,16 +463,20 @@ public class AuditMetricsCube extends AbstractDataset {
     return resultsMap;
   }
 
+<<<<<<< HEAD
 =======
     return resultsMap;
   }
 
 >>>>>>> 497f160... Fixed indentation
+=======
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
   public List<TopEntitiesResult> getTopNPrograms(int topN, long startTime, long endTime) {
     CubeQuery programQuery = CubeQuery.builder()
       .select()
       .measurement(AccessType.READ.name().toLowerCase(), AggregationFunction.SUM)
       .measurement(AccessType.WRITE.name().toLowerCase(), AggregationFunction.SUM)
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
       .from()
@@ -413,6 +486,9 @@ public class AuditMetricsCube extends AbstractDataset {
 =======
       .from()
 >>>>>>> 3402650... Addressed code review comments
+=======
+      .from()
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
       .resolution(TimeUnit.DAYS.toSeconds(365L), TimeUnit.SECONDS)
       .where()
       .dimension("audit_type", AuditType.ACCESS.name().toLowerCase())
@@ -429,6 +505,9 @@ public class AuditMetricsCube extends AbstractDataset {
     } catch (IllegalArgumentException e) {
       return new ArrayList<>();
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
     }
   }
 
@@ -457,6 +536,7 @@ public class AuditMetricsCube extends AbstractDataset {
       return (topN >= resultList.size()) ? resultList : resultList.subList(0, topN);
     } catch (IllegalArgumentException e) {
       return new ArrayList<>();
+<<<<<<< HEAD
 =======
         List<TopEntitiesResult> auditStats = transformTopNApplicationResult(results);
         return (topN >= auditStats.size()) ? auditStats : auditStats.subList(0, topN);
@@ -474,6 +554,11 @@ public class AuditMetricsCube extends AbstractDataset {
   }
 
 <<<<<<< HEAD
+=======
+    }
+  }
+
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
   private Map<String, TopEntitiesResult> transformTopNProgramResult(Collection<TimeSeries> results) {
     HashMap<String, TopEntitiesResult> resultsMap = new HashMap<>();
     for (TimeSeries t : results) {
@@ -557,6 +642,7 @@ public class AuditMetricsCube extends AbstractDataset {
       }
       resultsMap.get(appName).addAccessType(t.getMeasureName(),
         String.valueOf(t.getTimeValues().get(0).getValue()));
+<<<<<<< HEAD
     }
     return resultsMap;
   }
@@ -799,4 +885,9 @@ public class AuditMetricsCube extends AbstractDataset {
     return resultsMap;
   }
 >>>>>>> 497f160... Fixed indentation
+=======
+    }
+    return resultsMap;
+  }
+>>>>>>> 3810a387ec0e4d686a2fbb96e88d2e638bc31e54
 }
