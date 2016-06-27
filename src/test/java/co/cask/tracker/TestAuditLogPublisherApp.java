@@ -52,7 +52,6 @@ public class TestAuditLogPublisherApp extends AbstractApplication {
     createDataset(TrackerApp.ENTITY_LATEST_TIMESTAMP_DATASET_NAME, EntityLatestTimestampTable.class);
     createDataset(TrackerApp.AUDIT_TAGS_DATASET_NAME, AuditTagsTable.class);
     addFlow(new StreamToAuditLogFlow());
-    addService(new AuditLogService());
     addService(new TrackerService());
   }
 }

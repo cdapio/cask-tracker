@@ -70,7 +70,6 @@ public class TrackerAppTest extends TestBase {
           .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
           .create();
   private static ApplicationManager testAppManager;
-  private static ServiceManager auditLogServiceManager;
   private static ServiceManager trackerServiceManager;
 
   private static final Type DATASET_LIST = new TypeToken<List<TopDatasetsResult>>() { }.getType();
@@ -88,9 +87,6 @@ public class TrackerAppTest extends TestBase {
     testAppManager = deployApplication(TestAuditLogPublisherApp.class);
     FlowManager testFlowManager = testAppManager.getFlowManager(StreamToAuditLogFlow.FLOW_NAME).start();
     testFlowManager.waitForStatus(true);
-
-    auditLogServiceManager = testAppManager.getServiceManager(AuditLogService.SERVICE_NAME).start();
-    auditLogServiceManager.waitForStatus(true);
 
     trackerServiceManager = testAppManager.getServiceManager(TrackerService.SERVICE_NAME).start();
     trackerServiceManager.waitForStatus(true);
@@ -113,7 +109,7 @@ public class TrackerAppTest extends TestBase {
 
   @Test
   public void testInvalidDatesError() throws Exception {
-    String response = getServiceResponse(auditLogServiceManager,
+    String response = getServiceResponse(trackerServiceManager,
             "auditlog/stream/stream1?startTime=1&endTime=0",
             HttpResponseStatus.BAD_REQUEST.getCode());
     Assert.assertEquals("\"startTime must be before endTime.\"", response);
@@ -121,7 +117,7 @@ public class TrackerAppTest extends TestBase {
 
   @Test
   public void testInvalidOffset() throws Exception {
-    String response = getServiceResponse(auditLogServiceManager,
+    String response = getServiceResponse(trackerServiceManager,
                                          "auditlog/stream/stream1?offset=-1",
             HttpResponseStatus.BAD_REQUEST.getCode());
     Assert.assertEquals("\"offset cannot be negative.\"", response);
@@ -129,7 +125,7 @@ public class TrackerAppTest extends TestBase {
 
   @Test
   public void testInvalidLimit() throws Exception {
-    String response = getServiceResponse(auditLogServiceManager,
+    String response = getServiceResponse(trackerServiceManager,
                                          "auditlog/stream/stream1?limit=-1",
             HttpResponseStatus.BAD_REQUEST.getCode());
     Assert.assertEquals("\"limit cannot be negative.\"", response);

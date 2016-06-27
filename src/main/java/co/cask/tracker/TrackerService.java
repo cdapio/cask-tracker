@@ -18,15 +18,18 @@ package co.cask.tracker;
 import co.cask.cdap.api.service.AbstractService;
 
 /**
- * A service for accessing the Audit Metrics data through a RESTful API.
+ * A service for accessing the Audit Log data through a RESTful API.
  */
 public class TrackerService extends AbstractService {
-  public static final String SERVICE_NAME = "TrackerService";
+  public static final String SERVICE_NAME = "Tracker";
 
   @Override
   protected void configure() {
     setName(SERVICE_NAME);
-    setDescription("A service that exposes Tracker features as an API");
-    addHandler(new TrackerHandler());
+    setDescription("A service that exposes the Tracker features as an API.");
+    addHandler(new AuditLogHandler());
+    addHandler(new AuditMetricsHandler());
+    addHandler(new AuditTagsHandler());
   }
 }
+
