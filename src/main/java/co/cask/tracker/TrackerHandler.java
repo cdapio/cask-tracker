@@ -34,8 +34,6 @@ import com.google.gson.GsonBuilder;
 
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
-
-
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -77,7 +75,6 @@ public final class TrackerHandler extends AbstractHttpServiceHandler {
     auditMetricsCube = context.getDataset(TrackerApp.AUDIT_METRICS_DATASET_NAME);
     auditTagsTable = context.getDataset(TrackerApp.AUDIT_TAGS_DATASET_NAME);
     entityLatestTimestampTable = context.getDataset(TrackerApp.ENTITY_LATEST_TIMESTAMP_DATASET_NAME);
-
   }
 
   @Path("v1/auditmetrics/top-entities/{entity-name}")
@@ -94,13 +91,11 @@ public final class TrackerHandler extends AbstractHttpServiceHandler {
       return;
     }
     endTime = setEndTime(endTime);
-
     if (!isTimeFrameValid(startTime, endTime)) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST.getCode(), STARTTIME_GREATER_THAN_ENDTIME,
                            StandardCharsets.UTF_8);
       return;
     }
-
     switch (topEntity) {
       case "applications":
         List<TopApplicationsResult> appResult;
