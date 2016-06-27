@@ -85,7 +85,7 @@ public final class AuditTagsTable extends AbstractDataset {
       while ((row = scanner.next()) != null) {
         String tag = Bytes.toString(row.getRow());
         if (tag.startsWith(prefix)) {
-          tagMap.put(tag, Integer.parseInt(new String(row.get(TOTAL_ENTITIES))));
+          tagMap.put(tag, row.getInt(TOTAL_ENTITIES));
         }
       }
     } finally {

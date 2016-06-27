@@ -192,12 +192,14 @@ public class TrackerAppTest extends TestBase {
   */
   @Test
   public void testAddPreferredTags() throws Exception {
-    String response = getServiceResponse(trackerServiceManager, "v1/tags/promote", "POST", HttpResponseStatus.OK.getCode());
+    String response = getServiceResponse(trackerServiceManager, "v1/tags/promote",
+                                         "POST", HttpResponseStatus.OK.getCode());
   }
 
   @Test
   public void testValidate() throws Exception {
-    String response = getServiceResponse(trackerServiceManager, "v1/tags/validate", "POST", HttpResponseStatus.OK.getCode());
+    String response = getServiceResponse(trackerServiceManager, "v1/tags/validate",
+                                         "POST", HttpResponseStatus.OK.getCode());
     ValidateTagsResult result = GSON.fromJson(response, ValidateTagsResult.class);
     Assert.assertEquals(3, result.getValid());
     Assert.assertEquals(1, result.getInvalid());
@@ -205,8 +207,8 @@ public class TrackerAppTest extends TestBase {
 
   @Test
   public void testGetTags() throws Exception {
-    getServiceResponse(auditLogServiceManager, "v1/tags/promote", "POST", HttpResponseStatus.OK.getCode());
-    String response = getServiceResponse(auditLogServiceManager, "v1/tags", HttpResponseStatus.OK.getCode());
+    getServiceResponse(trackerServiceManager, "v1/tags/promote", "POST", HttpResponseStatus.OK.getCode());
+    String response = getServiceResponse(trackerServiceManager, "v1/tags", HttpResponseStatus.OK.getCode());
     TagsResult result = GSON.fromJson(response, TagsResult.class);
     Assert.assertEquals(4, result.getPreferred());
   }
@@ -225,6 +227,7 @@ public class TrackerAppTest extends TestBase {
     getServiceResponse(trackerServiceManager, "v1/tags/demote", "POST", HttpResponseStatus.OK.getCode());
   }
 
+  // Request is GET by default
   private String getServiceResponse(ServiceManager serviceManager,
                                     String request,
                                     int expectedResponseCode) throws Exception {
@@ -246,12 +249,14 @@ public class TrackerAppTest extends TestBase {
     return response;
   }
 
+  // Overload (String Type). For requests other than GET.
   private String getServiceResponse(ServiceManager serviceManager,
                                     String request, String type,
                                     int expectedResponseCode) throws Exception {
     URL url = new URL(serviceManager.getServiceURL(), request);
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
     connection.setRequestMethod(type);
+    //Feed JSON data if POST
     if (type.equals("POST")) {
       connection.setDoOutput(true);
       connection.getOutputStream().write(TEST_JSON_TAGS.getBytes());

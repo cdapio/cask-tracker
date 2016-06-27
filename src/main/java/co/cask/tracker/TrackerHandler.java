@@ -51,7 +51,7 @@ import javax.ws.rs.QueryParam;
 
 
 /**
- * This class handles requests to the AuditLog API.
+ * This class handles requests to the Tracker services API
  */
 public final class TrackerHandler extends AbstractHttpServiceHandler {
   private AuditMetricsCube auditMetricsCube;
@@ -59,14 +59,16 @@ public final class TrackerHandler extends AbstractHttpServiceHandler {
   private EntityLatestTimestampTable entityLatestTimestampTable;
   private String namespace;
 
+  private static final Gson GSON = new GsonBuilder().create();
+  private static final Type STRING_LIST = new TypeToken<List<String>>() { }.getType();
+
   // Error messages
   private static final String LIMIT_INVALID_MESSAGE = "Limit cannot be negative or zero.";
   private static final String STARTTIME_GREATER_THAN_ENDTIME = "Start time cannot be greater than end time.";
   private static final String SPECIFY_ENTITY_NAME_AND_TYPE = "Entity Name and Entity Type must be specified.";
   private static final String INVALID_TOP_ENTITY_REQUEST = "Invalid request for top entities: path not recognized";
-
-  private static final Gson GSON = new GsonBuilder().create();
-  private static final Type STRING_LIST = new TypeToken<List<String>>() { }.getType();
+  private static final String NO_TAGS_RECEIVED = "No Tags Received";
+  private static final String INVALID_TYPE_PARAMETER = "Invalid parameter for 'type' query";
 
   @Override
   public void initialize(HttpServiceContext context) throws Exception {
@@ -186,7 +188,7 @@ public final class TrackerHandler extends AbstractHttpServiceHandler {
   public void demoteTag(HttpServiceRequest request, HttpServiceResponder responder) {
     ByteBuffer requestContents = request.getContent();
     if (requestContents == null) {
-      responder.sendError(HttpResponseStatus.BAD_REQUEST.getCode(), "No Tags Received");
+      responder.sendError(HttpResponseStatus.BAD_REQUEST.getCode(), NO_TAGS_RECEIVED);
       return;
     }
     String tags = StandardCharsets.UTF_8.decode(requestContents).toString();
@@ -210,7 +212,7 @@ public final class TrackerHandler extends AbstractHttpServiceHandler {
   public void addPreferredTags(HttpServiceRequest request, HttpServiceResponder responder) {
     ByteBuffer requestContents = request.getContent();
     if (requestContents == null) {
-      responder.sendError(HttpResponseStatus.BAD_REQUEST.getCode(), "No Tags Received");
+      responder.sendError(HttpResponseStatus.BAD_REQUEST.getCode(), NO_TAGS_RECEIVED);
       return;
     }
 
@@ -225,7 +227,7 @@ public final class TrackerHandler extends AbstractHttpServiceHandler {
   public void validateTags(HttpServiceRequest request, HttpServiceResponder responder) {
     ByteBuffer requestContents = request.getContent();
     if (requestContents == null) {
-      responder.sendError(HttpResponseStatus.BAD_REQUEST.getCode(), "No Tags Received");
+      responder.sendError(HttpResponseStatus.BAD_REQUEST.getCode(), NO_TAGS_RECEIVED);
       return;
     }
     String tags = StandardCharsets.UTF_8.decode(requestContents).toString();
@@ -245,7 +247,7 @@ public final class TrackerHandler extends AbstractHttpServiceHandler {
     } else if (type.equals("default")) {
       responder.sendJson(HttpResponseStatus.OK.getCode(), auditTagsTable.getTags(prefix));
     } else {
-      responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), "Invalid parameter for 'type'");
+      responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), INVALID_TYPE_PARAMETER);
     }
   }
 
