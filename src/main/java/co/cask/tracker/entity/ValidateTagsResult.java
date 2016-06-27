@@ -21,7 +21,6 @@ import java.util.List;
 /**
  *  A POJO to hold the result of the validate tags request
  */
-
 public final class ValidateTagsResult {
 
   private final int valid;

@@ -24,14 +24,12 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 
-
 import com.google.common.base.CharMatcher;
 
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
 
 /**
  *  Table dataset holding the preferred and the user tags

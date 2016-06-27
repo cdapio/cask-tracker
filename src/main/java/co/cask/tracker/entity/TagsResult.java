@@ -27,7 +27,6 @@ import java.util.Map.Entry;
 /**
  *  A POJO to hold the result of the get tags request
  */
-
 public final class TagsResult {
 
   private int preferred;

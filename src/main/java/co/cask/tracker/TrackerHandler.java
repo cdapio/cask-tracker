@@ -47,7 +47,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 
-
 /**
  * This class handles requests to the Tracker services API
  */
