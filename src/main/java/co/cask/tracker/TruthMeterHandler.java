@@ -21,6 +21,8 @@ import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.tracker.entity.AuditMetricsCube;
 
+import co.cask.tracker.entity.EntityLatestTimestampTable;
+import co.cask.tracker.entity.TimeSinceResult;
 import co.cask.tracker.entity.TruthMeterResult;
 
 import java.util.HashMap;
@@ -38,27 +40,34 @@ import javax.ws.rs.QueryParam;
 public final class TruthMeterHandler extends AbstractHttpServiceHandler {
 
   private AuditMetricsCube auditMetricsCube;
-
+  private EntityLatestTimestampTable eltTable;
+  private String namespace;
   @Override
   public void initialize(HttpServiceContext context) throws Exception {
     super.initialize(context);
+    namespace = context.getNamespace();
     auditMetricsCube = context.getDataset(TrackerApp.AUDIT_METRICS_DATASET_NAME);
+    eltTable = context.getDataset(TrackerApp.ENTITY_LATEST_TIMESTAMP_DATASET_NAME);
   }
 
   @Path("v1/truth-meter/{entity-type}")
   @GET
   public void TruthValue(HttpServiceRequest request, HttpServiceResponder responder,
                             @PathParam("entity-type") String entityType,
-                            @QueryParam("entityName") List<String> entityName) {
-    Map<String, Integer> values = new HashMap<>();
-    for (String entity : entityName) {
-      values.put(entity, getTruthValue(entity, entityType));
-    }
-    TruthMeterResult result = new TruthMeterResult(entityType, values);
-    responder.sendJson(result);
+                            @QueryParam("entityName") List<String> entityNameList) {
+    responder.sendJson(new TruthMeterResult(entityType, getTruthValueMap(entityType, entityNameList)));
   }
 
-  private int getTruthValue(String entityName, String entityType) {
-    return 0;
+  private Map<String, Integer> getTruthValueMap(String entityType, List<String> entityNameList) {
+    long totalProgramsCount = auditMetricsCube.getTotalProgramsCount(namespace);
+    long totalActivity = auditMetricsCube.getTotalActivity(namespace) - totalProgramsCount;
+
+    for (String entityName : entityNameList) {
+      long programsCount = auditMetricsCube.getTotalProgramsCount(namespace, entityType, entityName);
+      long activity = auditMetricsCube.getTotalActivity(namespace, entityType, entityName) - programsCount;
+      TimeSinceResult timeSinceResult = eltTable.read(namespace, entityType, entityName);
+      long timeSinceRead = timeSinceResult.getTimeSinceEvents().get("read");
+    }
+    return new HashMap<>();
   }
 }

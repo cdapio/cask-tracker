@@ -349,6 +349,114 @@ public class AuditMetricsCube extends AbstractDataset {
       return new AuditHistogramResult(resolution.name(), timeValueList);
   }
 
+  public long getTotalProgramsCount(String namespace) {
+    CubeQuery query = CubeQuery.builder()
+      .select()
+      .measurement(AccessType.WRITE.name().toLowerCase(), AggregationFunction.SUM)
+      .measurement(AccessType.READ.name().toLowerCase(), AggregationFunction.SUM)
+      .from()
+      .resolution(TimeUnit.DAYS.toSeconds(365L), TimeUnit.SECONDS)
+      .where()
+      .dimension("namespace", namespace)
+      .dimension("audit_type", AuditType.ACCESS.name().toLowerCase())
+      .timeRange(0L, System.currentTimeMillis() / 1000 )
+      .groupBy()
+      .dimension("program_name")
+      .dimension("program_type")
+      .limit(1000)
+      .build();
+
+    Collection<TimeSeries> results = auditMetrics.query(query);
+    HashMap<String, Integer> uniquePrograms = new HashMap<>();
+    for (TimeSeries t : results) {
+      uniquePrograms.put(getKey(t.getDimensionValues().get("program_name"), t.getDimensionValues().get("program_type")),
+                         0);
+    }
+    return uniquePrograms.size();
+  }
+
+  public long getTotalProgramsCount(String namespace, String entityType, String entityName) {
+    CubeQuery query = CubeQuery.builder()
+      .select()
+      .measurement(AccessType.WRITE.name().toLowerCase(), AggregationFunction.SUM)
+      .measurement(AccessType.READ.name().toLowerCase(), AggregationFunction.SUM)
+      .from()
+      .resolution(TimeUnit.DAYS.toSeconds(365L), TimeUnit.SECONDS)
+      .where()
+      .dimension("namespace", namespace)
+      .dimension("entity_type", entityType)
+      .dimension("entity_name", entityName)
+      .dimension("audit_type", AuditType.ACCESS.name().toLowerCase())
+      .timeRange(0L, System.currentTimeMillis() / 1000 )
+      .groupBy()
+      .dimension("program_name")
+      .dimension("program_type")
+      .limit(1000)
+      .build();
+
+    Collection<TimeSeries> results = auditMetrics.query(query);
+    HashMap<String, Integer> uniquePrograms = new HashMap<>();
+    for (TimeSeries t : results) {
+      uniquePrograms.put(getKey(t.getDimensionValues().get("program_name"), t.getDimensionValues().get("program_type")),
+                         0);
+    }
+    return uniquePrograms.size();
+  }
+
+  public long getTotalActivity(String namespace) {
+    CubeQuery query = CubeQuery.builder()
+      .select()
+      .measurement("count", AggregationFunction.SUM)
+      .from()
+      .resolution(TimeUnit.DAYS.toSeconds(365L), TimeUnit.SECONDS)
+      .where()
+      .dimension("namespace", namespace)
+      .timeRange(0L, System.currentTimeMillis() / 1000 )
+      .limit(1000)
+      .build();
+
+    Collection<TimeSeries> results = auditMetrics.query(query);
+    // Single measurement queried; Aggregated for the 1st 365 days
+    return results.iterator().next().getTimeValues().get(0).getValue();
+  }
+
+  public long getTotalActivity(String namespace, String entityType, String entityName) {
+    CubeQuery query = CubeQuery.builder()
+      .select()
+      .measurement("count", AggregationFunction.SUM)
+      .from()
+      .resolution(TimeUnit.DAYS.toSeconds(365L), TimeUnit.SECONDS)
+      .where()
+      .dimension("namespace", namespace)
+      .dimension("entity_type", entityType)
+      .dimension("entity_name", entityName)
+      .timeRange(0L, System.currentTimeMillis() / 1000 )
+      .limit(1000)
+      .build();
+
+    Collection<TimeSeries> results = auditMetrics.query(query);
+    // Single measurement queried; Aggregated for the 1st 365 days
+    return results.iterator().next().getTimeValues().get(0).getValue();
+  }
+
+  public int getTotalEntity(String namespace, String entityType) {
+    CubeQuery query = CubeQuery.builder()
+      .select()
+      .measurement("count", AggregationFunction.SUM)
+      .from()
+      .resolution(TimeUnit.DAYS.toSeconds(365L), TimeUnit.SECONDS)
+      .where()
+      .dimension("namespace", namespace)
+      .dimension("entity_type", entityType)
+      .timeRange(0L, System.currentTimeMillis() / 1000 )
+      .groupBy()
+      .dimension("entity_name")
+      .limit(1000)
+      .build();
+
+    return auditMetrics.query(query).size();
+  }
+
   // This will be updated if we change how we select resolution.
   private Bucket getResolutionBucket(long startTime, long endTime) {
     if ((endTime - startTime) > TimeUnit.DAYS.toSeconds(7L)) {
