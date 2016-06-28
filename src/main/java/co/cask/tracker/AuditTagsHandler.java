@@ -44,6 +44,7 @@ import javax.ws.rs.QueryParam;
 public final class AuditTagsHandler extends AbstractHttpServiceHandler {
   private AuditTagsTable auditTagsTable;
 
+
   private static final Gson GSON = new GsonBuilder().create();
   private static final Type STRING_LIST = new TypeToken<List<String>>() { }.getType();
 
