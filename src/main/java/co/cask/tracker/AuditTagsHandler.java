@@ -19,8 +19,12 @@ import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import co.cask.cdap.client.MetadataClient;
 import co.cask.cdap.internal.guava.reflect.TypeToken;
+import co.cask.cdap.proto.Id;
 import co.cask.tracker.entity.AuditTagsTable;
+import co.cask.tracker.entity.ValidateTagsResult;
+import co.cask.tracker.utils.DiscoveryMetadataClient;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -43,13 +47,14 @@ import javax.ws.rs.QueryParam;
  */
 public final class AuditTagsHandler extends AbstractHttpServiceHandler {
   private AuditTagsTable auditTagsTable;
-
+  private DiscoveryMetadataClient disClient = new DiscoveryMetadataClient();
   private static final Gson GSON = new GsonBuilder().create();
   private static final Type STRING_LIST = new TypeToken<List<String>>() { }.getType();
 
   // Error messages
   private static final String NO_TAGS_RECEIVED = "No Tags Received";
   private static final String INVALID_TYPE_PARAMETER = "Invalid parameter for 'type' query";
+  private static final String DELETE_TAGS_WITH_ENTITIES = "Not able to delete preferred tags with entities";
 
   @Override
   public void initialize(HttpServiceContext context) throws Exception {
@@ -73,11 +78,16 @@ public final class AuditTagsHandler extends AbstractHttpServiceHandler {
   @Path("v1/tags/preferred")
   @DELETE
   public void deleteTagsWithoutEntities(HttpServiceRequest request, HttpServiceResponder responder,
-                                        @QueryParam("tag") String tag) {
-    if (auditTagsTable.deleteTag(tag)) {
-      responder.sendStatus(HttpResponseStatus.OK.getCode());
-    } else {
-      responder.sendStatus(HttpResponseStatus.BAD_REQUEST.getCode());
+                                        @QueryParam("tag") String tag) throws Exception {
+    int num = disClient.getEntityNum(tag, Id.Namespace.from(getContext().getNamespace()));
+    if (num!= 0) {
+      if (auditTagsTable.deleteTag(tag)) {
+        responder.sendStatus(HttpResponseStatus.OK.getCode());
+      } else {
+        responder.sendStatus(HttpResponseStatus.BAD_REQUEST.getCode());
+      }
+    }else {
+      responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), DELETE_TAGS_WITH_ENTITIES);
     }
   }
 
@@ -89,10 +99,10 @@ public final class AuditTagsHandler extends AbstractHttpServiceHandler {
       responder.sendError(HttpResponseStatus.BAD_REQUEST.getCode(), NO_TAGS_RECEIVED);
       return;
     }
-
     String tags = StandardCharsets.UTF_8.decode(requestContents).toString();
     List<String> tagsList = GSON.fromJson(tags, STRING_LIST);
-    auditTagsTable.addPreferredTags(tagsList);
+    List<String> validlist = auditTagsTable.validateTags(tagsList).getValidTags();
+    auditTagsTable.addPreferredTags(validlist);
     responder.sendStatus(HttpResponseStatus.OK.getCode());
   }
 
@@ -113,13 +123,13 @@ public final class AuditTagsHandler extends AbstractHttpServiceHandler {
   @GET
   public void getTags(HttpServiceRequest request, HttpServiceResponder responder,
                       @QueryParam("type") @DefaultValue("default") String type,
-                      @QueryParam("prefix") @DefaultValue("") String prefix) {
+                      @QueryParam("prefix") @DefaultValue("") String prefix) throws Exception {
     if (type.equals("user")) {
-      responder.sendJson(HttpResponseStatus.OK.getCode(), auditTagsTable.getUserTags(prefix));
+      responder.sendJson(HttpResponseStatus.OK.getCode(), auditTagsTable.getUserTags(prefix, Id.Namespace.from(getContext().getNamespace())));
     } else if (type.equals("preferred")) {
-      responder.sendJson(HttpResponseStatus.OK.getCode(), auditTagsTable.getPreferredTags(prefix));
+      responder.sendJson(HttpResponseStatus.OK.getCode(), auditTagsTable.getPreferredTags(prefix,Id.Namespace.from(getContext().getNamespace())));
     } else if (type.equals("default")) {
-      responder.sendJson(HttpResponseStatus.OK.getCode(), auditTagsTable.getTags(prefix));
+      responder.sendJson(HttpResponseStatus.OK.getCode(), auditTagsTable.getTags(prefix, Id.Namespace.from(getContext().getNamespace())));
     } else {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), INVALID_TYPE_PARAMETER);
     }

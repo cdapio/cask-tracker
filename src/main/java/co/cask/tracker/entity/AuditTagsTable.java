@@ -24,10 +24,13 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 
+import co.cask.cdap.proto.Id;
+import co.cask.tracker.utils.DiscoveryMetadataClient;
 import com.google.common.base.CharMatcher;
 
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Set;
 import java.util.List;
 import java.util.Map;
 
@@ -37,10 +40,11 @@ import java.util.Map;
 public final class AuditTagsTable extends AbstractDataset {
 
   private final Table preferredTagsTable;
-  private final Table userTagsTable;
+//  private final Table userTagsTable;
   private static final byte[] TOTAL_ENTITIES = Bytes.toBytes("total_entities");
   private static final byte[] DEFAULT_TOTAL_ENTITIES = Bytes.toBytes(0);
   private static final int MAX_TAG_LENGTH = 50;
+  private final DiscoveryMetadataClient disClient = new DiscoveryMetadataClient();
 
   private static final CharMatcher TAG_MATCHER = CharMatcher.inRange('A', 'Z')
     .or(CharMatcher.inRange('a', 'z'))
@@ -52,30 +56,38 @@ public final class AuditTagsTable extends AbstractDataset {
                         @EmbeddedDataset("userTagsTable") Table userTagsTable) {
     super(spec.getName(), preferredTagsTable, userTagsTable);
     this.preferredTagsTable = preferredTagsTable;
-    this.userTagsTable = userTagsTable;
+//    this.userTagsTable = userTagsTable;
   }
 
-  public TagsResult getUserTags(String prefix) {
+  public TagsResult getUserTags(String prefix, Id.Namespace namespace) throws Exception{
     Map<String, Integer> tagMap = new HashMap<>();
-    Scanner scanner = userTagsTable.scan(null, null);
-    try {
-      Row row;
-      while ((row = scanner.next()) != null) {
-        String tag = Bytes.toString(row.getRow());
-        if (tag.startsWith(prefix)) {
-          tagMap.put(tag, 0);
+    Set<String> userSet = disClient.GetTags(namespace);
+    for (String usertag : userSet){
+      if(preferredTagsTable.get(usertag.getBytes()).isEmpty()){
+        if(usertag.toLowerCase().startsWith(prefix.toLowerCase())) {
+          tagMap.put(usertag, 0);
         }
       }
-    } finally {
-      scanner.close();
     }
+//    Scanner scanner = userTagsTable.scan(null, null);
+//    try {
+//      Row row;
+//      while ((row = scanner.next()) != null) {
+//        String tag = Bytes.toString(row.getRow());
+//        if (tag.startsWith(prefix)) {
+//          tagMap.put(tag, 0);
+//        }
+//      }
+//    } finally {
+//      scanner.close();
+//    }
     TagsResult result = new TagsResult();
     result.setUser(tagMap.size());
     result.setUserTags(tagMap);
     return result;
   }
 
-  public TagsResult getPreferredTags(String prefix) {
+  public TagsResult getPreferredTags(String prefix, Id.Namespace namespace) throws Exception {
     Map<String, Integer> tagMap = new HashMap<>();
     Scanner scanner = preferredTagsTable.scan(null, null);
     try {
@@ -83,7 +95,8 @@ public final class AuditTagsTable extends AbstractDataset {
       while ((row = scanner.next()) != null) {
         String tag = Bytes.toString(row.getRow());
         if (tag.startsWith(prefix)) {
-          tagMap.put(tag, row.getInt(TOTAL_ENTITIES));
+//          tagMap.put(tag, row.getInt(TOTAL_ENTITIES));
+          tagMap.put(tag, disClient.getEntityNum(prefix, namespace));
         }
       }
     } finally {
@@ -95,9 +108,9 @@ public final class AuditTagsTable extends AbstractDataset {
     return result;
   }
 
-  public TagsResult getTags(String prefix) {
-    TagsResult userResult = getUserTags(prefix);
-    TagsResult preferredResult = getPreferredTags(prefix);
+  public TagsResult getTags(String prefix, Id.Namespace namespace) throws Exception {
+    TagsResult userResult = getUserTags(prefix, namespace);
+    TagsResult preferredResult = getPreferredTags(prefix, namespace);
     preferredResult.setUser(userResult.getUser());
     preferredResult.setUserTags(userResult.getUserTags());
     return preferredResult;
@@ -109,7 +122,7 @@ public final class AuditTagsTable extends AbstractDataset {
     for (String tag : tagList) {
       Row row = preferredTagsTable.get(tag.getBytes());
       if (!row.isEmpty()) {
-        userTagsTable.put(tag.getBytes(), TOTAL_ENTITIES, DEFAULT_TOTAL_ENTITIES);
+//        userTagsTable.put(tag.getBytes(), TOTAL_ENTITIES, DEFAULT_TOTAL_ENTITIES);
         preferredTagsTable.delete(tag.getBytes());
         valid.add(tag);
       } else {
@@ -129,20 +142,21 @@ public final class AuditTagsTable extends AbstractDataset {
 
   public void addPreferredTags(List<String> tagList) {
     for (String tag : tagList) {
-      if (!userTagsTable.get(tag.getBytes()).isEmpty()) {
-        userTagsTable.delete(tag.getBytes());
-      }
+
+//      if (!userTagsTable.get(tag.getBytes()).isEmpty()) {
+//        userTagsTable.delete(tag.getBytes());
+//      }
       preferredTagsTable.put(tag.getBytes(), TOTAL_ENTITIES, DEFAULT_TOTAL_ENTITIES);
     }
   }
 
-  public boolean addUserTag(String tag) {
-    if (preferredTagsTable.get(tag.getBytes()).isEmpty()) {
-      userTagsTable.put(tag.getBytes(), TOTAL_ENTITIES, DEFAULT_TOTAL_ENTITIES);
-      return true;
-    }
-    return false;
-  }
+//  public boolean addUserTag(String tag) {
+//    if (preferredTagsTable.get(tag.getBytes()).isEmpty()) {
+//      userTagsTable.put(tag.getBytes(), TOTAL_ENTITIES, DEFAULT_TOTAL_ENTITIES);
+//      return true;
+//    }
+//    return false;
+//  }
 
   public ValidateTagsResult validateTags (List<String> tagList) {
     List<String> validList = new LinkedList<>();
