@@ -26,7 +26,6 @@ import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Id.Namespace;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
@@ -64,16 +63,9 @@ public class DiscoveryMetadataClient {
   }
 
   public int getEntityNum(String tag, Namespace namespace) throws NotFoundException,IOException, UnauthenticatedException, BadRequestException{
-    int cnt = 0;
     Set<MetadataSearchResultRecord> metadataSet=
-      mdc.searchMetadata(namespace, "*", ImmutableSet.<MetadataSearchTargetType>of());
-    for (MetadataSearchResultRecord mdsr: metadataSet){
-      Set<String> set = mdc.getTags(mdsr.getEntityId());
-      if (set.contains(tag)){
-        cnt++;
-      }
-    }
-    return cnt;
+      mdc.searchMetadata(namespace, tag, ImmutableSet.<MetadataSearchTargetType>of());
+    return metadataSet.size();
   }
 
 }

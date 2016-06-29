@@ -65,7 +65,7 @@ public final class AuditTagsTable extends AbstractDataset {
     for (String usertag : userSet){
       if(preferredTagsTable.get(usertag.getBytes()).isEmpty()){
         if(usertag.toLowerCase().startsWith(prefix.toLowerCase())) {
-          tagMap.put(usertag, 0);
+          tagMap.put(usertag, disClient.getEntityNum(usertag, namespace));
         }
       }
     }
