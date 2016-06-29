@@ -30,6 +30,7 @@ public class TrackerService extends AbstractService {
     addHandler(new AuditLogHandler());
     addHandler(new AuditMetricsHandler());
     addHandler(new AuditTagsHandler());
+    addHandler(new TruthMeterHandler());
   }
 }
 

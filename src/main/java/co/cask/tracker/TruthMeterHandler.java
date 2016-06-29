@@ -19,29 +19,38 @@ import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import co.cask.cdap.internal.guava.reflect.TypeToken;
 import co.cask.tracker.entity.AuditMetricsCube;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import co.cask.tracker.entity.EntityLatestTimestampTable;
 import co.cask.tracker.entity.TimeSinceResult;
-import co.cask.tracker.entity.TruthMeterResult;
+  import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
+import java.lang.reflect.Type;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
 
 /**
- * This class handles requests to the Tracker services API
+ * This class handles requests to the Tracker TruthMeter API
  */
 public final class TruthMeterHandler extends AbstractHttpServiceHandler {
 
   private AuditMetricsCube auditMetricsCube;
   private EntityLatestTimestampTable eltTable;
   private String namespace;
+
+  private static final Type STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Gson GSON = new GsonBuilder().create();
+  // Err
+  private static String NO_INPUT_RECEIVED = "Empty Request Body Received";
+
   @Override
   public void initialize(HttpServiceContext context) throws Exception {
     super.initialize(context);
@@ -50,22 +59,29 @@ public final class TruthMeterHandler extends AbstractHttpServiceHandler {
     eltTable = context.getDataset(TrackerApp.ENTITY_LATEST_TIMESTAMP_DATASET_NAME);
   }
 
-  @Path("v1/truth-meter/{entity-type}")
-  @GET
-  public void TruthValue(HttpServiceRequest request, HttpServiceResponder responder,
-                            @PathParam("entity-type") String entityType,
-                            @QueryParam("entityName") List<String> entityNameList) {
-    responder.sendJson(new TruthMeterResult(entityType, getTruthValueMap(entityType, entityNameList)));
+  @Path("v1/truth-meter")
+  @POST
+  public void TruthValue(HttpServiceRequest request, HttpServiceResponder responder) {
+
+    ByteBuffer requestContents = request.getContent();
+    if (requestContents == null) {
+      responder.sendError(HttpResponseStatus.BAD_REQUEST.getCode(), NO_INPUT_RECEIVED);
+      return;
+    }
+    String tags = StandardCharsets.UTF_8.decode(requestContents).toString();
+    Map<String, String> requestMap = GSON.fromJson(tags, STRING_MAP);
+    responder.sendJson(getTruthValueMap(requestMap));
+
   }
 
-  private Map<String, Integer> getTruthValueMap(String entityType, List<String> entityNameList) {
+  private Map<String, Integer> getTruthValueMap(Map<String, String> requestMap) {
     long totalProgramsCount = auditMetricsCube.getTotalProgramsCount(namespace);
     long totalActivity = auditMetricsCube.getTotalActivity(namespace) - totalProgramsCount;
 
-    for (String entityName : entityNameList) {
-      long programsCount = auditMetricsCube.getTotalProgramsCount(namespace, entityType, entityName);
-      long activity = auditMetricsCube.getTotalActivity(namespace, entityType, entityName) - programsCount;
-      TimeSinceResult timeSinceResult = eltTable.read(namespace, entityType, entityName);
+    for (Map.Entry<String, String> entry : requestMap.entrySet()) {
+      long programsCount = auditMetricsCube.getTotalProgramsCount(namespace, entry.getKey(), entry.getValue());
+      long activity = auditMetricsCube.getTotalActivity(namespace, entry.getKey(), entry.getValue()) - programsCount;
+      TimeSinceResult timeSinceResult = eltTable.read(namespace, entry.getKey(), entry.getValue());
       long timeSinceRead = timeSinceResult.getTimeSinceEvents().get("read");
     }
     return new HashMap<>();
