@@ -21,6 +21,7 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 
 import co.cask.cdap.proto.Id.Namespace;
+import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 
@@ -56,7 +57,7 @@ public class DiscoveryMetadataClient {
           mdc.searchMetadata(namespace, "*", ImmutableSet.<MetadataSearchTargetType>of());
     Set<String> tagSet = new HashSet<>();
     for (MetadataSearchResultRecord mdsr: metadataSet) {
-        Set<String> set = mdc.getTags(mdsr.getEntityId());
+        Set<String> set = mdc.getTags(mdsr.getEntityId(), MetadataScope.USER);
         tagSet.addAll(set);
     }
     return tagSet;
