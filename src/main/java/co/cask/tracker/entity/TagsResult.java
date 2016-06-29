@@ -86,7 +86,11 @@ public final class TagsResult {
     Collections.sort(list, new Comparator<Entry<String, Integer>>() {
       @Override
       public int compare(Entry<String, Integer> o1, Entry<String, Integer> o2) {
-        return o2.getValue().compareTo(o1.getValue());
+        int comp = o2.getValue().compareTo(o1.getValue());
+        if (comp == 0) {
+          return o1.getKey().toLowerCase().compareTo(o2.getKey().toLowerCase());
+        }
+        return comp;
       }
     });
 
