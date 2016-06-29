@@ -23,16 +23,17 @@ import co.cask.cdap.api.dataset.module.EmbeddedDataset;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
-
 import co.cask.cdap.proto.Id;
 import co.cask.tracker.utils.DiscoveryMetadataClient;
+
 import com.google.common.base.CharMatcher;
 
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Set;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
 
 /**
  *  Table dataset holding the preferred and the user tags
@@ -59,12 +60,12 @@ public final class AuditTagsTable extends AbstractDataset {
 //    this.userTagsTable = userTagsTable;
   }
 
-  public TagsResult getUserTags(String prefix, Id.Namespace namespace) throws Exception{
+  public TagsResult getUserTags(String prefix, Id.Namespace namespace) throws Exception {
     Map<String, Integer> tagMap = new HashMap<>();
-    Set<String> userSet = disClient.GetTags(namespace);
-    for (String usertag : userSet){
-      if(preferredTagsTable.get(usertag.getBytes()).isEmpty()){
-        if(usertag.toLowerCase().startsWith(prefix.toLowerCase())) {
+    Set<String> userSet = disClient.getTags(namespace);
+    for (String usertag : userSet) {
+      if (preferredTagsTable.get(usertag.getBytes()).isEmpty()) {
+        if (usertag.toLowerCase().startsWith(prefix.toLowerCase())) {
           tagMap.put(usertag, disClient.getEntityNum(usertag, namespace));
         }
       }

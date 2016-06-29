@@ -14,22 +14,22 @@
  * the License.
  */
 package co.cask.tracker.utils;
+
+
 import co.cask.cdap.client.MetadataClient;
-
-
-import java.io.IOException;
-import java.util.Set;
-import java.util.HashSet;
-
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
-import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.UnauthenticatedException;
+
 import co.cask.cdap.proto.Id.Namespace;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
+
 import com.google.common.collect.ImmutableSet;
+
+import java.util.HashSet;
+import java.util.Set;
+
+
 
 
 
@@ -40,7 +40,7 @@ import com.google.common.collect.ImmutableSet;
  */
 public class DiscoveryMetadataClient {
   private MetadataClient mdc;
-  private MetadataClient default_mdc;
+  private MetadataClient defaultMdc;
   public DiscoveryMetadataClient() {
     ConnectionConfig connectionConfig = ConnectionConfig.builder()
       .setHostname("127.0.0.1")
@@ -48,22 +48,22 @@ public class DiscoveryMetadataClient {
       .build();
     ClientConfig config = ClientConfig.builder().setConnectionConfig(connectionConfig).build();
     this.mdc = new MetadataClient(config);
-    this.default_mdc = new MetadataClient(ClientConfig.getDefault());
+    this.defaultMdc = new MetadataClient(ClientConfig.getDefault());
   }
 
-  public Set<String> GetTags(Namespace namespace) throws NotFoundException,IOException, UnauthenticatedException, BadRequestException {
-    Set<MetadataSearchResultRecord> metadataSet=
+  public Set<String> getTags(Namespace namespace) throws Exception {
+    Set<MetadataSearchResultRecord> metadataSet =
           mdc.searchMetadata(namespace, "*", ImmutableSet.<MetadataSearchTargetType>of());
     Set<String> tagSet = new HashSet<>();
-    for (MetadataSearchResultRecord mdsr: metadataSet){
+    for (MetadataSearchResultRecord mdsr: metadataSet) {
         Set<String> set = mdc.getTags(mdsr.getEntityId());
         tagSet.addAll(set);
     }
     return tagSet;
   }
 
-  public int getEntityNum(String tag, Namespace namespace) throws NotFoundException,IOException, UnauthenticatedException, BadRequestException{
-    Set<MetadataSearchResultRecord> metadataSet=
+  public int getEntityNum(String tag, Namespace namespace) throws Exception {
+    Set<MetadataSearchResultRecord> metadataSet =
       mdc.searchMetadata(namespace, tag, ImmutableSet.<MetadataSearchTargetType>of());
     return metadataSet.size();
   }
