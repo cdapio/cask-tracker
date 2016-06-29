@@ -19,6 +19,7 @@ package co.cask.tracker.entity;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -85,11 +86,15 @@ public final class TagsResult {
     Collections.sort(list, new Comparator<Entry<String, Integer>>() {
       @Override
       public int compare(Entry<String, Integer> o1, Entry<String, Integer> o2) {
-        return o2.getValue().compareTo(o1.getValue());
+        int comp = o2.getValue().compareTo(o1.getValue());
+        if (comp == 0) {
+          return o1.getKey().toLowerCase().compareTo(o2.getKey().toLowerCase());
+        }
+        return comp;
       }
     });
 
-    Map<String, Integer> sortedMap = new HashMap<>();
+    Map<String, Integer> sortedMap = new LinkedHashMap<>();
     for (Entry<String, Integer> entry : list) {
       sortedMap.put(entry.getKey(), entry.getValue());
     }
