@@ -90,15 +90,16 @@ public final class TruthMeterHandler extends AbstractHttpServiceHandler {
                                                  totalActivity, totalProgramsCount));
   }
 
-  private Map<String, Integer> truthValueHelper(List<String> entityNameList, String entityType, long totalActivity, long totalProgramsCount) {
+  private Map<String, Integer> truthValueHelper(List<String> entityNameList, String entityType,
+                                                long totalActivity, long totalProgramsCount) {
     Map<String, Integer> resultMap = new HashMap<>();
     for (String entityName : entityNameList) {
       long datasetActivity = auditMetricsCube.getTotalActivity(namespace, entityType, entityName);
       long datasetProgramCount = auditMetricsCube.getTotalProgramsCount(namespace, entityType, entityName);
       long timeSinceLastRead = eltTable.read(namespace, entityType, entityName).getTimeSinceEvents().get("read");
 
-      int logScore = (int) (datasetActivity/totalActivity) * 100;
-      int programScore = (int) (datasetProgramCount/totalProgramsCount) * 100;
+      int logScore = (int) (datasetActivity / totalActivity) * 100;
+      int programScore = (int) (datasetProgramCount / totalProgramsCount) * 100;
       int score = 0; //Some magical function
       resultMap.put(entityName, score);
       // Check if there has ever been a read
