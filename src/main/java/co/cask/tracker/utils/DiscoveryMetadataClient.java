@@ -30,18 +30,14 @@ import com.google.common.collect.ImmutableSet;
 import java.util.HashSet;
 import java.util.Set;
 
-
-
-
-
-
-
 /**
  * extends MetadataClient to interact with CDAP Metadata
  */
 public class DiscoveryMetadataClient {
+
   private MetadataClient mdc;
   private MetadataClient defaultMdc;
+
   public DiscoveryMetadataClient() {
     ConnectionConfig connectionConfig = ConnectionConfig.builder()
       .setHostname("127.0.0.1")

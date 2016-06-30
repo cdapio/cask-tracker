@@ -359,7 +359,7 @@ public class AuditMetricsCube extends AbstractDataset {
       .where()
       .dimension("namespace", namespace)
       .dimension("audit_type", AuditType.ACCESS.name().toLowerCase())
-      .timeRange(0L, System.currentTimeMillis() / 1000 )
+      .timeRange(0L, System.currentTimeMillis() / 1000)
       .groupBy()
       .dimension("program_name")
       .dimension("program_type")
@@ -387,7 +387,7 @@ public class AuditMetricsCube extends AbstractDataset {
       .dimension("entity_type", entityType)
       .dimension("entity_name", entityName)
       .dimension("audit_type", AuditType.ACCESS.name().toLowerCase())
-      .timeRange(0L, System.currentTimeMillis() / 1000 )
+      .timeRange(0L, System.currentTimeMillis() / 1000)
       .groupBy()
       .dimension("program_name")
       .dimension("program_type")
@@ -411,7 +411,7 @@ public class AuditMetricsCube extends AbstractDataset {
       .resolution(TimeUnit.DAYS.toSeconds(365L), TimeUnit.SECONDS)
       .where()
       .dimension("namespace", namespace)
-      .timeRange(0L, System.currentTimeMillis() / 1000 )
+      .timeRange(0L, System.currentTimeMillis() / 1000)
       .limit(1000)
       .build();
 
@@ -430,7 +430,7 @@ public class AuditMetricsCube extends AbstractDataset {
       .dimension("namespace", namespace)
       .dimension("entity_type", entityType)
       .dimension("entity_name", entityName)
-      .timeRange(0L, System.currentTimeMillis() / 1000 )
+      .timeRange(0L, System.currentTimeMillis() / 1000)
       .limit(1000)
       .build();
 
@@ -448,7 +448,7 @@ public class AuditMetricsCube extends AbstractDataset {
       .where()
       .dimension("namespace", namespace)
       .dimension("entity_type", entityType)
-      .timeRange(0L, System.currentTimeMillis() / 1000 )
+      .timeRange(0L, System.currentTimeMillis() / 1000)
       .groupBy()
       .dimension("entity_name")
       .limit(1000)

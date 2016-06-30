@@ -21,17 +21,19 @@ import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.internal.guava.reflect.TypeToken;
 import co.cask.tracker.entity.AuditMetricsCube;
+import co.cask.tracker.entity.EntityLatestTimestampTable;
+import co.cask.tracker.entity.TimeSinceResult;
+import co.cask.tracker.entity.TruthMeterRequest;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import co.cask.tracker.entity.EntityLatestTimestampTable;
-import co.cask.tracker.entity.TimeSinceResult;
-  import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.POST;
@@ -49,7 +51,7 @@ public final class TruthMeterHandler extends AbstractHttpServiceHandler {
   private static final Type STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
   private static final Gson GSON = new GsonBuilder().create();
   // Err
-  private static String NO_INPUT_RECEIVED = "Empty Request Body Received";
+  private static final String NO_INPUT_RECEIVED = "Empty Request Body Received";
 
   @Override
   public void initialize(HttpServiceContext context) throws Exception {
@@ -61,7 +63,7 @@ public final class TruthMeterHandler extends AbstractHttpServiceHandler {
 
   @Path("v1/truth-meter")
   @POST
-  public void TruthValue(HttpServiceRequest request, HttpServiceResponder responder) {
+  public void truthValue(HttpServiceRequest request, HttpServiceResponder responder) {
 
     ByteBuffer requestContents = request.getContent();
     if (requestContents == null) {
@@ -69,21 +71,32 @@ public final class TruthMeterHandler extends AbstractHttpServiceHandler {
       return;
     }
     String tags = StandardCharsets.UTF_8.decode(requestContents).toString();
-    Map<String, String> requestMap = GSON.fromJson(tags, STRING_MAP);
-    responder.sendJson(getTruthValueMap(requestMap));
+    TruthMeterRequest truthMeterRequest = GSON.fromJson(tags, TruthMeterRequest.class);
+    responder.sendJson(getTruthValueMap(truthMeterRequest));
 
   }
 
-  private Map<String, Integer> getTruthValueMap(Map<String, String> requestMap) {
+  private Map<String, Integer> getTruthValueMap(TruthMeterRequest truthMeterRequest) {
+    List<String> datasets = truthMeterRequest.getDatasets();
+    List<String> streams = truthMeterRequest.getStreams();
+
     long totalProgramsCount = auditMetricsCube.getTotalProgramsCount(namespace);
     long totalActivity = auditMetricsCube.getTotalActivity(namespace) - totalProgramsCount;
 
-    for (Map.Entry<String, String> entry : requestMap.entrySet()) {
-      long programsCount = auditMetricsCube.getTotalProgramsCount(namespace, entry.getKey(), entry.getValue());
-      long activity = auditMetricsCube.getTotalActivity(namespace, entry.getKey(), entry.getValue()) - programsCount;
-      TimeSinceResult timeSinceResult = eltTable.read(namespace, entry.getKey(), entry.getValue());
-      long timeSinceRead = timeSinceResult.getTimeSinceEvents().get("read");
+    for (String datasetName : datasets) {
+      long datasetActivity = auditMetricsCube.getTotalActivity(namespace, "dataset", datasetName);
+      long datasetProgramCount = auditMetricsCube.getTotalProgramsCount(namespace, "dataset", datasetName);
+      long timeSinceLastRead = eltTable.read(namespace, "dataset", datasetName).getTimeSinceEvents().get("read");
+      // Check if there has ever been a read
     }
+
+    for (String streamName : streams) {
+      long streamActivity = auditMetricsCube.getTotalActivity(namespace, "dataset", streamName);
+      long streamProgramCount = auditMetricsCube.getTotalProgramsCount(namespace, "dataset", streamName);
+      long timeSinceLastRead = eltTable.read(namespace, "dataset", streamName).getTimeSinceEvents().get("read");
+      // Check if there has ever been a read
+    }
+
     return new HashMap<>();
   }
 }
