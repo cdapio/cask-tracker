@@ -20,10 +20,12 @@ import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.internal.guava.reflect.TypeToken;
+import co.cask.cdap.proto.element.EntityType;
 import co.cask.tracker.entity.AuditMetricsCube;
 import co.cask.tracker.entity.EntityLatestTimestampTable;
 import co.cask.tracker.entity.TimeSinceResult;
 import co.cask.tracker.entity.TruthMeterRequest;
+import co.cask.tracker.entity.TruthMeterResult;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -48,7 +50,6 @@ public final class TruthMeterHandler extends AbstractHttpServiceHandler {
   private EntityLatestTimestampTable eltTable;
   private String namespace;
 
-  private static final Type STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
   private static final Gson GSON = new GsonBuilder().create();
   // Err
   private static final String NO_INPUT_RECEIVED = "Empty Request Body Received";
@@ -76,27 +77,30 @@ public final class TruthMeterHandler extends AbstractHttpServiceHandler {
 
   }
 
-  private Map<String, Integer> getTruthValueMap(TruthMeterRequest truthMeterRequest) {
+  private TruthMeterResult getTruthValueMap(TruthMeterRequest truthMeterRequest) {
     List<String> datasets = truthMeterRequest.getDatasets();
     List<String> streams = truthMeterRequest.getStreams();
 
     long totalProgramsCount = auditMetricsCube.getTotalProgramsCount(namespace);
     long totalActivity = auditMetricsCube.getTotalActivity(namespace) - totalProgramsCount;
 
-    for (String datasetName : datasets) {
-      long datasetActivity = auditMetricsCube.getTotalActivity(namespace, "dataset", datasetName);
-      long datasetProgramCount = auditMetricsCube.getTotalProgramsCount(namespace, "dataset", datasetName);
-      long timeSinceLastRead = eltTable.read(namespace, "dataset", datasetName).getTimeSinceEvents().get("read");
+    return new TruthMeterResult(truthMeterHelper(datasets, EntityType.DATASET.name().toLowerCase(), totalActivity, totalProgramsCount),
+                                truthMeterHelper(streams, EntityType.STREAM.name().toLowerCase(), totalActivity, totalProgramsCount));
+  }
+
+  private Map<String, Integer> truthMeterHelper(List<String> entityNameList, String entityType, long totalActivity, long totalProgramsCount) {
+    Map<String, Integer> resultMap = new HashMap<>();
+    for (String entityName : entityNameList) {
+      long datasetActivity = auditMetricsCube.getTotalActivity(namespace, entityType, entityName);
+      long datasetProgramCount = auditMetricsCube.getTotalProgramsCount(namespace, entityType, entityName);
+      long timeSinceLastRead = eltTable.read(namespace, entityType, entityName).getTimeSinceEvents().get("read");
+
+      int logScore = (int) (datasetActivity/totalActivity) * 100;
+      int programScore = (int) (datasetProgramCount/totalProgramsCount) * 100;
+      int score = 0; //Some magical function
+      resultMap.put(entityName, score);
       // Check if there has ever been a read
     }
-
-    for (String streamName : streams) {
-      long streamActivity = auditMetricsCube.getTotalActivity(namespace, "dataset", streamName);
-      long streamProgramCount = auditMetricsCube.getTotalProgramsCount(namespace, "dataset", streamName);
-      long timeSinceLastRead = eltTable.read(namespace, "dataset", streamName).getTimeSinceEvents().get("read");
-      // Check if there has ever been a read
-    }
-
-    return new HashMap<>();
+    return resultMap;
   }
 }
