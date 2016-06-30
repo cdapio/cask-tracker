@@ -13,20 +13,21 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.tracker;
 
-import co.cask.cdap.api.service.AbstractService;
+package co.cask.tracker.entity;
+
+import java.util.Map;
 
 /**
- * A service for accessing the Audit Metrics data through a RESTful API.
+ *  A POJO to hold the result for Truth Meter
  */
-public class AuditMetricsService extends AbstractService {
-  public static final String SERVICE_NAME = "AuditMetrics";
+public final class TruthMeterResult {
 
-  @Override
-  protected void configure() {
-    setName(SERVICE_NAME);
-    setDescription("A service that exposes the Tracker audit metrics as an API.");
-    addHandler(new AuditMetricsHandler());
+  private final Map<String, Integer> datasets;
+  private final Map<String, Integer> streams;
+
+  public TruthMeterResult(Map<String, Integer> datasets, Map<String, Integer> streams) {
+    this.datasets = datasets;
+    this.streams = streams;
   }
 }

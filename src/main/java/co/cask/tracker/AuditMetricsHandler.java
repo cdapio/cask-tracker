@@ -26,6 +26,7 @@ import co.cask.tracker.entity.TimeSinceResult;
 import co.cask.tracker.entity.TopApplicationsResult;
 import co.cask.tracker.entity.TopProgramsResult;
 import com.google.common.base.Strings;
+
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.nio.charset.StandardCharsets;
@@ -37,9 +38,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 
-
 /**
- * This class handles requests to the AuditLog API.
+ * This class handles requests to the Tracker services API
  */
 public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
   private AuditMetricsCube auditMetricsCube;
@@ -58,7 +58,6 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
     namespace = context.getNamespace();
     auditMetricsCube = context.getDataset(TrackerApp.AUDIT_METRICS_DATASET_NAME);
     entityLatestTimestampTable = context.getDataset(TrackerApp.ENTITY_LATEST_TIMESTAMP_DATASET_NAME);
-
   }
 
   @Path("v1/auditmetrics/top-entities/{entity-name}")
@@ -75,13 +74,11 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
       return;
     }
     endTime = setEndTime(endTime);
-
     if (!isTimeFrameValid(startTime, endTime)) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST.getCode(), STARTTIME_GREATER_THAN_ENDTIME,
                            StandardCharsets.UTF_8);
       return;
     }
-
     switch (topEntity) {
       case "applications":
         List<TopApplicationsResult> appResult;
@@ -140,7 +137,6 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
     responder.sendJson(result);
   }
 
-
   private boolean isLimitValid (int limit) {
     return (limit > 0);
   }
@@ -160,5 +156,4 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
     }
     return endTime;
   }
-
 }
