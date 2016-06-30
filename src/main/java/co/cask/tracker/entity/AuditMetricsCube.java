@@ -439,24 +439,6 @@ public class AuditMetricsCube extends AbstractDataset {
     return results.iterator().next().getTimeValues().get(0).getValue();
   }
 
-  public int getTotalEntity(String namespace, String entityType) {
-    CubeQuery query = CubeQuery.builder()
-      .select()
-      .measurement("count", AggregationFunction.SUM)
-      .from()
-      .resolution(TimeUnit.DAYS.toSeconds(365L), TimeUnit.SECONDS)
-      .where()
-      .dimension("namespace", namespace)
-      .dimension("entity_type", entityType)
-      .timeRange(0L, System.currentTimeMillis() / 1000)
-      .groupBy()
-      .dimension("entity_name")
-      .limit(1000)
-      .build();
-
-    return auditMetrics.query(query).size();
-  }
-
   // This will be updated if we change how we select resolution.
   private Bucket getResolutionBucket(long startTime, long endTime) {
     if ((endTime - startTime) > TimeUnit.DAYS.toSeconds(7L)) {

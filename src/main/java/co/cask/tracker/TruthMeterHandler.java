@@ -84,11 +84,13 @@ public final class TruthMeterHandler extends AbstractHttpServiceHandler {
     long totalProgramsCount = auditMetricsCube.getTotalProgramsCount(namespace);
     long totalActivity = auditMetricsCube.getTotalActivity(namespace) - totalProgramsCount;
 
-    return new TruthMeterResult(truthMeterHelper(datasets, EntityType.DATASET.name().toLowerCase(), totalActivity, totalProgramsCount),
-                                truthMeterHelper(streams, EntityType.STREAM.name().toLowerCase(), totalActivity, totalProgramsCount));
+    return new TruthMeterResult(truthValueHelper(datasets, EntityType.DATASET.name().toLowerCase(),
+                                                 totalActivity, totalProgramsCount),
+                                truthValueHelper(streams, EntityType.STREAM.name().toLowerCase(),
+                                                 totalActivity, totalProgramsCount));
   }
 
-  private Map<String, Integer> truthMeterHelper(List<String> entityNameList, String entityType, long totalActivity, long totalProgramsCount) {
+  private Map<String, Integer> truthValueHelper(List<String> entityNameList, String entityType, long totalActivity, long totalProgramsCount) {
     Map<String, Integer> resultMap = new HashMap<>();
     for (String entityName : entityNameList) {
       long datasetActivity = auditMetricsCube.getTotalActivity(namespace, entityType, entityName);
