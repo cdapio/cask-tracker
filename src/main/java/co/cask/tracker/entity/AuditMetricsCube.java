@@ -349,6 +349,7 @@ public class AuditMetricsCube extends AbstractDataset {
       return new AuditHistogramResult(resolution.name(), timeValueList);
   }
 
+  // Total number of unique programs
   public long getTotalProgramsCount(String namespace) {
     CubeQuery query = CubeQuery.builder()
       .select()
@@ -375,6 +376,7 @@ public class AuditMetricsCube extends AbstractDataset {
     return uniquePrograms.size();
   }
 
+  // Total number of unique programs for a given entityName and entityType
   public long getTotalProgramsCount(String namespace, String entityType, String entityName) {
     CubeQuery query = CubeQuery.builder()
       .select()
@@ -403,6 +405,7 @@ public class AuditMetricsCube extends AbstractDataset {
     return uniquePrograms.size();
   }
 
+  // Total Audit log messages
   public long getTotalActivity(String namespace) {
     CubeQuery query = CubeQuery.builder()
       .select()
@@ -420,6 +423,7 @@ public class AuditMetricsCube extends AbstractDataset {
     return results.iterator().next().getTimeValues().get(0).getValue();
   }
 
+  // Total Audit log messages for a given entityName and entityType
   public long getTotalActivity(String namespace, String entityType, String entityName) {
     CubeQuery query = CubeQuery.builder()
       .select()
@@ -437,6 +441,24 @@ public class AuditMetricsCube extends AbstractDataset {
     Collection<TimeSeries> results = auditMetrics.query(query);
     // Single measurement queried; Aggregated for the 1st 365 days
     return results.iterator().next().getTimeValues().get(0).getValue();
+  }
+
+  // Total number of entites for a given type. Ex : Total number of different datasets
+  public int getTotalEntities(String namespace, String entityType) {
+    CubeQuery query = CubeQuery.builder()
+      .select()
+      .measurement("count", AggregationFunction.SUM)
+      .from()
+      .resolution(TimeUnit.DAYS.toSeconds(365L), TimeUnit.SECONDS)
+      .where()
+      .dimension("namespace", namespace)
+      .dimension("entity_type", entityType)
+      .timeRange(0L, System.currentTimeMillis() / 1000)
+      .limit(1000)
+      .build();
+
+    Collection<TimeSeries> result = auditMetrics.query(query);
+    return result.size();
   }
 
   // This will be updated if we change how we select resolution.
