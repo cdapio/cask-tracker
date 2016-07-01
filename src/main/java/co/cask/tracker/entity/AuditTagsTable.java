@@ -23,11 +23,15 @@ import co.cask.cdap.api.dataset.module.EmbeddedDataset;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
 import co.cask.tracker.utils.DiscoveryMetadataClient;
 
 import com.google.common.base.CharMatcher;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -41,7 +45,7 @@ import java.util.Set;
 public final class AuditTagsTable extends AbstractDataset {
 
   private final Table preferredTagsTable;
-//  private final Table userTagsTable;
+  //  private final Table userTagsTable;
   private static final byte[] TOTAL_ENTITIES = Bytes.toBytes("total_entities");
   private static final byte[] DEFAULT_TOTAL_ENTITIES = Bytes.toBytes(0);
   private static final int MAX_TAG_LENGTH = 50;
@@ -60,7 +64,8 @@ public final class AuditTagsTable extends AbstractDataset {
 //    this.userTagsTable = userTagsTable;
   }
 
-  public TagsResult getUserTags(String prefix, Id.Namespace namespace) throws Exception {
+  public TagsResult getUserTags(String prefix, Id.Namespace namespace) throws IOException, UnauthenticatedException,
+    NotFoundException, BadRequestException{
     Map<String, Integer> tagMap = new HashMap<>();
     Set<String> userSet = disClient.getTags(namespace);
     for (String usertag : userSet) {
@@ -70,34 +75,23 @@ public final class AuditTagsTable extends AbstractDataset {
         }
       }
     }
-//    Scanner scanner = userTagsTable.scan(null, null);
-//    try {
-//      Row row;
-//      while ((row = scanner.next()) != null) {
-//        String tag = Bytes.toString(row.getRow());
-//        if (tag.startsWith(prefix)) {
-//          tagMap.put(tag, 0);
-//        }
-//      }
-//    } finally {
-//      scanner.close();
-//    }
     TagsResult result = new TagsResult();
     result.setUser(tagMap.size());
     result.setUserTags(tagMap);
     return result;
   }
 
-  public TagsResult getPreferredTags(String prefix, Id.Namespace namespace) throws Exception {
+  public TagsResult getPreferredTags(String prefix, Id.Namespace namespace) throws IOException, NotFoundException,
+    UnauthenticatedException, BadRequestException {
     Map<String, Integer> tagMap = new HashMap<>();
     Scanner scanner = preferredTagsTable.scan(null, null);
     try {
       Row row;
       while ((row = scanner.next()) != null) {
         String tag = Bytes.toString(row.getRow());
-        if (tag.startsWith(prefix)) {
+        if (tag.toLowerCase().startsWith(prefix.toLowerCase())) {
 //          tagMap.put(tag, row.getInt(TOTAL_ENTITIES));
-          tagMap.put(tag, disClient.getEntityNum(prefix, namespace));
+          tagMap.put(tag, disClient.getEntityNum(tag, namespace));
         }
       }
     } finally {
@@ -109,7 +103,20 @@ public final class AuditTagsTable extends AbstractDataset {
     return result;
   }
 
-  public TagsResult getTags(String prefix, Id.Namespace namespace) throws Exception {
+  public void deleteAll(){
+    Scanner scanner = preferredTagsTable.scan(null, null);
+    try {
+      Row row;
+      while ((row = scanner.next()) != null) {
+        preferredTagsTable.delete(row.getRow());
+      }
+    } finally {
+      scanner.close();
+    }
+  }
+
+  public TagsResult getTags(String prefix, Id.Namespace namespace) throws IOException, NotFoundException,
+    UnauthenticatedException, BadRequestException{
     TagsResult userResult = getUserTags(prefix, namespace);
     TagsResult preferredResult = getPreferredTags(prefix, namespace);
     preferredResult.setUser(userResult.getUser());
@@ -123,7 +130,6 @@ public final class AuditTagsTable extends AbstractDataset {
     for (String tag : tagList) {
       Row row = preferredTagsTable.get(tag.getBytes());
       if (!row.isEmpty()) {
-//        userTagsTable.put(tag.getBytes(), TOTAL_ENTITIES, DEFAULT_TOTAL_ENTITIES);
         preferredTagsTable.delete(tag.getBytes());
         valid.add(tag);
       } else {
@@ -144,20 +150,9 @@ public final class AuditTagsTable extends AbstractDataset {
   public void addPreferredTags(List<String> tagList) {
     for (String tag : tagList) {
 
-//      if (!userTagsTable.get(tag.getBytes()).isEmpty()) {
-//        userTagsTable.delete(tag.getBytes());
-//      }
       preferredTagsTable.put(tag.getBytes(), TOTAL_ENTITIES, DEFAULT_TOTAL_ENTITIES);
     }
   }
-
-//  public boolean addUserTag(String tag) {
-//    if (preferredTagsTable.get(tag.getBytes()).isEmpty()) {
-//      userTagsTable.put(tag.getBytes(), TOTAL_ENTITIES, DEFAULT_TOTAL_ENTITIES);
-//      return true;
-//    }
-//    return false;
-//  }
 
   public ValidateTagsResult validateTags (List<String> tagList) {
     List<String> validList = new LinkedList<>();
