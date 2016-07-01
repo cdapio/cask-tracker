@@ -40,6 +40,8 @@ import co.cask.tracker.entity.TagsResult;
 import co.cask.tracker.entity.TopApplicationsResult;
 import co.cask.tracker.entity.TopDatasetsResult;
 import co.cask.tracker.entity.TopProgramsResult;
+import co.cask.tracker.entity.TruthMeterRequest;
+import co.cask.tracker.entity.TruthMeterResult;
 import co.cask.tracker.entity.ValidateTagsResult;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
@@ -57,6 +59,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -78,6 +82,7 @@ public class TrackerAppTest extends TestBase {
   private static final Type TIMESINCE_MAP = new TypeToken<Map<String, Long>>() { }.getRawType();
 
   private static final String TEST_JSON_TAGS = "[\"tag1\",\"tag2\",\"tag3\",\"ta*4\"]";
+  private String TEST_TRUTH_METER = "";
 
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
@@ -189,13 +194,13 @@ public class TrackerAppTest extends TestBase {
   @Test
   public void testAddPreferredTags() throws Exception {
     String response = getServiceResponse(trackerServiceManager, "v1/tags/promote",
-                                         "POST", HttpResponseStatus.OK.getCode());
+                                         "POST", TEST_JSON_TAGS, HttpResponseStatus.OK.getCode());
   }
 
   @Test
   public void testValidate() throws Exception {
     String response = getServiceResponse(trackerServiceManager, "v1/tags/validate",
-                                         "POST", HttpResponseStatus.OK.getCode());
+                                         "POST", TEST_JSON_TAGS, HttpResponseStatus.OK.getCode());
     ValidateTagsResult result = GSON.fromJson(response, ValidateTagsResult.class);
     Assert.assertEquals(3, result.getValid());
     Assert.assertEquals(1, result.getInvalid());
@@ -203,7 +208,8 @@ public class TrackerAppTest extends TestBase {
 
   @Test
   public void testGetTags() throws Exception {
-    getServiceResponse(trackerServiceManager, "v1/tags/promote", "POST", HttpResponseStatus.OK.getCode());
+    getServiceResponse(trackerServiceManager, "v1/tags/promote", "POST", TEST_JSON_TAGS,
+                       HttpResponseStatus.OK.getCode());
     String response = getServiceResponse(trackerServiceManager, "v1/tags", HttpResponseStatus.OK.getCode());
     TagsResult result = GSON.fromJson(response, TagsResult.class);
     Assert.assertEquals(4, result.getPreferred());
@@ -211,8 +217,8 @@ public class TrackerAppTest extends TestBase {
 
   @Test
   public void testDeletePreferredTags() throws Exception {
-    getServiceResponse(trackerServiceManager, "v1/tags/promote", "POST", HttpResponseStatus.OK.getCode());
-    getServiceResponse(trackerServiceManager, "v1/tags/preferred?tag=tag1", "DELETE", HttpResponseStatus.OK.getCode());
+    getServiceResponse(trackerServiceManager, "v1/tags/promote", "POST", TEST_JSON_TAGS, HttpResponseStatus.OK.getCode());
+    getServiceResponse(trackerServiceManager, "v1/tags/preferred?tag=tag1", "", "DELETE", HttpResponseStatus.OK.getCode());
     String response = getServiceResponse(trackerServiceManager, "v1/tags", HttpResponseStatus.OK.getCode());
     TagsResult result = GSON.fromJson(response, TagsResult.class);
     Assert.assertEquals(3, result.getPreferred());
@@ -220,7 +226,28 @@ public class TrackerAppTest extends TestBase {
 
   @Test
   public void testDemoteTags() throws Exception {
-    getServiceResponse(trackerServiceManager, "v1/tags/demote", "POST", HttpResponseStatus.OK.getCode());
+    getServiceResponse(trackerServiceManager, "v1/tags/demote", "POST", TEST_JSON_TAGS,  HttpResponseStatus.OK.getCode());
+  }
+
+  /* Tests for TruthMeter
+   *
+   */
+
+  @Test
+  public void testTruthMeter() throws Exception {
+    initializeTruthMeterInput();
+    String response = getServiceResponse(trackerServiceManager, "v1/truth-meter", "POST", TEST_TRUTH_METER,
+                                         HttpResponseStatus.OK.getCode());
+    TruthMeterResult result = GSON.fromJson(response, TruthMeterResult.class);
+  }
+
+  private void initializeTruthMeterInput() {
+    List<String> datasets = new LinkedList<>();
+    List<String> streams = new LinkedList<>();
+    datasets.add("ds1");
+    datasets.add("ds6");
+    streams.add("strm123");
+    TEST_TRUTH_METER = GSON.toJson(new TruthMeterRequest(datasets, streams));
   }
 
   // Request is GET by default
@@ -247,7 +274,7 @@ public class TrackerAppTest extends TestBase {
 
   // Overload (String Type). For requests other than GET.
   private String getServiceResponse(ServiceManager serviceManager,
-                                    String request, String type,
+                                    String request, String type, String postRequest,
                                     int expectedResponseCode) throws Exception {
     URL url = new URL(serviceManager.getServiceURL(), request);
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -255,7 +282,7 @@ public class TrackerAppTest extends TestBase {
     //Feed JSON data if POST
     if (type.equals("POST")) {
       connection.setDoOutput(true);
-      connection.getOutputStream().write(TEST_JSON_TAGS.getBytes());
+      connection.getOutputStream().write(postRequest.getBytes());
     }
     Assert.assertEquals(expectedResponseCode, connection.getResponseCode());
     String response;
