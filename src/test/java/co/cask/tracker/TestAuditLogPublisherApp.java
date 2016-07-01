@@ -35,10 +35,11 @@ public class TestAuditLogPublisherApp extends AbstractApplication {
     setName("TestAuditLogPublisherApp");
     setDescription("A temp app to test the AuditLogPublisher flowlet");
     createDataset(TrackerApp.AUDIT_LOG_DATASET_NAME, AuditLogTable.class);
-    String resolutions = String.format("%s,%s",
+    String resolutions = String.format("%s,%s,%s",
             TimeUnit.HOURS.toSeconds(1L),
-            TimeUnit.DAYS.toSeconds(1L));
-            createDataset(TrackerApp.AUDIT_METRICS_DATASET_NAME,
+            TimeUnit.DAYS.toSeconds(1L),
+            TimeUnit.DAYS.toSeconds(365L));
+    createDataset(TrackerApp.AUDIT_METRICS_DATASET_NAME,
             AuditMetricsCube.class,
             DatasetProperties.builder()
                     .add("dataset.cube.resolutions", resolutions)
