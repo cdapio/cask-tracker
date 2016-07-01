@@ -65,7 +65,7 @@ public final class AuditTagsTable extends AbstractDataset {
   }
 
   public TagsResult getUserTags(String prefix, Id.Namespace namespace) throws IOException, UnauthenticatedException,
-    NotFoundException, BadRequestException{
+    NotFoundException, BadRequestException {
     Map<String, Integer> tagMap = new HashMap<>();
     Set<String> userSet = disClient.getTags(namespace);
     for (String usertag : userSet) {
@@ -103,7 +103,7 @@ public final class AuditTagsTable extends AbstractDataset {
     return result;
   }
 
-  public void deleteAll(){
+  public void deleteAll() {
     Scanner scanner = preferredTagsTable.scan(null, null);
     try {
       Row row;
@@ -116,7 +116,7 @@ public final class AuditTagsTable extends AbstractDataset {
   }
 
   public TagsResult getTags(String prefix, Id.Namespace namespace) throws IOException, NotFoundException,
-    UnauthenticatedException, BadRequestException{
+    UnauthenticatedException, BadRequestException {
     TagsResult userResult = getUserTags(prefix, namespace);
     TagsResult preferredResult = getPreferredTags(prefix, namespace);
     preferredResult.setUser(userResult.getUser());
