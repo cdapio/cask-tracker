@@ -53,7 +53,7 @@ public class DiscoveryMetadataClient {
   }
 
   public Set<String> getTags(Namespace namespace) throws IOException, UnauthenticatedException,
-    NotFoundException, BadRequestException{
+    NotFoundException, BadRequestException {
     Set<MetadataSearchResultRecord> metadataSet =
       mdc.searchMetadata(namespace, "*", ImmutableSet.<MetadataSearchTargetType>of(MetadataSearchTargetType.APP,
                                                                                    MetadataSearchTargetType.DATASET,
@@ -69,7 +69,7 @@ public class DiscoveryMetadataClient {
   }
 
   public int getEntityNum(String tag, Namespace namespace) throws IOException, UnauthenticatedException,
-    NotFoundException, BadRequestException{
+    NotFoundException, BadRequestException {
     Set<MetadataSearchResultRecord> metadataSet =
       mdc.searchMetadata(namespace, tag, ImmutableSet.<MetadataSearchTargetType>of());
     return metadataSet.size();

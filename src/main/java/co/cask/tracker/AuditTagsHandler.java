@@ -54,7 +54,7 @@ public final class AuditTagsHandler extends AbstractHttpServiceHandler {
   private DiscoveryMetadataClient disClient = new DiscoveryMetadataClient();
   private static final Gson GSON = new GsonBuilder().create();
   private static final Type STRING_LIST = new TypeToken<List<String>>() { }.getType();
-  private static final Type STRING = new TypeToken<String>() {}.getType();
+  private static final Type STRING = new TypeToken<String>() { }.getType();
 
   // Error messages
   private static final String NO_TAGS_RECEIVED = "No Tags Received";
@@ -166,7 +166,7 @@ public final class AuditTagsHandler extends AbstractHttpServiceHandler {
   public void getTags(HttpServiceRequest request, HttpServiceResponder responder,
                       @QueryParam("type") @DefaultValue("default") String type,
                       @QueryParam("prefix") @DefaultValue("") String prefix) throws IOException, NotFoundException,
-    UnauthenticatedException, BadRequestException{
+    UnauthenticatedException, BadRequestException {
     if (type.equals("user")) {
       responder.sendJson(HttpResponseStatus.OK.getCode(),
                          auditTagsTable.getUserTags(prefix, Id.Namespace.from(getContext().getNamespace())));

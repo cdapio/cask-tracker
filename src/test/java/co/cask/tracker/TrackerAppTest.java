@@ -83,7 +83,7 @@ public class TrackerAppTest extends TestBase {
 
   private static final String TEST_JSON_TAGS = "[\"tag1\",\"tag2\",\"tag3\",\"ta*4\"]";
   private static final String DELETE_TAGS = "tag1";
-  private String TEST_TRUTH_METER = "";
+  private String testTruthMeter = "";
 
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
@@ -211,23 +211,29 @@ public class TrackerAppTest extends TestBase {
   public void testGetTags() throws Exception {
     getServiceResponse(trackerServiceManager, "v1/tags/promote", "POST", TEST_JSON_TAGS,
                        HttpResponseStatus.OK.getCode());
-    String response = getServiceResponse(trackerServiceManager, "v1/tags?type=preferred", HttpResponseStatus.OK.getCode());
+    String response = getServiceResponse(trackerServiceManager,
+                                         "v1/tags?type=preferred",
+                                         HttpResponseStatus.OK.getCode());
     TagsResult result = GSON.fromJson(response, TagsResult.class);
     Assert.assertEquals(3, result.getPreferred());
   }
 
   @Test
   public void testDeletePreferredTags() throws Exception {
-    getServiceResponse(trackerServiceManager, "v1/tags/promote", "POST", TEST_JSON_TAGS, HttpResponseStatus.OK.getCode());
-    getServiceResponse(trackerServiceManager, "v1/tags/delete", "POST", DELETE_TAGS, HttpResponseStatus.OK.getCode());
-    String response = getServiceResponse(trackerServiceManager, "v1/tags?type=preferred", HttpResponseStatus.OK.getCode());
+    getServiceResponse(trackerServiceManager, "v1/tags/promote", "POST",
+                       TEST_JSON_TAGS, HttpResponseStatus.OK.getCode());
+    getServiceResponse(trackerServiceManager, "v1/tags/delete", "POST",
+                       DELETE_TAGS, HttpResponseStatus.OK.getCode());
+    String response = getServiceResponse(trackerServiceManager, "v1/tags?type=preferred",
+                                         HttpResponseStatus.OK.getCode());
     TagsResult result = GSON.fromJson(response, TagsResult.class);
     Assert.assertEquals(2, result.getPreferred());
   }
 
   @Test
   public void testDemoteTags() throws Exception {
-    getServiceResponse(trackerServiceManager, "v1/tags/demote", "POST", TEST_JSON_TAGS,  HttpResponseStatus.OK.getCode());
+    getServiceResponse(trackerServiceManager, "v1/tags/demote", "POST", TEST_JSON_TAGS,
+                       HttpResponseStatus.OK.getCode());
   }
 
   /* Tests for TruthMeter
@@ -237,7 +243,8 @@ public class TrackerAppTest extends TestBase {
   @Test
   public void testTruthMeter() throws Exception {
     initializeTruthMeterInput();
-    String response = getServiceResponse(trackerServiceManager, "v1/truth-meter", "POST", TEST_TRUTH_METER,
+    String response = getServiceResponse(trackerServiceManager, "v1/truth-meter",
+                                         "POST", testTruthMeter,
                                          HttpResponseStatus.OK.getCode());
     TruthMeterResult result = GSON.fromJson(response, TruthMeterResult.class);
   }
@@ -248,7 +255,7 @@ public class TrackerAppTest extends TestBase {
     datasets.add("ds1");
     datasets.add("ds6");
     streams.add("strm123");
-    TEST_TRUTH_METER = GSON.toJson(new TruthMeterRequest(datasets, streams));
+    testTruthMeter = GSON.toJson(new TruthMeterRequest(datasets, streams));
   }
 
   // Request is GET by default
