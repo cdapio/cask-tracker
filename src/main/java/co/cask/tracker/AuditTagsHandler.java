@@ -20,6 +20,9 @@ import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.client.MetadataClient;
+import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.internal.guava.reflect.TypeToken;
 import co.cask.cdap.proto.Id;
 import co.cask.tracker.entity.AuditTagsTable;
@@ -30,6 +33,7 @@ import com.google.gson.GsonBuilder;
 
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -50,11 +54,13 @@ public final class AuditTagsHandler extends AbstractHttpServiceHandler {
   private DiscoveryMetadataClient disClient = new DiscoveryMetadataClient();
   private static final Gson GSON = new GsonBuilder().create();
   private static final Type STRING_LIST = new TypeToken<List<String>>() { }.getType();
+  private static final Type STRING = new TypeToken<String>() {}.getType();
 
   // Error messages
   private static final String NO_TAGS_RECEIVED = "No Tags Received";
   private static final String INVALID_TYPE_PARAMETER = "Invalid parameter for 'type' query";
   private static final String DELETE_TAGS_WITH_ENTITIES = "Not able to delete preferred tags with entities";
+  private static final String PREFERRED_TAG_NOTFOUND = "preferred tag not found";
 
   @Override
   public void initialize(HttpServiceContext context) throws Exception {
@@ -75,21 +81,56 @@ public final class AuditTagsHandler extends AbstractHttpServiceHandler {
     responder.sendJson(auditTagsTable.demoteTag(tagsList));
   }
 
-  @Path("v1/tags/preferred")
-  @DELETE
-  public void deleteTagsWithoutEntities(HttpServiceRequest request, HttpServiceResponder responder,
-                                        @QueryParam("tag") String tag) throws Exception {
+  @Path("v1/tags/deleteaAll")
+  @GET
+  public void demoteAll(HttpServiceRequest request, HttpServiceResponder responder) {
+    auditTagsTable.deleteAll();
+    responder.sendStatus(HttpResponseStatus.OK.getCode());
+  }
+
+  @Path("v1/tags/delete")
+  @POST
+  public void deleteTagsWithoutEntities(HttpServiceRequest request, HttpServiceResponder responder)
+    throws  Exception {
+    ByteBuffer requestContents = request.getContent();
+    if (requestContents == null) {
+      responder.sendError(HttpResponseStatus.BAD_REQUEST.getCode(), NO_TAGS_RECEIVED);
+      return;
+    }
+    String tags = StandardCharsets.UTF_8.decode(requestContents).toString();
+    String tag = GSON.fromJson(tags, STRING);
     int num = disClient.getEntityNum(tag, Id.Namespace.from(getContext().getNamespace()));
-    if (num != 0) {
+    if (num == 0) {
       if (auditTagsTable.deleteTag(tag)) {
         responder.sendStatus(HttpResponseStatus.OK.getCode());
       } else {
-        responder.sendStatus(HttpResponseStatus.BAD_REQUEST.getCode());
+        responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), PREFERRED_TAG_NOTFOUND);
       }
     } else {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), DELETE_TAGS_WITH_ENTITIES);
     }
   }
+
+//  @Path("v1/tags/preferred")
+//  @DELETE
+//  public void deleteTagsWithoutEntities(HttpServiceRequest request, HttpServiceResponder responder,
+//                                        @QueryParam("tag") String tag) throws Exception {
+//    if(tag == null){
+//      responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), NO_TAGS_RECEIVED);
+//    }
+//    else {
+//      int num = disClient.getEntityNum(tag, Id.Namespace.from(getContext().getNamespace()));
+//      if (num == 0) {
+//        if (auditTagsTable.deleteTag(tag)) {
+//          responder.sendStatus(HttpResponseStatus.OK.getCode());
+//        } else {
+//          responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), PREFERRED_TAG_NOTFOUND);
+//        }
+//      } else {
+//        responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), DELETE_TAGS_WITH_ENTITIES);
+//      }
+//    }
+//  }
 
   @Path("v1/tags/promote")
   @POST
@@ -124,7 +165,8 @@ public final class AuditTagsHandler extends AbstractHttpServiceHandler {
   @GET
   public void getTags(HttpServiceRequest request, HttpServiceResponder responder,
                       @QueryParam("type") @DefaultValue("default") String type,
-                      @QueryParam("prefix") @DefaultValue("") String prefix) throws Exception {
+                      @QueryParam("prefix") @DefaultValue("") String prefix) throws IOException, NotFoundException,
+    UnauthenticatedException, BadRequestException{
     if (type.equals("user")) {
       responder.sendJson(HttpResponseStatus.OK.getCode(),
                          auditTagsTable.getUserTags(prefix, Id.Namespace.from(getContext().getNamespace())));
