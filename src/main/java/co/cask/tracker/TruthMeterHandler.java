@@ -94,8 +94,8 @@ public final class TruthMeterHandler extends AbstractHttpServiceHandler {
                                                 long totalActivity, long totalProgramsCount) {
     Map<String, Integer> resultMap = new HashMap<>();
     for (String entityName : entityNameList) {
-      long datasetActivity = auditMetricsCube.getTotalActivity(namespace, entityType, entityName);
       long datasetProgramCount = auditMetricsCube.getTotalProgramsCount(namespace, entityType, entityName);
+      long datasetActivity = auditMetricsCube.getTotalActivity(namespace, entityType, entityName) - datasetProgramCount;
       Map<String, Long> map = eltTable.read(namespace, entityType, entityName).getTimeSinceEvents();
       long timeSinceRead;
       if (map.containsKey("read")) {

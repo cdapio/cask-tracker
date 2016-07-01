@@ -407,20 +407,35 @@ public class AuditMetricsCube extends AbstractDataset {
 
   // Total Audit log messages
   public long getTotalActivity(String namespace) {
-    CubeQuery query = CubeQuery.builder()
+    CubeQuery datasetQuery = CubeQuery.builder()
       .select()
       .measurement("count", AggregationFunction.SUM)
       .from()
       .resolution(TimeUnit.DAYS.toSeconds(365L), TimeUnit.SECONDS)
       .where()
       .dimension("namespace", namespace)
+      .dimension("entity_type", EntityType.DATASET.name().toLowerCase())
       .timeRange(0L, System.currentTimeMillis() / 1000)
       .limit(1000)
       .build();
 
-    Collection<TimeSeries> results = auditMetrics.query(query);
+    CubeQuery streamQuery = CubeQuery.builder()
+      .select()
+      .measurement("count", AggregationFunction.SUM)
+      .from()
+      .resolution(TimeUnit.DAYS.toSeconds(365L), TimeUnit.SECONDS)
+      .where()
+      .dimension("namespace", namespace)
+      .dimension("entity_type", EntityType.STREAM.name().toLowerCase())
+      .timeRange(0L, System.currentTimeMillis() / 1000)
+      .limit(1000)
+      .build();
+
+    Collection<TimeSeries> datasetResults = auditMetrics.query(datasetQuery);
+    Collection<TimeSeries> streamResults = auditMetrics.query(streamQuery);
     // Single measurement queried; Aggregated for the 1st 365 days
-    return results.iterator().next().getTimeValues().get(0).getValue();
+    return datasetResults.iterator().next().getTimeValues().get(0).getValue() +
+      streamResults.iterator().next().getTimeValues().get(0).getValue();
   }
 
   // Total Audit log messages for a given entityName and entityType
@@ -443,7 +458,7 @@ public class AuditMetricsCube extends AbstractDataset {
     return results.iterator().next().getTimeValues().get(0).getValue();
   }
 
-  // Total number of entites for a given type. Ex : Total number of different datasets
+  // Total number of entities for a given type. Ex : Total number of different datasets
   public int getTotalEntities(String namespace, String entityType) {
     CubeQuery query = CubeQuery.builder()
       .select()

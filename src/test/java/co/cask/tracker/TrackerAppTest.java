@@ -246,6 +246,7 @@ public class TrackerAppTest extends TestBase {
     List<String> streams = new LinkedList<>();
     datasets.add("ds1");
     datasets.add("ds6");
+    datasets.add("ds3");
     streams.add("strm123");
     TEST_TRUTH_METER = GSON.toJson(new TruthMeterRequest(datasets, streams));
   }
