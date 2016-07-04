@@ -81,12 +81,12 @@ public final class AuditTagsHandler extends AbstractHttpServiceHandler {
     responder.sendJson(auditTagsTable.demoteTag(tagsList));
   }
 
-  @Path("v1/tags/deleteaAll")
-  @GET
-  public void demoteAll(HttpServiceRequest request, HttpServiceResponder responder) {
-    auditTagsTable.deleteAll();
-    responder.sendStatus(HttpResponseStatus.OK.getCode());
-  }
+//  @Path("v1/tags/deleteaAll")
+//  @GET
+//  public void demoteAll(HttpServiceRequest request, HttpServiceResponder responder) {
+//    auditTagsTable.deleteAll();
+//    responder.sendStatus(HttpResponseStatus.OK.getCode());
+//  }
 
   @Path("v1/tags/delete")
   @POST
