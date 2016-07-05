@@ -136,12 +136,28 @@ public final class AuditTagsTable extends AbstractDataset {
     return false;
   }
 
-  public void addPreferredTags(List<String> tagList) {
+  public ValidateTagsResult addPreferredTags(List<String> tagList) {
+    List<String> valid = new LinkedList<>();
+    List<String> invalid = new LinkedList<>();
     for (String tag : tagList) {
-
-      preferredTagsTable.put(tag.getBytes(), TOTAL_ENTITIES, DEFAULT_TOTAL_ENTITIES);
+      Row row = preferredTagsTable.get(tag.getBytes());
+      if (row.isEmpty() && isValid(tag)) {
+        valid.add(tag);
+        preferredTagsTable.put(tag.getBytes(), TOTAL_ENTITIES, DEFAULT_TOTAL_ENTITIES);
+      }
+      else {
+        invalid.add(tag);
+      }
     }
+    return new ValidateTagsResult(valid.size(), invalid.size(), valid, invalid);
   }
+
+//  public void addPreferredTags(List<String> tagList) {
+//    for (String tag : tagList) {
+//
+//      preferredTagsTable.put(tag.getBytes(), TOTAL_ENTITIES, DEFAULT_TOTAL_ENTITIES);
+//    }
+//  }
 
   public ValidateTagsResult validateTags (List<String> tagList) {
     List<String> validList = new LinkedList<>();

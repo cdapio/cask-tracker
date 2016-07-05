@@ -115,9 +115,9 @@ public final class AuditTagsHandler extends AbstractHttpServiceHandler {
 
     String tags = StandardCharsets.UTF_8.decode(requestContents).toString();
     List<String> tagsList = GSON.fromJson(tags, STRING_LIST);
-    List<String> validlist = auditTagsTable.validateTags(tagsList).getValidTags();
-    auditTagsTable.addPreferredTags(validlist);
-    responder.sendStatus(HttpResponseStatus.OK.getCode());
+//    List<String> validlist = auditTagsTable.validateTags(tagsList).getValidTags();
+//    auditTagsTable.addPreferredTags(validlist);
+    responder.sendJson(HttpResponseStatus.OK.getCode(), auditTagsTable.addPreferredTags(tagsList));
   }
 
   @Path("v1/tags/validate")
