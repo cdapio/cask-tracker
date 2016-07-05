@@ -144,8 +144,7 @@ public final class AuditTagsTable extends AbstractDataset {
       if (row.isEmpty() && isValid(tag)) {
         valid.add(tag);
         preferredTagsTable.put(tag.getBytes(), TOTAL_ENTITIES, DEFAULT_TOTAL_ENTITIES);
-      }
-      else {
+      } else {
         invalid.add(tag);
       }
     }

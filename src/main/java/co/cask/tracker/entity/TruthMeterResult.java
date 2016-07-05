@@ -30,4 +30,12 @@ public final class TruthMeterResult {
     this.datasets = datasets;
     this.streams = streams;
   }
+
+  public Map<String, Integer> getDatasets() {
+    return datasets;
+  }
+
+  public Map<String, Integer> getStreams() {
+    return streams;
+  }
 }
