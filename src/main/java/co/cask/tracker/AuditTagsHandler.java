@@ -94,10 +94,10 @@ public final class AuditTagsHandler extends AbstractHttpServiceHandler {
         if (auditTagsTable.deleteTag(tag)) {
           responder.sendStatus(HttpResponseStatus.OK.getCode());
         } else {
-          responder.sendJson(PREFERRED_TAG_NOTFOUND);
+          responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), PREFERRED_TAG_NOTFOUND);
         }
       } else {
-        responder.sendJson(DELETE_TAGS_WITH_ENTITIES);
+        responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), DELETE_TAGS_WITH_ENTITIES);
         }
     }
   }
