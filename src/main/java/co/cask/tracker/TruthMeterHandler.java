@@ -82,6 +82,7 @@ public final class TruthMeterHandler extends AbstractHttpServiceHandler {
     List<String> streams = truthMeterRequest.getStreams();
 
     long totalProgramsCount = auditMetricsCube.getTotalProgramsCount(namespace);
+    // program read activity is analyzed independently, so subtracting it here to avoid
     long totalActivity = auditMetricsCube.getTotalActivity(namespace) - totalProgramsCount;
 
     return new TruthMeterResult(truthValueHelper(datasets, EntityType.DATASET.name().toLowerCase(),
@@ -99,22 +100,27 @@ public final class TruthMeterHandler extends AbstractHttpServiceHandler {
       long entityActivity = auditMetricsCube.getTotalActivity(namespace, entityType, entityName) - entityProgramCount;
       Map<String, Long> map = eltTable.read(namespace, entityType, entityName).getTimeSinceEvents();
       long timeSinceRead;
+      // Check if there has ever been a read on the entity
       if (map.containsKey("read")) {
         timeSinceRead = map.get("read");
       } else {
         timeSinceRead = -1;
       }
+      // Collect read values to process score in another iteration
       timeMap.put(entityName, timeSinceRead);
+      // Activity and programs count determine 40% each of the final score
       float logScore = ((float) entityActivity / (float) totalActivity) * 40;
       float programScore = ((float) entityProgramCount / (float) totalProgramsCount) * 40;
       int score = (int) (logScore + programScore);
       resultMap.put(entityName, score);
     }
+    // This does not scale properly, so will likely be replaced
     Map<String, Long> sortedTimeMap = sortMapByValue(timeMap);
     int timeScore = sortedTimeMap.size() * 2;
     for (Map.Entry<String, Long> entry : sortedTimeMap.entrySet()) {
       String entityName = entry.getKey();
       if (entry.getValue() == -1) {
+        // No reads has been recorded for this and the following datasets: no extra score
         break;
       }
       int newScore = resultMap.get(entityName) + timeScore;
