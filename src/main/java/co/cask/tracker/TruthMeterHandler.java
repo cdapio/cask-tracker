@@ -19,11 +19,9 @@ import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
-import co.cask.cdap.internal.guava.reflect.TypeToken;
 import co.cask.cdap.proto.element.EntityType;
 import co.cask.tracker.entity.AuditMetricsCube;
 import co.cask.tracker.entity.EntityLatestTimestampTable;
-import co.cask.tracker.entity.TimeSinceResult;
 import co.cask.tracker.entity.TruthMeterRequest;
 import co.cask.tracker.entity.TruthMeterResult;
 import com.google.gson.Gson;
@@ -31,10 +29,12 @@ import com.google.gson.GsonBuilder;
 
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
-import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -93,9 +93,10 @@ public final class TruthMeterHandler extends AbstractHttpServiceHandler {
   private Map<String, Integer> truthValueHelper(List<String> entityNameList, String entityType,
                                                 long totalActivity, long totalProgramsCount) {
     Map<String, Integer> resultMap = new HashMap<>();
+    Map<String, Long> timeMap = new HashMap<>();
     for (String entityName : entityNameList) {
-      long datasetProgramCount = auditMetricsCube.getTotalProgramsCount(namespace, entityType, entityName);
-      long datasetActivity = auditMetricsCube.getTotalActivity(namespace, entityType, entityName) - datasetProgramCount;
+      long entityProgramCount = auditMetricsCube.getTotalProgramsCount(namespace, entityType, entityName);
+      long entityActivity = auditMetricsCube.getTotalActivity(namespace, entityType, entityName) - entityProgramCount;
       Map<String, Long> map = eltTable.read(namespace, entityType, entityName).getTimeSinceEvents();
       long timeSinceRead;
       if (map.containsKey("read")) {
@@ -103,12 +104,42 @@ public final class TruthMeterHandler extends AbstractHttpServiceHandler {
       } else {
         timeSinceRead = -1;
       }
-      float logScore = ((float) datasetActivity / (float) totalActivity) * 100;
-      float programScore = ((float) datasetProgramCount / (float) totalProgramsCount) * 100;
+      timeMap.put(entityName, timeSinceRead);
+      float logScore = ((float) entityActivity / (float) totalActivity) * 100;
+      float programScore = ((float) entityProgramCount / (float) totalProgramsCount) * 100;
       int score = (int) ((logScore + programScore) / 2);
       resultMap.put(entityName, score);
       // Check if there has ever been a read
     }
+    Map<String, Long> sortedTimeMap = sortMapByValue(timeMap);
+    int timeScore = sortedTimeMap.size() * 2;
+    for (Map.Entry<String, Long> entry : sortedTimeMap.entrySet()) {
+      String entityName = entry.getKey();
+      if (entry.getValue() == -1) {
+        break;
+      }
+      int newScore = resultMap.get(entityName) + timeScore;
+      if (newScore > 100) {
+        newScore = 100;
+      }
+      resultMap.put(entityName, newScore);
+      timeScore -= 2;
+    }
     return resultMap;
+  }
+
+  private static Map<String, Long> sortMapByValue(Map<String, Long> map) {
+    List<Map.Entry<String, Long>> list = new LinkedList<>(map.entrySet());
+    Collections.sort(list, new Comparator<Map.Entry<String, Long>>() {
+      @Override
+      public int compare(Map.Entry<String, Long> o1, Map.Entry<String, Long> o2) {
+        return o2.getValue().compareTo(o1.getValue());
+      }
+    });
+    Map<String, Long> result = new HashMap<>();
+    for (Map.Entry<String, Long> entry : list) {
+      result.put(entry.getKey(), entry.getValue());
+    }
+    return result;
   }
 }
