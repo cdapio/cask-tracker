@@ -105,11 +105,10 @@ public final class TruthMeterHandler extends AbstractHttpServiceHandler {
         timeSinceRead = -1;
       }
       timeMap.put(entityName, timeSinceRead);
-      float logScore = ((float) entityActivity / (float) totalActivity) * 100;
-      float programScore = ((float) entityProgramCount / (float) totalProgramsCount) * 100;
-      int score = (int) ((logScore + programScore) / 2);
+      float logScore = ((float) entityActivity / (float) totalActivity) * 40;
+      float programScore = ((float) entityProgramCount / (float) totalProgramsCount) * 40;
+      int score = (int) (logScore + programScore);
       resultMap.put(entityName, score);
-      // Check if there has ever been a read
     }
     Map<String, Long> sortedTimeMap = sortMapByValue(timeMap);
     int timeScore = sortedTimeMap.size() * 2;
