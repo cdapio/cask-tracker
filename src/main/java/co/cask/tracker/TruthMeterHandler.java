@@ -50,6 +50,11 @@ public final class TruthMeterHandler extends AbstractHttpServiceHandler {
   private EntityLatestTimestampTable eltTable;
   private String namespace;
 
+  // Score parameter
+  private static final float LOG_MESSAGES_WEIGHT = 40.0f;
+  private static final float UNIQUE_PROGRAM_WEIGHT = 40.0f;
+  private static final float TIME_SINCE_READ_WEIGHT = 20.0f;
+
   private static final Gson GSON = new GsonBuilder().create();
   // Err
   private static final String NO_INPUT_RECEIVED = "Empty Request Body Received";
@@ -104,8 +109,8 @@ public final class TruthMeterHandler extends AbstractHttpServiceHandler {
         timeMap.put(entityName, map.get("read"));
       }
       // Activity and programs count determine 40% each of the final score
-      float logScore = ((float) entityActivity / (float) totalActivity) * 40;
-      float programScore = ((float) entityProgramCount / (float) totalProgramsCount) * 40;
+      float logScore = ((float) entityActivity / (float) totalActivity) * LOG_MESSAGES_WEIGHT;
+      float programScore = ((float) entityProgramCount / (float) totalProgramsCount) * UNIQUE_PROGRAM_WEIGHT;
       int score = (int) (logScore + programScore);
       resultMap.put(entityName, score);
     }
@@ -115,7 +120,7 @@ public final class TruthMeterHandler extends AbstractHttpServiceHandler {
     int rank = size;
     for (Map.Entry<String, Long> entry : sortedTimeMap.entrySet()) {
       String entityName = entry.getKey();
-      int newScore = resultMap.get(entityName) + (int) ((float) rank / (float) size * 20.0);
+      int newScore = resultMap.get(entityName) + (int) ((float) rank / (float) size * TIME_SINCE_READ_WEIGHT);
       resultMap.put(entityName, newScore);
       rank -= 1;
     }
