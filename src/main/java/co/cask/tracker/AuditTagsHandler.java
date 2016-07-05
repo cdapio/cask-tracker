@@ -81,12 +81,6 @@ public final class AuditTagsHandler extends AbstractHttpServiceHandler {
     responder.sendJson(auditTagsTable.demoteTag(tagsList));
   }
 
-//  @Path("v1/tags/deleteaAll")
-//  @GET
-//  public void demoteAll(HttpServiceRequest request, HttpServiceResponder responder) {
-//    auditTagsTable.deleteAll();
-//    responder.sendStatus(HttpResponseStatus.OK.getCode());
-//  }
 
   @Path("v1/tags/delete")
   @POST
@@ -111,26 +105,6 @@ public final class AuditTagsHandler extends AbstractHttpServiceHandler {
     }
   }
 
-//  @Path("v1/tags/preferred")
-//  @DELETE
-//  public void deleteTagsWithoutEntities(HttpServiceRequest request, HttpServiceResponder responder,
-//                                        @QueryParam("tag") String tag) throws Exception {
-//    if(tag == null){
-//      responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), NO_TAGS_RECEIVED);
-//    }
-//    else {
-//      int num = disClient.getEntityNum(tag, Id.Namespace.from(getContext().getNamespace()));
-//      if (num == 0) {
-//        if (auditTagsTable.deleteTag(tag)) {
-//          responder.sendStatus(HttpResponseStatus.OK.getCode());
-//        } else {
-//          responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), PREFERRED_TAG_NOTFOUND);
-//        }
-//      } else {
-//        responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), DELETE_TAGS_WITH_ENTITIES);
-//      }
-//    }
-//  }
 
   @Path("v1/tags/promote")
   @POST

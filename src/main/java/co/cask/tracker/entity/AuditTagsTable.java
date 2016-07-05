@@ -103,17 +103,6 @@ public final class AuditTagsTable extends AbstractDataset {
     return result;
   }
 
-  public void deleteAll() {
-    Scanner scanner = preferredTagsTable.scan(null, null);
-    try {
-      Row row;
-      while ((row = scanner.next()) != null) {
-        preferredTagsTable.delete(row.getRow());
-      }
-    } finally {
-      scanner.close();
-    }
-  }
 
   public TagsResult getTags(String prefix, Id.Namespace namespace) throws IOException, NotFoundException,
     UnauthenticatedException, BadRequestException {
