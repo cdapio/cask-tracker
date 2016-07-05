@@ -246,7 +246,7 @@ public class TrackerAppTest extends TestBase {
     String response = getServiceResponse(trackerServiceManager, "v1/truth-meter",
                                          "POST", testTruthMeter,
                                          HttpResponseStatus.OK.getCode());
-    TruthMeterResult result = GSON.fromJson(response, TruthMeterResult.class);
+          TruthMeterResult result = GSON.fromJson(response, TruthMeterResult.class);
   }
 
   private void initializeTruthMeterInput() {
