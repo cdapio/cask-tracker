@@ -222,8 +222,10 @@ public class TrackerAppTest extends TestBase {
   public void testDeletePreferredTags() throws Exception {
     getServiceResponse(trackerServiceManager, "v1/tags/promote", "POST",
                        TEST_JSON_TAGS, HttpResponseStatus.OK.getCode());
-    getServiceResponse(trackerServiceManager, "v1/tags/delete", "POST",
-                       DELETE_TAGS, HttpResponseStatus.OK.getCode());
+//    getServiceResponse(trackerServiceManager, "v1/tags/delete", "POST",
+//                       DELETE_TAGS, HttpResponseStatus.OK.getCode());
+    getServiceResponse(trackerServiceManager, "v1/tags/preferred?tag=tag1", "DELETE",
+                       null, HttpResponseStatus.OK.getCode());
     String response = getServiceResponse(trackerServiceManager, "v1/tags?type=preferred",
                                          HttpResponseStatus.OK.getCode());
     TagsResult result = GSON.fromJson(response, TagsResult.class);
