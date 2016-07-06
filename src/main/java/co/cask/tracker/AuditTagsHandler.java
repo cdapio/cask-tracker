@@ -28,6 +28,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.tracker.entity.AuditTagsTable;
 import co.cask.tracker.entity.ValidateTagsResult;
 import co.cask.tracker.utils.DiscoveryMetadataClient;
+import com.google.common.base.Charsets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -85,20 +86,20 @@ public final class AuditTagsHandler extends AbstractHttpServiceHandler {
   @DELETE
   public void deleteTagsWithoutEntities(HttpServiceRequest request, HttpServiceResponder responder,
                                         @QueryParam("tag") String tag) throws Exception {
-    if(tag == null){
-      responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), NO_TAGS_RECEIVED);
-      }
-    else {
-      int num = disClient.getEntityNum(tag, Id.Namespace.from(getContext().getNamespace()));
-      if (num == 0) {
-        if (auditTagsTable.deleteTag(tag)) {
-          responder.sendStatus(HttpResponseStatus.OK.getCode());
-        } else {
-          responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), PREFERRED_TAG_NOTFOUND);
-        }
-      } else {
-        responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), DELETE_TAGS_WITH_ENTITIES);
-        }
+    if (tag == null) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST.getCode(), NO_TAGS_RECEIVED, Charsets.UTF_8);
+      return;
+    }
+    int num = disClient.getEntityNum(tag, Id.Namespace.from(getContext().getNamespace()));
+    if (num > 0) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST.getCode(), DELETE_TAGS_WITH_ENTITIES, Charsets.UTF_8);
+      return;
+    }
+
+    if (auditTagsTable.deleteTag(tag)) {
+      responder.sendStatus(HttpResponseStatus.OK.getCode());
+    } else {
+      responder.sendString(HttpResponseStatus.NOT_FOUND.getCode(), PREFERRED_TAG_NOTFOUND, Charsets.UTF_8);
     }
   }
 
@@ -115,8 +116,6 @@ public final class AuditTagsHandler extends AbstractHttpServiceHandler {
 
     String tags = StandardCharsets.UTF_8.decode(requestContents).toString();
     List<String> tagsList = GSON.fromJson(tags, STRING_LIST);
-//    List<String> validlist = auditTagsTable.validateTags(tagsList).getValidTags();
-//    auditTagsTable.addPreferredTags(validlist);
     responder.sendJson(HttpResponseStatus.OK.getCode(), auditTagsTable.addPreferredTags(tagsList));
   }
 
@@ -152,5 +151,4 @@ public final class AuditTagsHandler extends AbstractHttpServiceHandler {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), INVALID_TYPE_PARAMETER);
     }
   }
-
 }
