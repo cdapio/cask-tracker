@@ -24,9 +24,11 @@ import co.cask.tracker.entity.AuditMetricsCube;
 import co.cask.tracker.entity.EntityLatestTimestampTable;
 import co.cask.tracker.entity.TruthMeterRequest;
 import co.cask.tracker.entity.TruthMeterResult;
+import co.cask.tracker.entity.UniqueEntityHolder;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import org.apache.hadoop.yarn.webapp.hamlet.HamletSpec;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.nio.ByteBuffer;
@@ -76,67 +78,95 @@ public final class TruthMeterHandler extends AbstractHttpServiceHandler {
       responder.sendError(HttpResponseStatus.BAD_REQUEST.getCode(), NO_INPUT_RECEIVED);
       return;
     }
-    String tags = StandardCharsets.UTF_8.decode(requestContents).toString();
-    TruthMeterRequest truthMeterRequest = GSON.fromJson(tags, TruthMeterRequest.class);
+    String entityList = StandardCharsets.UTF_8.decode(requestContents).toString();
+    TruthMeterRequest truthMeterRequest = GSON.fromJson(entityList, TruthMeterRequest.class);
     responder.sendJson(getTruthValueMap(truthMeterRequest));
-
   }
 
+  // Gets the score and modifies the result to the format expected by the UI
   private TruthMeterResult getTruthValueMap(TruthMeterRequest truthMeterRequest) {
     List<String> datasets = truthMeterRequest.getDatasets();
     List<String> streams = truthMeterRequest.getStreams();
 
     long totalProgramsCount = auditMetricsCube.getTotalProgramsCount(namespace);
-    // program read activity is analyzed independently, so subtracting it here to avoid
+    // program read activity is analyzed independently, so subtracting it here
     long totalActivity = auditMetricsCube.getTotalActivity(namespace) - totalProgramsCount;
+    List<UniqueEntityHolder> requestList = getUniqueEntityList(datasets, "dataset");
+    requestList.addAll(getUniqueEntityList(streams, "stream"));
 
-    return new TruthMeterResult(truthValueHelper(datasets, EntityType.DATASET.name().toLowerCase(),
-                                                 totalActivity, totalProgramsCount),
-                                truthValueHelper(streams, EntityType.STREAM.name().toLowerCase(),
-                                                 totalActivity, totalProgramsCount));
+    Map<UniqueEntityHolder, Integer> scoreMap = truthValueHelper(requestList, totalActivity, totalProgramsCount);
+    Map<String, Integer> datasetMap = new HashMap<>();
+    Map<String, Integer> streamMap = new HashMap<>();
+    for (Map.Entry<UniqueEntityHolder, Integer> entry : scoreMap.entrySet()) {
+      if (entry.getKey().getEntityType().equals("dataset")) {
+        datasetMap.put(entry.getKey().getEntityName(), entry.getValue());
+      } else {
+        streamMap.put(entry.getKey().getEntityName(), entry.getValue());
+      }
+    }
+    return new TruthMeterResult(datasetMap, streamMap);
   }
 
-  private Map<String, Integer> truthValueHelper(List<String> entityNameList, String entityType,
-                                                long totalActivity, long totalProgramsCount) {
-    Map<String, Integer> resultMap = new HashMap<>();
-    Map<String, Long> timeMap = new HashMap<>();
-    for (String entityName : entityNameList) {
-      long entityProgramCount = auditMetricsCube.getTotalProgramsCount(namespace, entityType, entityName);
-      long entityActivity = auditMetricsCube.getTotalActivity(namespace, entityType, entityName) - entityProgramCount;
-      Map<String, Long> map = eltTable.read(namespace, entityType, entityName).getTimeSinceEvents();
-      // Check if there has ever been a read on the entity
-      if (map.containsKey("read")) {
-        timeMap.put(entityName, map.get("read"));
-      }
-      // Activity and programs count determine 40% each of the final score
+  // Calculates score for each entity
+  private Map<UniqueEntityHolder, Integer> truthValueHelper(List<UniqueEntityHolder> requestList,
+                                                            long totalActivity, long totalProgramsCount) {
+    Map<UniqueEntityHolder, Integer> resultMap = new HashMap<>();
+    for (UniqueEntityHolder uniqueEntity : requestList) {
+      long entityProgramCount =
+        auditMetricsCube.getTotalProgramsCount(namespace, uniqueEntity.getEntityType(), uniqueEntity.getEntityName());
+      long entityActivity =
+        auditMetricsCube.getTotalActivity(namespace, uniqueEntity.getEntityType(), uniqueEntity.getEntityName())
+          - entityProgramCount;
+
+      // Activity and programs count determine following % each of the final score
       float logScore = ((float) entityActivity / (float) totalActivity) * LOG_MESSAGES_WEIGHT;
       float programScore = ((float) entityProgramCount / (float) totalProgramsCount) * UNIQUE_PROGRAM_WEIGHT;
       int score = (int) (logScore + programScore);
-      resultMap.put(entityName, score);
+      resultMap.put(uniqueEntity, score);
     }
-    // This does not scale properly, so will likely be replaced
-    Map<String, Long> sortedTimeMap = sortMapByValue(timeMap);
+
+    /*
+     * Score calculation using time since last read
+     */
+    // Get a list of all datasets and streams stored so far
+    List<UniqueEntityHolder> metricsQuery =
+      getUniqueEntityList(auditMetricsCube.getEntities(namespace, "dataset"), "dataset");
+    metricsQuery.addAll(getUniqueEntityList(auditMetricsCube.getEntities(namespace, "stream"), "stream"));
+
+    // Get a map of time since read stamps for each of them to determine an entity's rank
+    Map<UniqueEntityHolder, Long> sortedTimeMap = sortMapByValue(eltTable.getReadTimestamps(namespace, metricsQuery));
     int size = sortedTimeMap.size();
     int rank = size;
-    for (Map.Entry<String, Long> entry : sortedTimeMap.entrySet()) {
-      String entityName = entry.getKey();
-      int newScore = resultMap.get(entityName) + (int) ((float) rank / (float) size * TIME_SINCE_READ_WEIGHT);
-      resultMap.put(entityName, newScore);
+    for (Map.Entry<UniqueEntityHolder, Long> entry : sortedTimeMap.entrySet()) {
+      // Updates score for entities for which score was requested
+      if (resultMap.containsKey(entry.getKey())) {
+        UniqueEntityHolder uniqueEntity = entry.getKey();
+        int newScore = resultMap.get(uniqueEntity) + (int) ((float) rank / (float) size * TIME_SINCE_READ_WEIGHT);
+        resultMap.put(uniqueEntity, newScore);
+      }
       rank -= 1;
     }
     return resultMap;
   }
 
-  private static Map<String, Long> sortMapByValue(Map<String, Long> map) {
-    List<Map.Entry<String, Long>> list = new LinkedList<>(map.entrySet());
-    Collections.sort(list, new Comparator<Map.Entry<String, Long>>() {
+  private static List<UniqueEntityHolder> getUniqueEntityList(List<String> entityList, String entityType) {
+    List<UniqueEntityHolder> resultList = new LinkedList<>();
+    for (String entity : entityList) {
+      resultList.add(new UniqueEntityHolder(entityType, entity));
+    }
+    return resultList;
+  }
+
+  private static Map<UniqueEntityHolder, Long> sortMapByValue(Map<UniqueEntityHolder, Long> map) {
+    List<Map.Entry<UniqueEntityHolder, Long>> list = new LinkedList<>(map.entrySet());
+    Collections.sort(list, new Comparator<Map.Entry<UniqueEntityHolder, Long>>() {
       @Override
-      public int compare(Map.Entry<String, Long> o1, Map.Entry<String, Long> o2) {
+      public int compare(Map.Entry<UniqueEntityHolder, Long> o1, Map.Entry<UniqueEntityHolder, Long> o2) {
         return o2.getValue().compareTo(o1.getValue());
       }
     });
-    Map<String, Long> result = new HashMap<>();
-    for (Map.Entry<String, Long> entry : list) {
+    Map<UniqueEntityHolder, Long> result = new HashMap<>();
+    for (Map.Entry<UniqueEntityHolder, Long> entry : list) {
       result.put(entry.getKey(), entry.getValue());
     }
     return result;

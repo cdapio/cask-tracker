@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -458,8 +459,7 @@ public class AuditMetricsCube extends AbstractDataset {
     return results.iterator().next().getTimeValues().get(0).getValue();
   }
 
-  // Total number of entities for a given type. Ex : Total number of different datasets
-  public int getTotalEntities(String namespace, String entityType) {
+  public List<String> getEntities(String namespace, String entityType) {
     CubeQuery query = CubeQuery.builder()
       .select()
       .measurement("count", AggregationFunction.SUM)
@@ -469,11 +469,17 @@ public class AuditMetricsCube extends AbstractDataset {
       .dimension("namespace", namespace)
       .dimension("entity_type", entityType)
       .timeRange(0L, System.currentTimeMillis() / 1000)
+      .groupBy()
+      .dimension("entity_name")
       .limit(1000)
       .build();
 
     Collection<TimeSeries> result = auditMetrics.query(query);
-    return result.size();
+    List<String> entityList = new LinkedList<>();
+    for (TimeSeries t : result) {
+      entityList.add(t.getDimensionValues().get("entity_name"));
+    }
+    return entityList;
   }
 
   // This will be updated if we change how we select resolution.
