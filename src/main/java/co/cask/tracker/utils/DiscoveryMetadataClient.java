@@ -38,8 +38,8 @@ import java.util.Set;
  * extends MetadataClient to interact with CDAP Metadata
  */
 public class DiscoveryMetadataClient {
-  private final String HOSTNAME = "127.0.0.1";
-  private final Integer PORT = 10000;
+  private static final String HOSTNAME = "127.0.0.1";
+  private static final Integer PORT = 10000;
   private MetadataClient mdc;
   private MetadataClient defaultMdc;
 
@@ -69,7 +69,8 @@ public class DiscoveryMetadataClient {
   public int getEntityNum(String tag, Namespace namespace) throws IOException, UnauthenticatedException,
     NotFoundException, BadRequestException {
     Set<MetadataSearchResultRecord> metadataSet =
-      mdc.searchMetadata(namespace, tag, ImmutableSet.<MetadataSearchTargetType>of());
+      mdc.searchMetadata(namespace, tag, ImmutableSet.<MetadataSearchTargetType>of(MetadataSearchTargetType.DATASET,
+                                                                                   MetadataSearchTargetType.STREAM));
     return metadataSet.size();
   }
 
