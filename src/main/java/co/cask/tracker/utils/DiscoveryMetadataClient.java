@@ -56,11 +56,8 @@ public class DiscoveryMetadataClient {
   public Set<String> getTags(Namespace namespace) throws IOException, UnauthenticatedException,
     NotFoundException, BadRequestException {
     Set<MetadataSearchResultRecord> metadataSet =
-      mdc.searchMetadata(namespace, "*", ImmutableSet.<MetadataSearchTargetType>of(MetadataSearchTargetType.APP,
-                                                                                   MetadataSearchTargetType.DATASET,
-                                                                                   MetadataSearchTargetType.STREAM,
-                                                                                   MetadataSearchTargetType.ARTIFACT,
-                                                                                   MetadataSearchTargetType.PROGRAM));
+      mdc.searchMetadata(namespace, "*", ImmutableSet.<MetadataSearchTargetType>of(MetadataSearchTargetType.DATASET,
+                                                                                   MetadataSearchTargetType.STREAM));
     Set<String> tagSet = new HashSet<>();
     for (MetadataSearchResultRecord mdsr: metadataSet) {
       Set<String> set = mdc.getTags(mdsr.getEntityId(), MetadataScope.USER);
