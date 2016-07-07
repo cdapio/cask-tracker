@@ -45,7 +45,6 @@ import java.util.Set;
 public final class AuditTagsTable extends AbstractDataset {
 
   private final Table preferredTagsTable;
-  //  private final Table userTagsTable;
   private static final byte[] TOTAL_ENTITIES = Bytes.toBytes("total_entities");
   private static final byte[] DEFAULT_TOTAL_ENTITIES = Bytes.toBytes(0);
   private static final int MAX_TAG_LENGTH = 50;
@@ -61,7 +60,6 @@ public final class AuditTagsTable extends AbstractDataset {
                         @EmbeddedDataset("userTagsTable") Table userTagsTable) {
     super(spec.getName(), preferredTagsTable, userTagsTable);
     this.preferredTagsTable = preferredTagsTable;
-//    this.userTagsTable = userTagsTable;
   }
 
   public TagsResult getUserTags(String prefix, Id.Namespace namespace) throws IOException, UnauthenticatedException,
@@ -151,29 +149,18 @@ public final class AuditTagsTable extends AbstractDataset {
     return new ValidateTagsResult(valid.size(), invalid.size(), valid, invalid);
   }
 
-//  public void addPreferredTags(List<String> tagList) {
-//    for (String tag : tagList) {
-//
-//      preferredTagsTable.put(tag.getBytes(), TOTAL_ENTITIES, DEFAULT_TOTAL_ENTITIES);
-//    }
-//  }
 
   public ValidateTagsResult validateTags (List<String> tagList) {
     List<String> validList = new LinkedList<>();
     List<String> invalidList = new LinkedList<>();
-    int validCount = 0;
-    int invalidCount = 0;
-
     for (String tag : tagList) {
       if (isValid(tag)) {
         validList.add(tag);
-        validCount += 1;
       } else {
         invalidList.add(tag);
-        invalidCount += 1;
       }
     }
-    return new ValidateTagsResult(validCount, invalidCount, validList, invalidList);
+    return new ValidateTagsResult(validList.size(), invalidList.size(), validList, invalidList);
   }
 
   private boolean isValid(String tag) {

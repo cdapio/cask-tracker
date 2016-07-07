@@ -51,11 +51,10 @@ import javax.ws.rs.QueryParam;
  * This class handles requests to the Tracker services API
  */
 public final class AuditTagsHandler extends AbstractHttpServiceHandler {
+  private static final Gson GSON = new Gson();
+  private static final Type STRING_LIST = new TypeToken<List<String>>() { }.getType();
   private AuditTagsTable auditTagsTable;
   private DiscoveryMetadataClient disClient = new DiscoveryMetadataClient();
-  private static final Gson GSON = new GsonBuilder().create();
-  private static final Type STRING_LIST = new TypeToken<List<String>>() { }.getType();
-  private static final Type STRING = new TypeToken<String>() { }.getType();
 
   // Error messages
   private static final String NO_TAGS_RECEIVED = "No Tags Received";
