@@ -39,6 +39,8 @@ import co.cask.tracker.entity.AuditHistogramResult;
 import co.cask.tracker.entity.TopApplicationsResult;
 import co.cask.tracker.entity.TopDatasetsResult;
 import co.cask.tracker.entity.TopProgramsResult;
+import co.cask.tracker.entity.ValidateTagsResult;
+import co.cask.tracker.entity.TagsResult;
 import co.cask.tracker.utils.ParameterCheck;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
@@ -75,6 +77,8 @@ public class TrackerAppTest extends TestBase {
   private static final Type PROGRAM_LIST = new TypeToken<List<TopProgramsResult>>() { }.getType();
   private static final Type APPLICATION_LIST = new TypeToken<List<TopApplicationsResult>>() { }.getType();
   private static final Type TIMESINCE_MAP = new TypeToken<Map<String, Long>>() { }.getRawType();
+
+  private static final String TEST_JSON_TAGS = "[\"tag1\",\"tag2\",\"tag3\",\"ta*4\"]";
 
 
   @ClassRule
@@ -181,6 +185,54 @@ public class TrackerAppTest extends TestBase {
     Assert.assertEquals(14, total);
   }
 
+
+
+  @Test
+  public void testAddPreferredTags() throws Exception {
+    String response = getServiceResponse(trackerServiceManager, "v1/tags/promote",
+                                         "POST", TEST_JSON_TAGS, HttpResponseStatus.OK.getCode());
+  }
+
+  @Test
+  public void testValidate() throws Exception {
+    String response = getServiceResponse(trackerServiceManager, "v1/tags/validate",
+                                         "POST", TEST_JSON_TAGS, HttpResponseStatus.OK.getCode());
+    ValidateTagsResult result = GSON.fromJson(response, ValidateTagsResult.class);
+    Assert.assertEquals(3, result.getValid());
+    Assert.assertEquals(1, result.getInvalid());
+  }
+
+  @Test
+  public void testGetTags() throws Exception {
+    getServiceResponse(trackerServiceManager, "v1/tags/promote", "POST", TEST_JSON_TAGS,
+                       HttpResponseStatus.OK.getCode());
+    String response = getServiceResponse(trackerServiceManager,
+                                         "v1/tags?type=preferred",
+                                         HttpResponseStatus.OK.getCode());
+    TagsResult result = GSON.fromJson(response, TagsResult.class);
+    Assert.assertEquals(3, result.getPreferred());
+  }
+
+  @Test
+  public void testDeletePreferredTags() throws Exception {
+    getServiceResponse(trackerServiceManager, "v1/tags/promote", "POST",
+                       TEST_JSON_TAGS, HttpResponseStatus.OK.getCode());
+//    getServiceResponse(trackerServiceManager, "v1/tags/delete", "POST",
+//                       DELETE_TAGS, HttpResponseStatus.OK.getCode());
+    getServiceResponse(trackerServiceManager, "v1/tags/preferred?tag=tag1", "DELETE",
+                       null, HttpResponseStatus.OK.getCode());
+    String response = getServiceResponse(trackerServiceManager, "v1/tags?type=preferred",
+                                         HttpResponseStatus.OK.getCode());
+    TagsResult result = GSON.fromJson(response, TagsResult.class);
+    Assert.assertEquals(2, result.getPreferred());
+  }
+
+  @Test
+  public void testDemoteTags() throws Exception {
+    getServiceResponse(trackerServiceManager, "v1/tags/demote", "POST", TEST_JSON_TAGS,
+                       HttpResponseStatus.OK.getCode());
+  }
+
   private String getServiceResponse(ServiceManager serviceManager,
                                     String request,
                                     int expectedResponseCode) throws Exception {
@@ -201,6 +253,38 @@ public class TrackerAppTest extends TestBase {
     }
     return response;
   }
+
+  // Overload (String Type). For requests other than GET.
+  private String getServiceResponse(ServiceManager serviceManager,
+                                    String request, String type, String postRequest,
+                                    int expectedResponseCode) throws Exception {
+    URL url = new URL(serviceManager.getServiceURL(), request);
+    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    connection.setRequestMethod(type);
+
+    //Feed JSON data if POST
+    if (type.equals("POST")) {
+      connection.setDoOutput(true);
+      connection.getOutputStream().write(postRequest.getBytes());
+    }
+
+    Assert.assertEquals(expectedResponseCode, connection.getResponseCode());
+    String response;
+    try {
+      if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+        response = new String(ByteStreams.toByteArray(connection.getInputStream()), Charsets.UTF_8);
+      } else if (connection.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
+        response = new String(ByteStreams.toByteArray(connection.getErrorStream()), Charsets.UTF_8);
+      } else {
+        throw new Exception("Invalid response code returned: " + connection.getResponseCode());
+      }
+    } finally {
+      connection.disconnect();
+    }
+    return response;
+  }
+
+
 
   // Adapted from https://wiki.cask.co/display/CE/Audit+information+publishing
   private List<AuditMessage> generateTestData() {
