@@ -217,8 +217,6 @@ public class TrackerAppTest extends TestBase {
   public void testDeletePreferredTags() throws Exception {
     getServiceResponse(trackerServiceManager, "v1/tags/promote", "POST",
                        TEST_JSON_TAGS, HttpResponseStatus.OK.getCode());
-//    getServiceResponse(trackerServiceManager, "v1/tags/delete", "POST",
-//                       DELETE_TAGS, HttpResponseStatus.OK.getCode());
     getServiceResponse(trackerServiceManager, "v1/tags/preferred?tag=tag1", "DELETE",
                        null, HttpResponseStatus.OK.getCode());
     String response = getServiceResponse(trackerServiceManager, "v1/tags?type=preferred",
@@ -254,7 +252,7 @@ public class TrackerAppTest extends TestBase {
     return response;
   }
 
-  // Overload (String Type). For requests other than GET.
+  // Overload (String Type). For POST AND DELETE request.
   private String getServiceResponse(ServiceManager serviceManager,
                                     String request, String type, String postRequest,
                                     int expectedResponseCode) throws Exception {
@@ -263,7 +261,7 @@ public class TrackerAppTest extends TestBase {
     connection.setRequestMethod(type);
 
     //Feed JSON data if POST
-    if (type.equals("POST")) {
+    if (type.equals("POST") || type.equals("PUT")) {
       connection.setDoOutput(true);
       connection.getOutputStream().write(postRequest.getBytes());
     }

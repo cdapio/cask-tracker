@@ -20,6 +20,7 @@ import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.client.MetadataClient;
+import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
@@ -33,6 +34,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -52,15 +55,17 @@ import javax.ws.rs.QueryParam;
  */
 public final class AuditTagsHandler extends AbstractHttpServiceHandler {
   private static final Gson GSON = new Gson();
+  private static final Logger LOG = LoggerFactory.getLogger(AuditTagsHandler.class);
   private static final Type STRING_LIST = new TypeToken<List<String>>() { }.getType();
-  private AuditTagsTable auditTagsTable;
-  private DiscoveryMetadataClient disClient = new DiscoveryMetadataClient();
 
   // Error messages
   private static final String NO_TAGS_RECEIVED = "No Tags Received";
   private static final String INVALID_TYPE_PARAMETER = "Invalid parameter for 'type' query";
   private static final String DELETE_TAGS_WITH_ENTITIES = "Not able to delete preferred tags with entities";
   private static final String PREFERRED_TAG_NOTFOUND = "preferred tag not found";
+
+  private AuditTagsTable auditTagsTable;
+  private DiscoveryMetadataClient disClient = new DiscoveryMetadataClient();
 
   @Override
   public void initialize(HttpServiceContext context) throws Exception {
@@ -76,6 +81,7 @@ public final class AuditTagsHandler extends AbstractHttpServiceHandler {
       responder.sendError(HttpResponseStatus.BAD_REQUEST.getCode(), NO_TAGS_RECEIVED);
       return;
     }
+    LOG.info("HEADER TEST: " + request.getHeader("host"));
     String tags = StandardCharsets.UTF_8.decode(requestContents).toString();
     List<String> tagsList = GSON.fromJson(tags, STRING_LIST);
     responder.sendJson(auditTagsTable.demoteTag(tagsList));

@@ -38,19 +38,10 @@ import java.util.Set;
  * extends MetadataClient to interact with CDAP Metadata
  */
 public class DiscoveryMetadataClient {
-  private static final String HOSTNAME = "127.0.0.1";
-  private static final Integer PORT = 10000;
   private MetadataClient mdc;
-  private MetadataClient defaultMdc;
 
   public DiscoveryMetadataClient() {
-    ConnectionConfig connectionConfig = ConnectionConfig.builder()
-      .setHostname(HOSTNAME)
-      .setPort(PORT)
-      .build();
-    ClientConfig config = ClientConfig.builder().setConnectionConfig(connectionConfig).build();
-    this.mdc = new MetadataClient(config);
-    this.defaultMdc = new MetadataClient(ClientConfig.getDefault());
+    this.mdc = new MetadataClient(ClientConfig.getDefault());
   }
 
   public Set<String> getTags(Namespace namespace) throws IOException, UnauthenticatedException,
