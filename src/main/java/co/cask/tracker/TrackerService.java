@@ -29,5 +29,6 @@ public class TrackerService extends AbstractService {
     setDescription("A service that exposes the Tracker endpoints as an API.");
     addHandler(new AuditLogHandler());
     addHandler(new AuditMetricsHandler());
+    addHandler(new AuditTagsHandler());
   }
 }
