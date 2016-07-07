@@ -43,5 +43,7 @@ public final class ValidateTagsResult {
     return invalid;
   }
 
-  public List<String> getValidTags() { return validTags; };
+  public List<String> getValidTags() {
+    return validTags;
+  };
 }
