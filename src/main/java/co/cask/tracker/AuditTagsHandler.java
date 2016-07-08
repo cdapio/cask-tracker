@@ -164,7 +164,7 @@ public final class AuditTagsHandler extends AbstractHttpServiceHandler {
       String hostname = hostport.split(":")[0];
       Integer port = Integer.parseInt(hostport.split(":")[1]);
       metadataClient = new MetadataClientHelper(hostname, port);
-      LOG.info("HEADER TEST: " + request.getHeader("host") + " " + hostname + " " + port);
+      LOG.info("HEADER TEST: " + request.getAllHeaders());
     }
     return metadataClient;
   }

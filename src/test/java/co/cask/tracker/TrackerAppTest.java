@@ -51,6 +51,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
@@ -203,6 +204,8 @@ public class TrackerAppTest extends TestBase {
   }
 
   @Test
+  @Ignore
+  // Ignored because there is no way to communicate with CDAP metadata from an app unit test
   public void testGetTags() throws Exception {
     getServiceResponse(trackerServiceManager, "v1/tags/promote", "POST", TEST_JSON_TAGS,
                        HttpResponseStatus.OK.getCode());
@@ -214,6 +217,8 @@ public class TrackerAppTest extends TestBase {
   }
 
   @Test
+  @Ignore
+  // Ignored because there is no way to communicate with CDAP metadata from an app unit test
   public void testDeletePreferredTags() throws Exception {
     getServiceResponse(trackerServiceManager, "v1/tags/promote", "POST",
                        TEST_JSON_TAGS, HttpResponseStatus.OK.getCode());
