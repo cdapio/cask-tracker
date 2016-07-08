@@ -124,7 +124,7 @@ public final class AuditTagsTable extends AbstractDataset {
         invalid.add(tag);
       }
     }
-    return new ValidateTagsResult(valid.size(), invalid.size(), valid, invalid);
+    return new ValidateTagsResult(valid, invalid);
   }
 
   public boolean deleteTag(String tag) {
@@ -147,7 +147,7 @@ public final class AuditTagsTable extends AbstractDataset {
         invalid.add(tag);
       }
     }
-    return new ValidateTagsResult(valid.size(), invalid.size(), valid, invalid);
+    return new ValidateTagsResult(valid, invalid);
   }
 
 
@@ -161,7 +161,7 @@ public final class AuditTagsTable extends AbstractDataset {
         invalidList.add(tag);
       }
     }
-    return new ValidateTagsResult(validList.size(), invalidList.size(), validList, invalidList);
+    return new ValidateTagsResult(validList, invalidList);
   }
 
   private boolean isValid(String tag) {

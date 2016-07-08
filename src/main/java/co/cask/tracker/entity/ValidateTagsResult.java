@@ -28,9 +28,9 @@ public final class ValidateTagsResult {
   private final List<String> validTags;
   private final List<String> invalidTags;
 
-  public ValidateTagsResult(int valid, int invalid, List<String> validTags, List<String> invalidTags) {
-    this.valid = valid;
-    this.invalid = invalid;
+  public ValidateTagsResult(List<String> validTags, List<String> invalidTags) {
+    this.valid = validTags.size();
+    this.invalid = invalidTags.size();
     this.validTags = validTags;
     this.invalidTags = invalidTags;
   }

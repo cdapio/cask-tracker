@@ -135,7 +135,7 @@ public final class AuditTagsHandler extends AbstractHttpServiceHandler {
   @Path("v1/tags")
   @GET
   public void getTags(HttpServiceRequest request, HttpServiceResponder responder,
-                      @QueryParam("type") @DefaultValue("default") String type,
+                      @QueryParam("type") @DefaultValue("All") String type,
                       @QueryParam("prefix") @DefaultValue("") String prefix) throws IOException, NotFoundException,
     UnauthenticatedException, BadRequestException {
     MetadataClientHelper metadataClient = getMetadataClient(request);
@@ -147,7 +147,7 @@ public final class AuditTagsHandler extends AbstractHttpServiceHandler {
       responder.sendJson(HttpResponseStatus.OK.getCode(),
                          auditTagsTable.getPreferredTags(metadataClient,
                                                          prefix, Id.Namespace.from(getContext().getNamespace())));
-    } else if (type.equals("default")) {
+    } else if (type.equals("All")) {
       responder.sendJson(HttpResponseStatus.OK.getCode(),
                          auditTagsTable.getTags(metadataClient,
                                                 prefix, Id.Namespace.from(getContext().getNamespace())));
