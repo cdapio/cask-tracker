@@ -40,6 +40,15 @@ import java.util.Set;
 public class DiscoveryMetadataClient {
   private MetadataClient mdc;
 
+  public DiscoveryMetadataClient(String hostname, Integer port) {
+    ConnectionConfig connectionConfig = ConnectionConfig.builder()
+      .setHostname(hostname)
+      .setPort(port)
+      .build();
+    ClientConfig config = ClientConfig.builder().setConnectionConfig(connectionConfig).build();
+    this.mdc = new MetadataClient(config);
+  }
+
   public DiscoveryMetadataClient() {
     this.mdc = new MetadataClient(ClientConfig.getDefault());
   }

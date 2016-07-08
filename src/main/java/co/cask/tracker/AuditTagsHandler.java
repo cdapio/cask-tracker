@@ -65,8 +65,7 @@ public final class AuditTagsHandler extends AbstractHttpServiceHandler {
   private static final String PREFERRED_TAG_NOTFOUND = "preferred tag not found";
 
   private AuditTagsTable auditTagsTable;
-  private DiscoveryMetadataClient disClient = new DiscoveryMetadataClient();
-
+  private DiscoveryMetadataClient disClient;
   @Override
   public void initialize(HttpServiceContext context) throws Exception {
     super.initialize(context);
@@ -81,11 +80,25 @@ public final class AuditTagsHandler extends AbstractHttpServiceHandler {
       responder.sendError(HttpResponseStatus.BAD_REQUEST.getCode(), NO_TAGS_RECEIVED);
       return;
     }
-    LOG.info("HEADER TEST: " + request.getHeader("host"));
     String tags = StandardCharsets.UTF_8.decode(requestContents).toString();
     List<String> tagsList = GSON.fromJson(tags, STRING_LIST);
     responder.sendJson(auditTagsTable.demoteTag(tagsList));
   }
+
+  private DiscoveryMetadataClient getDisClient(HttpServiceRequest request) {
+    if (disClient == null) {
+      String hostport = request.getHeader("host");
+      if (hostport == null) {
+        return new DiscoveryMetadataClient();
+      }
+      String hostname = hostport.split(":")[0];
+      Integer port = Integer.parseInt(hostport.split(":")[1]);
+      disClient = new DiscoveryMetadataClient(hostname, port);
+      LOG.info("HEADER TEST: " + request.getHeader("host") + " " + hostname + " " + port);
+    }
+    return disClient;
+  }
+
 
   @Path("v1/tags/preferred")
   @DELETE
@@ -95,7 +108,7 @@ public final class AuditTagsHandler extends AbstractHttpServiceHandler {
       responder.sendString(HttpResponseStatus.BAD_REQUEST.getCode(), NO_TAGS_RECEIVED, Charsets.UTF_8);
       return;
     }
-    int num = disClient.getEntityNum(tag, Id.Namespace.from(getContext().getNamespace()));
+    int num = getDisClient(request).getEntityNum(tag, Id.Namespace.from(getContext().getNamespace()));
     if (num > 0) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST.getCode(), DELETE_TAGS_WITH_ENTITIES, Charsets.UTF_8);
       return;
@@ -143,15 +156,18 @@ public final class AuditTagsHandler extends AbstractHttpServiceHandler {
                       @QueryParam("type") @DefaultValue("default") String type,
                       @QueryParam("prefix") @DefaultValue("") String prefix) throws IOException, NotFoundException,
     UnauthenticatedException, BadRequestException {
+    DiscoveryMetadataClient disClient = getDisClient(request);
     if (type.equals("user")) {
       responder.sendJson(HttpResponseStatus.OK.getCode(),
-                         auditTagsTable.getUserTags(prefix, Id.Namespace.from(getContext().getNamespace())));
+                         auditTagsTable.getUserTags(disClient,
+                                                    prefix, Id.Namespace.from(getContext().getNamespace())));
     } else if (type.equals("preferred")) {
       responder.sendJson(HttpResponseStatus.OK.getCode(),
-                         auditTagsTable.getPreferredTags(prefix, Id.Namespace.from(getContext().getNamespace())));
+                         auditTagsTable.getPreferredTags(disClient,
+                                                         prefix, Id.Namespace.from(getContext().getNamespace())));
     } else if (type.equals("default")) {
       responder.sendJson(HttpResponseStatus.OK.getCode(),
-                         auditTagsTable.getTags(prefix, Id.Namespace.from(getContext().getNamespace())));
+                         auditTagsTable.getTags(disClient, prefix, Id.Namespace.from(getContext().getNamespace())));
     } else {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), INVALID_TYPE_PARAMETER);
     }
