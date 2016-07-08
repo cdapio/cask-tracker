@@ -33,7 +33,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Created by Yue on 7/8/16.
+ * A helper to use metadata client.
  */
 public class MetadataClientHelper {
   private MetadataClient mdc;
