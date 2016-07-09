@@ -23,22 +23,18 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.internal.guava.reflect.TypeToken;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.tracker.entity.AuditTagsTable;
 import co.cask.tracker.utils.MetadataClientHelper;
 import com.google.common.base.Charsets;
+import com.google.common.base.Strings;
 import com.google.gson.Gson;
-
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -51,7 +47,6 @@ import javax.ws.rs.QueryParam;
  */
 public final class AuditTagsHandler extends AbstractHttpServiceHandler {
   private static final Gson GSON = new Gson();
-  private static final Logger LOG = LoggerFactory.getLogger(AuditTagsHandler.class);
   private static final Type STRING_LIST = new TypeToken<List<String>>() { }.getType();
 
   // Error messages
@@ -62,6 +57,7 @@ public final class AuditTagsHandler extends AbstractHttpServiceHandler {
 
   private AuditTagsTable auditTagsTable;
   private MetadataClientHelper metadataClient;
+
   @Override
   public void initialize(HttpServiceContext context) throws Exception {
     super.initialize(context);
@@ -86,11 +82,11 @@ public final class AuditTagsHandler extends AbstractHttpServiceHandler {
   @DELETE
   public void deleteTagsWithoutEntities(HttpServiceRequest request, HttpServiceResponder responder,
                                         @QueryParam("tag") String tag) throws Exception {
-    if (tag == null) {
+    if (Strings.isNullOrEmpty(tag)) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST.getCode(), NO_TAGS_RECEIVED, Charsets.UTF_8);
       return;
     }
-    int num = getMetadataClient(request).getEntityNum(tag, Id.Namespace.from(getContext().getNamespace()));
+    int num = getMetadataClient(request).getEntityNum(tag, new NamespaceId(getContext().getNamespace()));
     if (num > 0) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST.getCode(), DELETE_TAGS_WITH_ENTITIES, Charsets.UTF_8);
       return;
@@ -135,22 +131,22 @@ public final class AuditTagsHandler extends AbstractHttpServiceHandler {
   @Path("v1/tags")
   @GET
   public void getTags(HttpServiceRequest request, HttpServiceResponder responder,
-                      @QueryParam("type") @DefaultValue("All") String type,
+                      @QueryParam("type") @DefaultValue("all") String type,
                       @QueryParam("prefix") @DefaultValue("") String prefix) throws IOException, NotFoundException,
     UnauthenticatedException, BadRequestException {
     MetadataClientHelper metadataClient = getMetadataClient(request);
     if (type.equals("user")) {
       responder.sendJson(HttpResponseStatus.OK.getCode(),
                          auditTagsTable.getUserTags(metadataClient,
-                                                    prefix, Id.Namespace.from(getContext().getNamespace())));
+                                                    prefix, new NamespaceId(getContext().getNamespace())));
     } else if (type.equals("preferred")) {
       responder.sendJson(HttpResponseStatus.OK.getCode(),
                          auditTagsTable.getPreferredTags(metadataClient,
-                                                         prefix, Id.Namespace.from(getContext().getNamespace())));
-    } else if (type.equals("All")) {
+                                                         prefix, new NamespaceId(getContext().getNamespace())));
+    } else if (type.equals("all")) {
       responder.sendJson(HttpResponseStatus.OK.getCode(),
                          auditTagsTable.getTags(metadataClient,
-                                                prefix, Id.Namespace.from(getContext().getNamespace())));
+                                                prefix, new NamespaceId(getContext().getNamespace())));
     } else {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST.getCode(), INVALID_TYPE_PARAMETER);
     }
@@ -164,7 +160,6 @@ public final class AuditTagsHandler extends AbstractHttpServiceHandler {
       String hostname = hostport.split(":")[0];
       Integer port = Integer.parseInt(hostport.split(":")[1]);
       metadataClient = new MetadataClientHelper(hostname, port);
-      LOG.info("HEADER TEST: " + request.getAllHeaders());
     }
     return metadataClient;
   }

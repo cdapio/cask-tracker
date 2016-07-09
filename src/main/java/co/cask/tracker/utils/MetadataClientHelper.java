@@ -22,7 +22,7 @@ import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
@@ -51,10 +51,11 @@ public class MetadataClientHelper {
     this.mdc = new MetadataClient(ClientConfig.getDefault());
   }
 
-  public Set<String> getTags(Id.Namespace namespace) throws IOException, UnauthenticatedException,
+  public Set<String> getTags(NamespaceId namespace) throws IOException, UnauthenticatedException,
     NotFoundException, BadRequestException {
     Set<MetadataSearchResultRecord> metadataSet =
-      mdc.searchMetadata(namespace, "*", ImmutableSet.<MetadataSearchTargetType>of(MetadataSearchTargetType.DATASET,
+      mdc.searchMetadata(namespace.toId(), "*",
+                         ImmutableSet.<MetadataSearchTargetType>of(MetadataSearchTargetType.DATASET,
                                                                                    MetadataSearchTargetType.STREAM));
     Set<String> tagSet = new HashSet<>();
     for (MetadataSearchResultRecord mdsr: metadataSet) {
@@ -64,10 +65,11 @@ public class MetadataClientHelper {
     return tagSet;
   }
 
-  public int getEntityNum(String tag, Id.Namespace namespace) throws IOException, UnauthenticatedException,
+  public int getEntityNum(String tag, NamespaceId namespace) throws IOException, UnauthenticatedException,
     NotFoundException, BadRequestException {
     Set<MetadataSearchResultRecord> metadataSet =
-      mdc.searchMetadata(namespace, tag, ImmutableSet.<MetadataSearchTargetType>of(MetadataSearchTargetType.DATASET,
+      mdc.searchMetadata(namespace.toId(), tag,
+                         ImmutableSet.<MetadataSearchTargetType>of(MetadataSearchTargetType.DATASET,
                                                                                    MetadataSearchTargetType.STREAM));
     return metadataSet.size();
   }

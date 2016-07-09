@@ -26,8 +26,8 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.Id;
 
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.tracker.utils.MetadataClientHelper;
 import com.google.common.base.CharMatcher;
 
@@ -55,13 +55,12 @@ public final class AuditTagsTable extends AbstractDataset {
     .or(CharMatcher.is('_'))
     .or(CharMatcher.is('-'));
 
-  public AuditTagsTable(DatasetSpecification spec, @EmbeddedDataset("preferredTagsTable") Table preferredTagsTable,
-                        @EmbeddedDataset("userTagsTable") Table userTagsTable) {
-    super(spec.getName(), preferredTagsTable, userTagsTable);
+  public AuditTagsTable(DatasetSpecification spec, @EmbeddedDataset("preferredTagsTable") Table preferredTagsTable) {
+    super(spec.getName(), preferredTagsTable);
     this.preferredTagsTable = preferredTagsTable;
   }
 
-  public TagsResult getUserTags(MetadataClientHelper metadataClient, String prefix, Id.Namespace namespace)
+  public TagsResult getUserTags(MetadataClientHelper metadataClient, String prefix, NamespaceId namespace)
                                     throws IOException, UnauthenticatedException,
                                            NotFoundException, BadRequestException {
     Map<String, Integer> tagMap = new HashMap<>();
@@ -79,7 +78,7 @@ public final class AuditTagsTable extends AbstractDataset {
     return result;
   }
 
-  public TagsResult getPreferredTags(MetadataClientHelper metadataClient, String prefix, Id.Namespace namespace)
+  public TagsResult getPreferredTags(MetadataClientHelper metadataClient, String prefix, NamespaceId namespace)
                                                     throws IOException, NotFoundException,
     UnauthenticatedException, BadRequestException {
     Map<String, Integer> tagMap = new HashMap<>();
@@ -102,7 +101,7 @@ public final class AuditTagsTable extends AbstractDataset {
   }
 
 
-  public TagsResult getTags(MetadataClientHelper metadataClient, String prefix, Id.Namespace namespace)
+  public TagsResult getTags(MetadataClientHelper metadataClient, String prefix, NamespaceId namespace)
                                                   throws IOException, NotFoundException,
     UnauthenticatedException, BadRequestException {
     TagsResult userResult = getUserTags(metadataClient, prefix, namespace);
@@ -165,9 +164,6 @@ public final class AuditTagsTable extends AbstractDataset {
   }
 
   private boolean isValid(String tag) {
-    if (!TAG_MATCHER.matchesAllOf(tag) || tag.length() > MAX_TAG_LENGTH) {
-      return false;
-    }
-    return true;
+    return !(!TAG_MATCHER.matchesAllOf(tag) || tag.length() > MAX_TAG_LENGTH);
   }
 }
