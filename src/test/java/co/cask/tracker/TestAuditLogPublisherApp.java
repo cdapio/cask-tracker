@@ -47,7 +47,8 @@ public class TestAuditLogPublisherApp extends AbstractApplication {
                     .add("dataset.cube.aggregation.agg1.dimensions",
                             "namespace,entity_type,entity_name,audit_type")
                     .add("dataset.cube.aggregation.agg2.dimensions",
-                            "namespace,entity_type,entity_name,audit_type,program_name,app_name,program_type")
+                            "namespace,entity_type,entity_name,audit_type," +
+                              "program_name,app_name,program_type,accessor_namespace")
                     .build());
     createDataset(TrackerApp.ENTITY_LATEST_TIMESTAMP_DATASET_NAME, EntityLatestTimestampTable.class);
     createDataset(TrackerApp.AUDIT_TAGS_DATASET_NAME, AuditTagsTable.class);

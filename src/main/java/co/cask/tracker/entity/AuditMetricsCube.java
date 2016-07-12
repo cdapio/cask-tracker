@@ -103,9 +103,15 @@ public class AuditMetricsCube extends AbstractDataset {
     fact.addDimensionValue("audit_type", auditMessage.getType().name().toLowerCase());
     if (auditMessage.getPayload() instanceof AccessPayload) {
       AccessPayload accessPayload = ((AccessPayload) auditMessage.getPayload());
-      String programName = EntityIdHelper.getEntityName(accessPayload.getAccessor());
-      String appName = EntityIdHelper.getApplicationName(accessPayload.getAccessor());
-      String programType = accessPayload.getAccessor().getEntity().name().toLowerCase();
+      EntityId accessor = accessPayload.getAccessor();
+      String programName = EntityIdHelper.getEntityName(accessor);
+      String appName = EntityIdHelper.getApplicationName(accessor);
+      String programType = accessor.getEntity().name().toLowerCase();
+      // Accounting for cross-namespace dataset access
+      if (accessor instanceof NamespacedId) {
+        String accessorNamespace = ((NamespacedId) accessor).getNamespace();
+        fact.addDimensionValue("accessor_namespace", accessorNamespace);
+      }
       if (appName.length() != 0) {
         fact.addDimensionValue("app_name", appName);
       }
@@ -252,6 +258,7 @@ public class AuditMetricsCube extends AbstractDataset {
       if (Strings.isNullOrEmpty(programName)) {
         continue;
       }
+      String accessorNamespace = t.getDimensionValues().get("accessor_namespace");
       String appName = t.getDimensionValues().get("app_name");
       String programType = t.getDimensionValues().get("program_type");
       String key = getKey(appName, programName, programType);
@@ -259,7 +266,7 @@ public class AuditMetricsCube extends AbstractDataset {
       long value = t.getTimeValues().get(0).getValue();
       TopProgramsResult result = resultsMap.get(key);
       if (result == null) {
-        resultsMap.put(key, new TopProgramsResult(programName, appName, programType, value));
+        resultsMap.put(key, new TopProgramsResult(accessorNamespace, programName, appName, programType, value));
       } else {
         result.increment(value);
       }

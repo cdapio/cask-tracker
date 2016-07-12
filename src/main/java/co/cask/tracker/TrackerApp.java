@@ -53,7 +53,8 @@ public class TrackerApp extends AbstractApplication<TrackerAppConfig> {
             .add("dataset.cube.aggregation.agg1.dimensions",
                     "namespace,entity_type,entity_name,audit_type")
             .add("dataset.cube.aggregation.agg2.dimensions",
-                    "namespace,entity_type,entity_name,audit_type,program_name,app_name,program_type")
+                    "namespace,entity_type,entity_name,audit_type," +
+                      "program_name,app_name,program_type,accessor_namespace")
             .build();
     createDataset(AUDIT_METRICS_DATASET_NAME, AuditMetricsCube.class, prop);
     createDataset(ENTITY_LATEST_TIMESTAMP_DATASET_NAME, EntityLatestTimestampTable.class);

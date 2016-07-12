@@ -20,12 +20,14 @@ package co.cask.tracker.entity;
  * A POJO to hold the results for the TopN query.
  */
 public class TopProgramsResult implements Comparable<TopProgramsResult> {
+  private final String namespace;
   private final String entityName;
   private final String application;
   private final String programType;
   private long value;
 
-  public TopProgramsResult(String entityName, String application, String entityType, long value) {
+  public TopProgramsResult(String namespace, String entityName, String application, String entityType, long value) {
+    this.namespace = namespace;
     this.entityName = entityName;
     this.application = application;
     this.programType = entityType;
@@ -34,6 +36,10 @@ public class TopProgramsResult implements Comparable<TopProgramsResult> {
 
   public long getValue() {
     return value;
+  }
+
+  public String getNamespace() {
+    return namespace;
   }
 
   public String getApplication() {
