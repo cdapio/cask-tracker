@@ -412,7 +412,7 @@ public class AuditMetricsCube extends AbstractDataset {
       }
       return uniquePrograms.size();
     } catch (NoSuchElementException e) {
-      return -1L;
+      return 0L;
     }
   }
 
@@ -468,7 +468,7 @@ public class AuditMetricsCube extends AbstractDataset {
       // Single measurement queried; Aggregated for the 1st 365 days
       return results.iterator().next().getTimeValues().get(0).getValue();
     } catch (NoSuchElementException e) {
-      return -1L;
+      return 0L;
     }
   }
 
