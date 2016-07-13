@@ -46,6 +46,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -375,7 +376,8 @@ public class AuditMetricsCube extends AbstractDataset {
     Collection<TimeSeries> results = auditMetrics.query(query);
     Map<String, Integer> uniquePrograms = new HashMap<>();
     for (TimeSeries t : results) {
-      uniquePrograms.put(getKey(t.getDimensionValues().get("program_name"), t.getDimensionValues().get("program_type")),
+      uniquePrograms.put(getKey(t.getDimensionValues().get("program_name"),
+                                t.getDimensionValues().get("program_type")),
                          0);
     }
     return uniquePrograms.size();
@@ -400,14 +402,18 @@ public class AuditMetricsCube extends AbstractDataset {
       .dimension("program_type")
       .limit(1000)
       .build();
-
-    Collection<TimeSeries> results = auditMetrics.query(query);
-    Map<String, Integer> uniquePrograms = new HashMap<>();
-    for (TimeSeries t : results) {
-      uniquePrograms.put(getKey(t.getDimensionValues().get("program_name"), t.getDimensionValues().get("program_type")),
-                         0);
+    try {
+      Collection<TimeSeries> results = auditMetrics.query(query);
+      Map<String, Integer> uniquePrograms = new HashMap<>();
+      for (TimeSeries t : results) {
+        uniquePrograms.put(getKey(t.getDimensionValues().get("program_name"),
+                                  t.getDimensionValues().get("program_type")),
+                           0);
+      }
+      return uniquePrograms.size();
+    } catch (NoSuchElementException e) {
+      return -1L;
     }
-    return uniquePrograms.size();
   }
 
   // Total Audit log messages
@@ -457,10 +463,13 @@ public class AuditMetricsCube extends AbstractDataset {
       .timeRange(0L, System.currentTimeMillis() / 1000)
       .limit(1000)
       .build();
-
-    Collection<TimeSeries> results = auditMetrics.query(query);
-    // Single measurement queried; Aggregated for the 1st 365 days
-    return results.iterator().next().getTimeValues().get(0).getValue();
+    try {
+      Collection<TimeSeries> results = auditMetrics.query(query);
+      // Single measurement queried; Aggregated for the 1st 365 days
+      return results.iterator().next().getTimeValues().get(0).getValue();
+    } catch (NoSuchElementException e) {
+      return -1L;
+    }
   }
 
   public List<String> getEntities(String namespace, String entityType) {

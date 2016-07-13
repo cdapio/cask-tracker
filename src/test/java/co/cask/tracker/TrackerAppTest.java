@@ -112,7 +112,6 @@ public class TrackerAppTest extends TestBase {
     testAppManager.stopAll();
     clear();
   }
-
   @Test
   public void testInvalidDatesError() throws Exception {
     String response = getServiceResponse(trackerServiceManager,
