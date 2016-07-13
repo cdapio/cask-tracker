@@ -60,6 +60,9 @@ public final class TrackerMeterHandler extends AbstractHttpServiceHandler {
   private static final String DATASET = EntityType.DATASET.name().toLowerCase();
   private static final String STREAM = EntityType.STREAM.name().toLowerCase();
 
+  private static final String EMPTY_REQUEST = "Request body was empty. " +
+    "At least one dataset or stream name must be present";
+
   @Override
   public void initialize(HttpServiceContext context) throws Exception {
     super.initialize(context);
@@ -74,11 +77,15 @@ public final class TrackerMeterHandler extends AbstractHttpServiceHandler {
     ByteBuffer requestContents = request.getContent();
     if (requestContents == null) {
       responder.sendError(HttpResponseStatus.BAD_REQUEST.getCode(),
-                          "Request body was empty. At least one dataset or stream name must be present");
+                          EMPTY_REQUEST);
       return;
     }
     TrackerMeterRequest trackerMeterRequest = GSON.fromJson(StandardCharsets.UTF_8.decode(requestContents).toString(),
                                                             TrackerMeterRequest.class);
+    if (trackerMeterRequest.getDatasets().size() == 0 && trackerMeterRequest.getStreams().size() == 0) {
+      responder.sendError(HttpResponseStatus.BAD_REQUEST.getCode(), EMPTY_REQUEST);
+      return;
+    }
     responder.sendJson(getTrackerScoreMap(trackerMeterRequest));
   }
   // Gets the score and modifies the result to the format expected by the UI
@@ -130,13 +137,15 @@ public final class TrackerMeterHandler extends AbstractHttpServiceHandler {
     metricsQuery.addAll(getUniqueEntityList(auditMetricsCube.getEntities(namespace, STREAM), STREAM));
 
     // Get a map of time since read stamps for each of them to determine an entity's rank
-    Map<Entity, Integer> rankMap = getRankMap(sortMapByValue(entityTimestampTable.getReadTimestamps(namespace, metricsQuery)));
+    Map<Entity, Integer> rankMap
+      = getRankMap(sortMapByValue(entityTimestampTable.getReadTimestamps(namespace, metricsQuery)));
     int size = rankMap.size();
     for (Map.Entry<Entity, Integer> entry : rankMap.entrySet()) {
       // Updates score for entities for which score was requested
       if (resultMap.containsKey(entry.getKey())) {
         Entity entity = entry.getKey();
-        int newScore = resultMap.get(entity) + (int) ((float) entry.getValue() / (float) size * TIME_SINCE_READ_WEIGHT);
+        int newScore = resultMap.get(entity)
+          + (int) (((float) entry.getValue() / (float) size) * TIME_SINCE_READ_WEIGHT);
         resultMap.put(entity, newScore);
       }
     }
