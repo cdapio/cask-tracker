@@ -113,17 +113,14 @@ public final class TrackerMeterHandler extends AbstractHttpServiceHandler {
         auditMetricsCube.getTotalProgramsCount(namespace, uniqueEntity.getEntityType(), uniqueEntity.getEntityName());
       long entityActivity = auditMetricsCube.getTotalActivity(namespace, uniqueEntity.getEntityType(),
                                                               uniqueEntity.getEntityName()) - entityProgramCount;
-      float logScore, programScore;
+      float logScore = 0f;
+      float programScore = 0f;
       // Activity and programs count determine following % each of the final score
       if (totalActivity != 0) {
         logScore = ((float) entityActivity / (float) totalActivity) * LOG_MESSAGES_WEIGHT;
-      } else {
-        logScore = 0;
       }
       if (totalProgramsCount != 0) {
         programScore = ((float) entityProgramCount / (float) totalProgramsCount) * UNIQUE_PROGRAM_WEIGHT;
-      } else {
-        programScore = 0;
       }
       int score = (int) (logScore + programScore);
       resultMap.put(uniqueEntity, score);
