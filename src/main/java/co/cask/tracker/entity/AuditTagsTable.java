@@ -168,8 +168,7 @@ public final class AuditTagsTable extends AbstractDataset {
     List<String> valid = new LinkedList<>();
     List<String> invalid = new LinkedList<>();
     for (String tag : tagList) {
-      Row row = preferredTagsTable.get(tag.getBytes());
-      if (row.isEmpty() && isValid(tag)) {
+      if (isValid(tag)) {
         valid.add(tag);
         preferredTagsTable.put(tag.getBytes(), TOTAL_ENTITIES, DEFAULT_TOTAL_ENTITIES);
       } else {
