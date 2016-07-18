@@ -394,8 +394,7 @@ public class TrackerAppTest extends TestBase {
     return list;
   }
 
-  private String generateString(Random rng, String characters, int length)
-  {
+  private String generateString(Random rng, String characters, int length) {
     char[] text = new char[length];
     for (int i = 0; i < length; i++)
     {
