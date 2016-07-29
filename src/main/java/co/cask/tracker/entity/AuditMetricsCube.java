@@ -111,6 +111,9 @@ public class AuditMetricsCube extends AbstractDataset {
     if (auditMessage.getPayload() instanceof AccessPayload) {
       AccessPayload accessPayload = ((AccessPayload) auditMessage.getPayload());
       EntityId accessor = accessPayload.getAccessor();
+      if (ParameterCheck.isTrackerEntity(accessor)) {
+        return;
+      }
       // Accounting for cross-namespace dataset access
       if (accessor instanceof NamespacedId) {
         String accessorNamespace = ((NamespacedId) accessor).getNamespace();
@@ -216,6 +219,7 @@ public class AuditMetricsCube extends AbstractDataset {
       .select()
       .measurement(AccessType.READ.name().toLowerCase(), AggregationFunction.SUM)
       .measurement(AccessType.WRITE.name().toLowerCase(), AggregationFunction.SUM)
+      .measurement(AccessType.UNKNOWN.name().toLowerCase(), AggregationFunction.SUM)
       .from()
       .resolution(TimeUnit.DAYS.toSeconds(365L), TimeUnit.SECONDS)
       .where()
@@ -240,6 +244,7 @@ public class AuditMetricsCube extends AbstractDataset {
       .select()
       .measurement(AccessType.READ.name().toLowerCase(), AggregationFunction.SUM)
       .measurement(AccessType.WRITE.name().toLowerCase(), AggregationFunction.SUM)
+      .measurement(AccessType.UNKNOWN.name().toLowerCase(), AggregationFunction.SUM)
       .from()
       .resolution(TimeUnit.DAYS.toSeconds(365L), TimeUnit.SECONDS)
       .where()
@@ -289,6 +294,7 @@ public class AuditMetricsCube extends AbstractDataset {
       .select()
       .measurement(AccessType.READ.name().toLowerCase(), AggregationFunction.SUM)
       .measurement(AccessType.WRITE.name().toLowerCase(), AggregationFunction.SUM)
+      .measurement(AccessType.UNKNOWN.name().toLowerCase(), AggregationFunction.SUM)
       .from()
       .resolution(TimeUnit.DAYS.toSeconds(365L), TimeUnit.SECONDS)
       .where()
@@ -313,6 +319,7 @@ public class AuditMetricsCube extends AbstractDataset {
       .select()
       .measurement(AccessType.READ.name().toLowerCase(), AggregationFunction.SUM)
       .measurement(AccessType.WRITE.name().toLowerCase(), AggregationFunction.SUM)
+      .measurement(AccessType.UNKNOWN.name().toLowerCase(), AggregationFunction.SUM)
       .from()
       .resolution(TimeUnit.DAYS.toSeconds(365L), TimeUnit.SECONDS)
       .where()

@@ -245,13 +245,21 @@ public class TrackerAppTest extends TestBase {
   }
 
   @Test
-  public void testTrackerDatasetFilter() throws Exception {
+  public void testTrackerEntityFilter() throws Exception {
+    // Test dataset filter
     String response = getServiceResponse(trackerServiceManager,
                                          "v1/auditmetrics/audit-histogram?entityType=dataset&entityName="
                                            + TrackerApp.AUDIT_LOG_DATASET_NAME,
                                          HttpResponseStatus.OK.getCode());
     AuditHistogramResult result = GSON.fromJson(response, AuditHistogramResult.class);
     Assert.assertEquals(0, result.getResults().size());
+
+    // Test entity filter
+    response = getServiceResponse(trackerServiceManager,
+                                         "v1/auditmetrics/top-entities/programs?entityName=dsx&entityType=dataset",
+                                         HttpResponseStatus.OK.getCode());
+    List<TopProgramsResult> programsResults = GSON.fromJson(response, PROGRAM_LIST);
+    Assert.assertEquals(0, programsResults.size());
   }
 
   /* Tests for Preferred Tags
@@ -576,7 +584,17 @@ public class TrackerAppTest extends TestBase {
                                   AuditType.ACCESS,
                                   new AccessPayload(AccessType.WRITE,
                                                     EntityId.fromString("program:ns1.b.SERVICE.program1"))
-                )
+                 )
+    );
+    testData.add(new AuditMessage(1456956659516L,
+                                  NamespaceId.DEFAULT.dataset("dsx"),
+                                  "user4",
+                                  AuditType.ACCESS,
+                                  new AccessPayload(AccessType.WRITE,
+                                                    EntityId.fromString(String.format("program:ns1.%s.SERVICE.program1",
+                                                                                      TrackerApp.APP_NAME))
+                                  )
+                 )
     );
     return testData;
   }

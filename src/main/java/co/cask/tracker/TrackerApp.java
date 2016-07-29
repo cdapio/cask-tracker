@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
  * CDAP Application and provide input to data governance process on cluster.
  */
 public class TrackerApp extends AbstractApplication<TrackerAppConfig> {
-  public static final String APP_NAME = "Tracker";
+  public static final String APP_NAME = "_Tracker";
   public static final String AUDIT_LOG_DATASET_NAME = "_auditLog";
   public static final String AUDIT_METRICS_DATASET_NAME = "_auditMetrics";
   public static final String ENTITY_LATEST_TIMESTAMP_DATASET_NAME = "_timeSinceTable";
