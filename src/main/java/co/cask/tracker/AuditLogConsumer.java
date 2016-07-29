@@ -88,7 +88,7 @@ public final class AuditLogConsumer extends Kafka08ConsumerFlowlet<ByteBuffer, S
     TrackerAppConfig appConfig = GSON.fromJson(getContext().getApplicationSpecification().getConfiguration(),
             TrackerAppConfig.class);
     auditLogKafkaConfig = appConfig.getAuditLogKafkaConfig();
-    LOG.info("Configuring Audit Log Kafka Consumer : {}", auditLogKafkaConfig);
+    LOG.debug("Configuring Audit Log Kafka Consumer : {}", auditLogKafkaConfig);
     offsetStore = getContext().getDataset(auditLogKafkaConfig.getOffsetDataset());
     if (!Strings.isNullOrEmpty(auditLogKafkaConfig.getZookeeperString())) {
       kafkaConfigurer.setZooKeeper(auditLogKafkaConfig.getZookeeperString());

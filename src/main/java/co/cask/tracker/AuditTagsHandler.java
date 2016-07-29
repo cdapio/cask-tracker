@@ -290,7 +290,7 @@ public final class AuditTagsHandler extends AbstractHttpServiceHandler {
         new MetaClient(config).ping();
       } catch (IOException e) {
         config = ClientConfig.getDefault();
-        LOG.error("Got error while pinging router. Falling back to default client config: " + config, e);
+        LOG.info("Got error while pinging router. Falling back to default client config: " + config, e);
       }
       return new DiscoveryMetadataClient(config);
 
@@ -298,7 +298,7 @@ public final class AuditTagsHandler extends AbstractHttpServiceHandler {
     } catch (UnauthenticatedException e) {
       // authentication is enabled, so we can't go through router. Have to use discovery via zookeeper
       // Note that in standalone CDAP, can't use zookeeper discovery
-      LOG.error("Got error while pinging router. Falling back to DiscoveryMetadataClient.", e);
+      LOG.info("Got error while pinging router. Falling back to DiscoveryMetadataClient.", e);
       LOG.info("Using discovery with zookeeper quorum {}", zookeeperQuorum);
       //delete "kafca" to make "/cdap/kafka" to "/cdap"
       ZKClientService zkClient = createZKClient(zookeeperQuorum.replace("/kafka", ""));
