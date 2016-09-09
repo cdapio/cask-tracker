@@ -51,17 +51,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * Extends AbstractMetadataClient, interact with CDAP (security)
  */
+@ThreadSafe
 public class DiscoveryMetadataClient extends AbstractMetadataClient {
   private static final int ROUTER = 0;
   private static final int DISCOVERY = 1;
 
   private final int mode;
-  private Supplier<EndpointStrategy> endpointStrategySupplier;
-  private ClientConfig clientConfig;
+  private final Supplier<EndpointStrategy> endpointStrategySupplier;
+  private final ClientConfig clientConfig;
 
   public DiscoveryMetadataClient(final DiscoveryServiceClient discoveryClient) {
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
@@ -70,11 +72,14 @@ public class DiscoveryMetadataClient extends AbstractMetadataClient {
         return new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.METADATA_SERVICE));
       }
     });
+    this.clientConfig = null;
     this.mode = DISCOVERY;
   }
 
   public DiscoveryMetadataClient(ClientConfig clientConfig) {
-    this.clientConfig = clientConfig;
+    this.endpointStrategySupplier = null;
+    // simply make a copy, to ensure that the ClientConfig instance we use is never modified
+    this.clientConfig = new ClientConfig.Builder(clientConfig).build();
     this.mode = ROUTER;
   }
 
