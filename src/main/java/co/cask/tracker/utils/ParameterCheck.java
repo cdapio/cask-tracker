@@ -16,6 +16,7 @@
 
 package co.cask.tracker.utils;
 
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.proto.element.EntityType;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.tracker.TrackerApp;
@@ -87,6 +88,15 @@ public class ParameterCheck {
       default:
         return false;
     }
+  }
+
+  public static boolean isValidColumnType(String columnType) {
+    for (Schema.Type type : Schema.Type.values()) {
+      if (type.name().equalsIgnoreCase(columnType)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static boolean isTrackerEntity(EntityId entityId) {

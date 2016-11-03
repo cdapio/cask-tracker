@@ -28,7 +28,6 @@ import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.audit.payload.access.AccessPayload;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.tracker.utils.EntityIdHelper;
 import co.cask.tracker.utils.ParameterCheck;
 
 import java.io.IOException;

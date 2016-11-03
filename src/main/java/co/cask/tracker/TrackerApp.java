@@ -18,6 +18,7 @@ package co.cask.tracker;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.tracker.config.TrackerAppConfig;
 import co.cask.tracker.entity.AuditLogTable;
 import co.cask.tracker.entity.AuditMetricsCube;
@@ -37,6 +38,8 @@ public class TrackerApp extends AbstractApplication<TrackerAppConfig> {
   public static final String AUDIT_METRICS_DATASET_NAME = "_auditMetrics";
   public static final String ENTITY_LATEST_TIMESTAMP_DATASET_NAME = "_timeSinceTable";
   public static final String AUDIT_TAGS_DATASET_NAME = "_auditTagsTable";
+  public static final String DATA_DICTIONARY_DATASET_NAME = "_dataDictionary";
+
 
   @Override
   public void configure() {
@@ -58,6 +61,7 @@ public class TrackerApp extends AbstractApplication<TrackerAppConfig> {
     createDataset(AUDIT_METRICS_DATASET_NAME, AuditMetricsCube.class, prop);
     createDataset(ENTITY_LATEST_TIMESTAMP_DATASET_NAME, LatestEntityTable.class);
     createDataset(AUDIT_TAGS_DATASET_NAME, AuditTagsTable.class);
+    createDataset(DATA_DICTIONARY_DATASET_NAME, Table.class);
     addFlow(new AuditLogFlow(getConfig()));
     addService(new TrackerService(getConfig()));
   }

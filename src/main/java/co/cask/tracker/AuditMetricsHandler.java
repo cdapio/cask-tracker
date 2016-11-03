@@ -31,7 +31,6 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -153,5 +152,4 @@ public final class AuditMetricsHandler extends AbstractHttpServiceHandler {
     }
     responder.sendJson(result);
   }
-
 }
