@@ -20,7 +20,6 @@ import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * A POJO to hold the results for the TopN query.
