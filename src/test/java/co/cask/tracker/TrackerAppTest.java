@@ -285,11 +285,13 @@ public class TrackerAppTest extends TestBase {
 
   @Test
   public void testValidate() throws Exception {
-    String response = getServiceResponse(trackerServiceManager, "v1/tags/validate",
-                                         "POST", TEST_JSON_TAGS, HttpResponseStatus.OK.getCode());
+    Random rng = new Random();
+    List<String> testList = generateStringList(rng, "abc123", 3000);
+    String response = getServiceResponse(trackerServiceManager, "v1/tags/promote",
+                                         "POST", GSON.toJson(testList), HttpResponseStatus.OK.getCode());
     ValidateTagsResult result = GSON.fromJson(response, ValidateTagsResult.class);
-    Assert.assertEquals(3, result.getValid());
-    Assert.assertEquals(1, result.getInvalid());
+    Assert.assertNotEquals(3001, result.getValid());
+    Assert.assertNotEquals(3001, result.getInvalid());
   }
 
   @Test
@@ -456,6 +458,21 @@ public class TrackerAppTest extends TestBase {
     return response;
   }
 
+  private List<String> generateStringList(Random rng, String characters, int stringNum) {
+    List<String> list = new ArrayList<>();
+    for (int i = 0; i < stringNum; i++) {
+      list.add(generateString(rng, characters, rng.nextInt(60)));
+    }
+    return list;
+  }
+
+  private String generateString(Random rng, String characters, int length) {
+    char[] text = new char[length];
+    for (int i = 0; i < length; i++) {
+      text[i] = characters.charAt(rng.nextInt(characters.length()));
+    }
+    return new String(text);
+  }
 
   // Adapted from https://wiki.cask.co/display/CE/Audit+information+publishing
   private List<AuditMessage> generateTestData() {
