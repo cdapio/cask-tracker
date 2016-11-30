@@ -33,6 +33,7 @@ import co.cask.cdap.proto.audit.payload.access.AccessType;
 import co.cask.cdap.proto.element.EntityType;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.tracker.utils.EntityIdHelper;
 import co.cask.tracker.utils.ParameterCheck;
 import com.google.common.base.Strings;
@@ -85,6 +86,7 @@ public class AuditMetricsCube extends AbstractDataset {
    */
   public void write(AuditMessage auditMessage) throws IOException {
     EntityId entityId = auditMessage.getEntityId();
+
     if (!(entityId instanceof NamespacedEntityId)) {
       throw
         new IllegalStateException(String.format("Entity '%s' does not have a namespace " +
@@ -121,7 +123,12 @@ public class AuditMetricsCube extends AbstractDataset {
       if (!appName.isEmpty()) {
         fact.addDimensionValue("app_name", appName);
       }
-      String programName = accessor.getEntityName();
+      String programName;
+      if (accessor instanceof ProgramRunId) {
+        programName = ((ProgramRunId) accessor).getProgram();
+      } else {
+        programName = accessor.getEntityName();
+      }
       if (!programName.isEmpty()) {
         fact.addDimensionValue("program_name", programName);
       }
