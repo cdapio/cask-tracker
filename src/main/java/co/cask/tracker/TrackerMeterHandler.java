@@ -89,15 +89,11 @@ public final class TrackerMeterHandler extends AbstractHttpServiceHandler {
   }
   // Gets the score and modifies the result to the format expected by the UI
   private TrackerMeterResult getTrackerScoreMap(TrackerMeterRequest truthMeterRequest) {
-    long totalProgramsCount = auditMetricsCube.getTotalProgramsCount(namespace);
-    // program read activity is analyzed independently, so subtracting it here
-    long totalActivity = auditMetricsCube.getTotalActivity(namespace) - totalProgramsCount;
-
     List<Entity> requestList = getUniqueEntityList(truthMeterRequest.getDatasets(), DATASET);
     requestList.addAll(getUniqueEntityList(truthMeterRequest.getStreams(), STREAM));
 
     // Get the score map, and divide entities into datasets and streams
-    Map<Entity, Integer> scoreMap = trackerMeterHelper(requestList, totalActivity, totalProgramsCount);
+    Map<Entity, Integer> scoreMap = trackerMeterHelper(requestList);
     Map<String, Integer> datasetMap = new HashMap<>();
     Map<String, Integer> streamMap = new HashMap<>();
     for (Map.Entry<Entity, Integer> entry : scoreMap.entrySet()) {
@@ -111,59 +107,36 @@ public final class TrackerMeterHandler extends AbstractHttpServiceHandler {
   }
 
   // Calculates score for each entity
-  private Map<Entity, Integer> trackerMeterHelper(List<Entity> requestList,
-                                                  long totalActivity, long totalProgramsCount) {
-    Map<Entity, Integer> resultMap = new HashMap<>();
-    for (Entity uniqueEntity : requestList) {
-      long entityProgramCount =
-        auditMetricsCube.getTotalProgramsCount(namespace, uniqueEntity.getEntityType(), uniqueEntity.getEntityName());
-      long entityActivity = auditMetricsCube.getTotalActivity(namespace, uniqueEntity.getEntityType(),
-                                                              uniqueEntity.getEntityName()) - entityProgramCount;
-      float logScore = 0;
-      float programScore = 0;
-      // Activity and programs count determine following % each of the final score
-      if (totalActivity != 0) {
-        logScore = ((float) entityActivity / (float) totalActivity) * LOG_MESSAGES_WEIGHT;
-      }
-      if (totalProgramsCount != 0) {
-        programScore = ((float) entityProgramCount / (float) totalProgramsCount) * UNIQUE_PROGRAM_WEIGHT;
-      }
-      int score = (int) (logScore + programScore);
-      resultMap.put(uniqueEntity, score);
-    }
-
-    /*
-     * Score calculation using time since last read
-     */
-    // Get a list of all datasets and streams stored so far
+  private Map<Entity, Integer> trackerMeterHelper(List<Entity> requestList) {
+    // Get a list of all datasets and streams stored in system so far
     List<Entity> metricsQuery =
       getUniqueEntityList(auditMetricsCube.getEntities(namespace, DATASET), DATASET);
     metricsQuery.addAll(getUniqueEntityList(auditMetricsCube.getEntities(namespace, STREAM), STREAM));
 
-    Map<Entity, Integer> rankMap
+    Map<Entity, Integer> programRankMap
+      = getRankMap(sortMapByValue(auditMetricsCube.getTotalProgramsCount(namespace, metricsQuery)));
+    Map<Entity, Integer> activityRankMap
+      = getRankMap(sortMapByValue(auditMetricsCube.getTotalActivity(namespace, metricsQuery)));
+    Map<Entity, Integer> timeRankMap
       = getRankMap(sortMapByValue(latestEntityTable.getReadTimestamps(namespace, metricsQuery)));
-    int size = rankMap.size();
-    int rank = size;
-    for (Map.Entry<Entity, Integer> entry : rankMap.entrySet()) {
-      // Updates score for entities for which score was requested
-      if (resultMap.containsKey(entry.getKey())) {
-        Entity entity = entry.getKey();
-        int newScore = resultMap.get(entity) + (int) ((float) rank / (float) size * TIME_SINCE_READ_WEIGHT);
-        resultMap.put(entity, newScore);
-      }
-    }
+
+    Map<Entity, Integer> resultMap
+      = updateScore(programRankMap, requestList, new HashMap<Entity, Integer>(), UNIQUE_PROGRAM_WEIGHT);
+    resultMap = updateScore(activityRankMap, requestList, resultMap, LOG_MESSAGES_WEIGHT);
+    resultMap = updateScore(timeRankMap, requestList, resultMap, TIME_SINCE_READ_WEIGHT);
+
     return resultMap;
   }
 
   // Returns same rank for entities with equal timestamp.
-  private Map<Entity, Integer> getRankMap(Map<Entity, Long> sortedTimeMap) {
+  private Map<Entity, Integer> getRankMap(Map<Entity, Long> map) {
     Map<Entity, Integer> resultMap = new LinkedHashMap<>();
     // If two entities with same timestamp is given a rank n, the entity after them should have rank n-2 and not
     // n-1. rankChangeStep stores the number of consecutive equal timestamps and fixes this.
-    int rank = sortedTimeMap.size();
+    int rank = map.size();
     int rankChangeStep = 1;
     long lastTimestamp = -1L;
-    for (Map.Entry<Entity, Long> entry : sortedTimeMap.entrySet()) {
+    for (Map.Entry<Entity, Long> entry : map.entrySet()) {
       resultMap.put(entry.getKey(), rank);
       if (lastTimestamp == entry.getValue()) {
         rankChangeStep += 1;
@@ -175,6 +148,25 @@ public final class TrackerMeterHandler extends AbstractHttpServiceHandler {
       }
     }
     return resultMap;
+  }
+
+  private static Map<Entity, Integer> updateScore(Map<Entity, Integer> rankMap, List<Entity> requestList,
+                                                  Map<Entity, Integer> resultMap, float weight) {
+    for (Map.Entry<Entity, Integer> entry : rankMap.entrySet()) {
+      if (requestList.contains(entry.getKey())) {
+        if (resultMap.containsKey(entry.getKey())) {
+          resultMap.put(entry.getKey(), resultMap.get(entry.getKey())
+            + computeScore(rankMap.get(entry.getKey()), rankMap.size(), weight));
+        } else {
+          resultMap.put(entry.getKey(), computeScore(rankMap.get(entry.getKey()), rankMap.size(), weight));
+        }
+      }
+    }
+    return resultMap;
+  }
+
+  private static int computeScore(int rank, int size, float weight) {
+    return (int) ((float) rank / (float) size * weight);
   }
 
   private static List<Entity> getUniqueEntityList(List<String> entityList, String entityType) {
@@ -190,7 +182,7 @@ public final class TrackerMeterHandler extends AbstractHttpServiceHandler {
     Collections.sort(list, new Comparator<Map.Entry<Entity, Long>>() {
       @Override
       public int compare(Map.Entry<Entity, Long> o1, Map.Entry<Entity, Long> o2) {
-        return o1.getValue().compareTo(o2.getValue());
+        return o2.getValue().compareTo(o1.getValue());
       }
     });
     Map<Entity, Long> result = new LinkedHashMap<>();

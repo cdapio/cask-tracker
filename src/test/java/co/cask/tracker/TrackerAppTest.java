@@ -326,11 +326,11 @@ public class TrackerAppTest extends TestBase {
   }
 
 
-  /* Tests for TruthMeter
+  /* Tests for TrackerMeter
    *
    */
   @Test
-  public void testTruthMeter() throws Exception {
+  public void testTrackerMeter() throws Exception {
     List<String> datasets = new LinkedList<>();
     List<String> streams = new LinkedList<>();
     datasets.add("ds1");
