@@ -26,7 +26,6 @@ import co.cask.tracker.entity.LatestEntityTable;
 import co.cask.tracker.entity.TrackerMeterRequest;
 import co.cask.tracker.entity.TrackerMeterResult;
 import com.google.gson.Gson;
-
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.nio.ByteBuffer;
@@ -38,7 +37,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 

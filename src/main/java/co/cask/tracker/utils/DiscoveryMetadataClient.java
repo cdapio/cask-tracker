@@ -16,7 +16,12 @@
 
 package co.cask.tracker.utils;
 
+
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.service.http.HttpServiceRequest;
+import co.cask.cdap.client.MetaClient;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
@@ -37,35 +42,55 @@ import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
+import co.cask.tracker.DataDictionaryHandler;
+import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableSet;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.ZKDiscoveryService;
+import org.apache.twill.zookeeper.RetryStrategies;
+import org.apache.twill.zookeeper.ZKClientService;
+import org.apache.twill.zookeeper.ZKClientServices;
+import org.apache.twill.zookeeper.ZKClients;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
- * Extends AbstractMetadataClient, interact with CDAP (security)
+ * Singleton class that extends AbstractMetadataClient, interact with CDAP (security)
  */
 @ThreadSafe
 public class DiscoveryMetadataClient extends AbstractMetadataClient {
+
+  private static final String SCHEMA = "schema";
   private static final int ROUTER = 0;
   private static final int DISCOVERY = 1;
+  private static final int BASE_DELAY = 500;
+  private static final int MAX_DELAY = 2000;
+  private static final Logger LOG = LoggerFactory.getLogger(DiscoveryMetadataClient.class);
+
+  private static volatile DiscoveryMetadataClient client;
 
   private final int mode;
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
   private final ClientConfig clientConfig;
 
-  public DiscoveryMetadataClient(final DiscoveryServiceClient discoveryClient) {
+  private DiscoveryMetadataClient(final DiscoveryServiceClient discoveryClient) {
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
       @Override
       public EndpointStrategy get() {
@@ -76,15 +101,71 @@ public class DiscoveryMetadataClient extends AbstractMetadataClient {
     this.mode = DISCOVERY;
   }
 
-  public DiscoveryMetadataClient(ClientConfig clientConfig) {
+  private DiscoveryMetadataClient(ClientConfig clientConfig) {
     this.endpointStrategySupplier = null;
     // simply make a copy, to ensure that the ClientConfig instance we use is never modified
     this.clientConfig = new ClientConfig.Builder(clientConfig).build();
     this.mode = ROUTER;
   }
 
+  public static DiscoveryMetadataClient getInstance(HttpServiceRequest request,
+                                                    String zookeeperQuorum) throws UnauthorizedException {
+    try {
+      String hostport = Objects.firstNonNull(request.getHeader("host"), request.getHeader("Host"));
+      LOG.info("Creating ConnectionConfig using host and port {}", hostport);
+      String hostName = hostport.split(":")[0];
+      int port = Integer.parseInt(hostport.split(":")[1]);
+      ConnectionConfig connectionConfig = ConnectionConfig.builder()
+        .setHostname(hostName)
+        .setPort(port)
+        .build();
+      ClientConfig config = ClientConfig.builder().setConnectionConfig(connectionConfig).build();
+      try {
+        new MetaClient(config).ping();
+      } catch (IOException e) {
+        config = ClientConfig.getDefault();
+        LOG.debug("Got error while pinging router. Falling back to default client config: " + config, e);
+      }
+      return new DiscoveryMetadataClient(config);
+
+      // create it based upon ClientConfig if you don't get an exception
+    } catch (UnauthenticatedException e) {
+      if (client != null) {
+        return client;
+      }
+      synchronized (DiscoveryMetadataClient.class) {
+        if (client != null) {
+          return client;
+        }
+        // Authentication is enabled, so we can't go through router. Have to use discovery via zookeeper.
+        // Note that we can't use zookeeper discovery in CDAP standalone.
+        LOG.debug("Got error while pinging router. Falling back to DiscoveryMetadataClient.", e);
+        LOG.info("Using discovery with zookeeper quorum {}", zookeeperQuorum);
+        //delete "kafka" to make "/cdap/kafka" to "/cdap"
+        ZKClientService zkClient = createZKClient(zookeeperQuorum.replace("/kafka", ""));
+        zkClient.startAndWait();
+        ZKDiscoveryService zkDiscoveryService = new ZKDiscoveryService(zkClient);
+        client = new DiscoveryMetadataClient(zkDiscoveryService);
+        return client;
+      }
+    }
+  }
+
+  private static ZKClientService createZKClient(String zookeeperQuorum) {
+    Preconditions.checkNotNull(zookeeperQuorum, "Missing ZooKeeper configuration '%s'", Constants.Zookeeper.QUORUM);
+    return ZKClientServices.delegate(
+      ZKClients.reWatchOnExpire(
+        ZKClients.retryOnFailure(
+          ZKClientService.Builder.of(zookeeperQuorum)
+            .build(),
+          RetryStrategies.exponentialDelay(BASE_DELAY, MAX_DELAY, TimeUnit.MILLISECONDS)
+        )
+      )
+    );
+  }
+
   @Override
-  protected HttpResponse execute(HttpRequest request,  int... allowedErrorCodes)
+  protected HttpResponse execute(HttpRequest request, int... allowedErrorCodes)
     throws IOException, UnauthenticatedException, UnauthorizedException {
     if (mode == DISCOVERY) {
       return HttpRequests.execute(request);
@@ -129,12 +210,13 @@ public class DiscoveryMetadataClient extends AbstractMetadataClient {
         namespace.toId(), "*",
         ImmutableSet.of(MetadataSearchTargetType.DATASET, MetadataSearchTargetType.STREAM)).getResults();
     Set<String> tagSet = new HashSet<>();
-    for (MetadataSearchResultRecord mdsr: metadataSet) {
+    for (MetadataSearchResultRecord mdsr : metadataSet) {
       Set<String> set = getTags(mdsr.getEntityId().toId(), MetadataScope.USER);
       tagSet.addAll(set);
     }
     return tagSet;
   }
+
 
   public Set<String> getEntityTags(NamespaceId namespace, String entityType, String entityName)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
@@ -171,5 +253,23 @@ public class DiscoveryMetadataClient extends AbstractMetadataClient {
     } catch (Exception e) {
       return false;
     }
+  }
+
+  public List<HashMap<String, String>> getMetadataSearchRecords(NamespaceId namespace, String column)
+    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
+    List<HashMap<String, String>> datasets = new ArrayList<>();
+    Set<MetadataSearchResultRecord> metadataSet =
+      searchMetadata(
+        namespace.toId(), column,
+        ImmutableSet.of(MetadataSearchTargetType.DATASET, MetadataSearchTargetType.STREAM)).getResults();
+    for (MetadataSearchResultRecord mdsr : metadataSet) {
+      Map<String, String> map = getProperties(mdsr.getEntityId().toId());
+      HashMap<String, String> record = new HashMap<>();
+      Schema datasetSchema = Schema.parseJson(map.get(SCHEMA));
+      record.put(DataDictionaryHandler.ENTITY_NAME, mdsr.getEntityId().getEntityName());
+      record.put(DataDictionaryHandler.TYPE, datasetSchema.getField(column).getSchema().getType().toString());
+      datasets.add(record);
+    }
+    return datasets;
   }
 }

@@ -19,6 +19,7 @@ package co.cask.tracker;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.tracker.entity.AuditLogTable;
 import co.cask.tracker.entity.AuditMetricsCube;
 import co.cask.tracker.entity.AuditTagsTable;
@@ -51,6 +52,7 @@ public class TestAuditLogPublisherApp extends AbstractApplication {
                     .build());
     createDataset(TrackerApp.ENTITY_LATEST_TIMESTAMP_DATASET_NAME, LatestEntityTable.class);
     createDataset(TrackerApp.AUDIT_TAGS_DATASET_NAME, AuditTagsTable.class);
+    createDataset(TrackerApp.DATA_DICTIONARY_DATASET_NAME, Table.class);
     addFlow(new StreamToAuditLogFlow());
     addService(new TrackerService());
   }

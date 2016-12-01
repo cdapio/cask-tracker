@@ -47,8 +47,6 @@ import co.cask.tracker.entity.TrackerMeterRequest;
 import co.cask.tracker.entity.TrackerMeterResult;
 import co.cask.tracker.entity.ValidateTagsResult;
 import co.cask.tracker.utils.ParameterCheck;
-import com.google.common.base.Charsets;
-import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -60,8 +58,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -85,7 +81,6 @@ public class TrackerAppTest extends TestBase {
   private static final Type PROGRAM_LIST = new TypeToken<List<TopProgramsResult>>() { }.getType();
   private static final Type APPLICATION_LIST = new TypeToken<List<TopApplicationsResult>>() { }.getType();
   private static final Type TIMESINCE_MAP = new TypeToken<Map<String, Long>>() { }.getRawType();
-
   private static final String TEST_JSON_TAGS = "[\"tag1\",\"tag2\",\"tag3\",\"ta*4\"]";
   private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTabcdefghijklmnopqrst123/*!";
   private static final int TEST_STRING_LIST_LENGTH = 3000;
@@ -122,12 +117,12 @@ public class TrackerAppTest extends TestBase {
 
   @Test
   public void testAuditLog() throws Exception {
-    String response = getServiceResponse(trackerServiceManager,
+    String response = TestUtils.getServiceResponse(trackerServiceManager,
                                          "v1/auditlog/stream/stream1",
                                          HttpResponseStatus.OK.getCode());
     AuditLogResponse result = GSON.fromJson(response, AuditLogResponse.class);
     Assert.assertNotEquals(0, result.getTotalResults());
-    response = getServiceResponse(trackerServiceManager,
+    response = TestUtils.getServiceResponse(trackerServiceManager,
                                   "v1/auditlog/dataset/ds1",
                                   HttpResponseStatus.OK.getCode());
     result = GSON.fromJson(response, AuditLogResponse.class);
@@ -136,7 +131,7 @@ public class TrackerAppTest extends TestBase {
 
   @Test
   public void testInvalidDatesError() throws Exception {
-    String response = getServiceResponse(trackerServiceManager,
+    String response = TestUtils.getServiceResponse(trackerServiceManager,
                                          "v1/auditlog/stream/stream1?startTime=1&endTime=0",
                                          HttpResponseStatus.BAD_REQUEST.getCode());
     Assert.assertEquals(ParameterCheck.STARTTIME_GREATER_THAN_ENDTIME, response);
@@ -144,7 +139,7 @@ public class TrackerAppTest extends TestBase {
 
   @Test
   public void testInvalidOffset() throws Exception {
-    String response = getServiceResponse(trackerServiceManager,
+    String response = TestUtils.getServiceResponse(trackerServiceManager,
                                          "v1/auditlog/stream/stream1?offset=-1",
                                          HttpResponseStatus.BAD_REQUEST.getCode());
     Assert.assertEquals(ParameterCheck.OFFSET_INVALID, response);
@@ -152,7 +147,7 @@ public class TrackerAppTest extends TestBase {
 
   @Test
   public void testInvalidLimit() throws Exception {
-    String response = getServiceResponse(trackerServiceManager,
+    String response = TestUtils.getServiceResponse(trackerServiceManager,
                                          "v1/auditlog/stream/stream1?limit=-1",
                                          HttpResponseStatus.BAD_REQUEST.getCode());
     Assert.assertEquals(ParameterCheck.LIMIT_INVALID, response);
@@ -160,7 +155,7 @@ public class TrackerAppTest extends TestBase {
 
   @Test
   public void testTopNDatasets() throws Exception {
-    String response = getServiceResponse(trackerServiceManager,
+    String response = TestUtils.getServiceResponse(trackerServiceManager,
                                          "v1/auditmetrics/top-entities/datasets?limit=20",
                                          HttpResponseStatus.OK.getCode());
     List<TopDatasetsResult> result = GSON.fromJson(response, DATASET_LIST);
@@ -172,7 +167,7 @@ public class TrackerAppTest extends TestBase {
 
   @Test
   public void testTopNPrograms() throws Exception {
-    String response = getServiceResponse(trackerServiceManager,
+    String response = TestUtils.getServiceResponse(trackerServiceManager,
                                          "v1/auditmetrics/top-entities/programs?limit=20",
                                          HttpResponseStatus.OK.getCode());
     List<TopProgramsResult> result = GSON.fromJson(response, PROGRAM_LIST);
@@ -184,7 +179,7 @@ public class TrackerAppTest extends TestBase {
 
   @Test
   public void testTopNApplications() throws Exception {
-    String response = getServiceResponse(trackerServiceManager,
+    String response = TestUtils.getServiceResponse(trackerServiceManager,
                                          "v1/auditmetrics/top-entities/applications?limit=20",
                                          HttpResponseStatus.OK.getCode());
     List<TopApplicationsResult> result = GSON.fromJson(response, APPLICATION_LIST);
@@ -194,7 +189,7 @@ public class TrackerAppTest extends TestBase {
 
   @Test
   public void testTimeSince() throws Exception {
-    String response = getServiceResponse(trackerServiceManager,
+    String response = TestUtils.getServiceResponse(trackerServiceManager,
                                          "v1/auditmetrics/time-since?entityType=dataset&entityName=ds1",
                                          HttpResponseStatus.OK.getCode());
     Map<String, Long> resultMap = GSON.fromJson(response, TIMESINCE_MAP);
@@ -203,7 +198,7 @@ public class TrackerAppTest extends TestBase {
 
   @Test
   public void testGlobalAuditLogHistogram() throws Exception {
-    String response = getServiceResponse(trackerServiceManager, "v1/auditmetrics/audit-histogram",
+    String response = TestUtils.getServiceResponse(trackerServiceManager, "v1/auditmetrics/audit-histogram",
                                          HttpResponseStatus.OK.getCode());
     AuditHistogramResult result = GSON.fromJson(response, AuditHistogramResult.class);
     Collection<TimeValue> results = result.getResults();
@@ -217,7 +212,7 @@ public class TrackerAppTest extends TestBase {
 
   @Test
   public void testSpecificAuditLogHistogram() throws Exception {
-    String response = getServiceResponse(trackerServiceManager,
+    String response = TestUtils.getServiceResponse(trackerServiceManager,
                                          "v1/auditmetrics/audit-histogram?entityType=dataset&entityName=ds1",
                                          HttpResponseStatus.OK.getCode());
     AuditHistogramResult result = GSON.fromJson(response, AuditHistogramResult.class);
@@ -232,13 +227,13 @@ public class TrackerAppTest extends TestBase {
 
   @Test
   public void testResolutionBucket() throws Exception {
-    String response = getServiceResponse(trackerServiceManager,
+    String response = TestUtils.getServiceResponse(trackerServiceManager,
                                          "v1/auditmetrics/audit-histogram?entityType=dataset" +
                                            "&entityName=ds1&startTime=now-5d&endTime=now",
                                          HttpResponseStatus.OK.getCode());
     AuditHistogramResult result = GSON.fromJson(response, AuditHistogramResult.class);
     Assert.assertEquals(result.getBucketInterval(), "HOUR");
-    response = getServiceResponse(trackerServiceManager,
+    response = TestUtils.getServiceResponse(trackerServiceManager,
                                   "v1/auditmetrics/audit-histogram?entityType=dataset&entityName=ds1" +
                                     "&startTime=now-7d&endTime=now",
                                   HttpResponseStatus.OK.getCode());
@@ -249,14 +244,14 @@ public class TrackerAppTest extends TestBase {
   @Test
   public void testTrackerEntityFilter() throws Exception {
     // Test dataset filter
-    String response = getServiceResponse(trackerServiceManager,
+    String response = TestUtils.getServiceResponse(trackerServiceManager,
                                          "v1/auditmetrics/audit-histogram?entityType=dataset&entityName="
                                            + TrackerApp.AUDIT_LOG_DATASET_NAME,
                                          HttpResponseStatus.OK.getCode());
     AuditHistogramResult result = GSON.fromJson(response, AuditHistogramResult.class);
     Assert.assertEquals(0, result.getResults().size());
 
-    response = getServiceResponse(trackerServiceManager,
+    response = TestUtils.getServiceResponse(trackerServiceManager,
                                          "v1/auditmetrics/audit-histogram?entityType=dataset&entityName="
                                            + AuditLogKafkaConfig.DEFAULT_OFFSET_DATASET,
                                          HttpResponseStatus.OK.getCode());
@@ -264,7 +259,7 @@ public class TrackerAppTest extends TestBase {
     Assert.assertEquals(0, result.getResults().size());
 
     // Test entity filter
-    response = getServiceResponse(trackerServiceManager,
+    response = TestUtils.getServiceResponse(trackerServiceManager,
                                          "v1/auditmetrics/top-entities/programs?entityName=dsx&entityType=dataset",
                                          HttpResponseStatus.OK.getCode());
     List<TopProgramsResult> programsResults = GSON.fromJson(response, PROGRAM_LIST);
@@ -277,7 +272,7 @@ public class TrackerAppTest extends TestBase {
   @Test
   public void testAddPreferredTags() throws Exception {
     List<String> testList = generateStringList(STRING_LENGTH, CHARACTERS, TEST_STRING_LIST_LENGTH);
-    String response = getServiceResponse(trackerServiceManager, "v1/tags/promote",
+    String response = TestUtils.getServiceResponse(trackerServiceManager, "v1/tags/promote",
                                          "POST", GSON.toJson(testList), HttpResponseStatus.OK.getCode());
     ValidateTagsResult result = GSON.fromJson(response, ValidateTagsResult.class);
     Assert.assertEquals(TEST_STRING_LIST_LENGTH, result.getInvalid() + result.getValid());
@@ -285,7 +280,7 @@ public class TrackerAppTest extends TestBase {
 
   @Test
   public void testValidate() throws Exception {
-    String response = getServiceResponse(trackerServiceManager, "v1/tags/validate",
+    String response = TestUtils.getServiceResponse(trackerServiceManager, "v1/tags/validate",
                                          "POST", TEST_JSON_TAGS, HttpResponseStatus.OK.getCode());
     ValidateTagsResult result = GSON.fromJson(response, ValidateTagsResult.class);
     Assert.assertEquals(3, result.getValid());
@@ -296,9 +291,9 @@ public class TrackerAppTest extends TestBase {
   @Ignore
   // Ignored because there is no way to communicate with CDAP metadata from an app unit test
   public void testGetTags() throws Exception {
-    getServiceResponse(trackerServiceManager, "v1/tags/promote", "POST", TEST_JSON_TAGS,
+    TestUtils.getServiceResponse(trackerServiceManager, "v1/tags/promote", "POST", TEST_JSON_TAGS,
                        HttpResponseStatus.OK.getCode());
-    String response = getServiceResponse(trackerServiceManager,
+    String response = TestUtils.getServiceResponse(trackerServiceManager,
                                          "v1/tags?type=preferred",
                                          HttpResponseStatus.OK.getCode());
     TagsResult result = GSON.fromJson(response, TagsResult.class);
@@ -309,11 +304,11 @@ public class TrackerAppTest extends TestBase {
   @Ignore
   // Ignored because there is no way to communicate with CDAP metadata from an app unit test
   public void testDeletePreferredTags() throws Exception {
-    getServiceResponse(trackerServiceManager, "v1/tags/promote", "POST",
+    TestUtils.getServiceResponse(trackerServiceManager, "v1/tags/promote", "POST",
                        TEST_JSON_TAGS, HttpResponseStatus.OK.getCode());
-    getServiceResponse(trackerServiceManager, "v1/tags/preferred?tag=tag1", "DELETE",
+    TestUtils.getServiceResponse(trackerServiceManager, "v1/tags/preferred?tag=tag1", "DELETE",
                        null, HttpResponseStatus.OK.getCode());
-    String response = getServiceResponse(trackerServiceManager, "v1/tags?type=preferred",
+    String response = TestUtils.getServiceResponse(trackerServiceManager, "v1/tags?type=preferred",
                                          HttpResponseStatus.OK.getCode());
     TagsResult result = GSON.fromJson(response, TagsResult.class);
     Assert.assertEquals(2, result.getPreferredSize());
@@ -321,7 +316,7 @@ public class TrackerAppTest extends TestBase {
 
   @Test
   public void testDemoteTags() throws Exception {
-    getServiceResponse(trackerServiceManager, "v1/tags/demote", "POST", TEST_JSON_TAGS,
+    TestUtils.getServiceResponse(trackerServiceManager, "v1/tags/demote", "POST", TEST_JSON_TAGS,
                        HttpResponseStatus.OK.getCode());
   }
 
@@ -377,8 +372,7 @@ public class TrackerAppTest extends TestBase {
   private TrackerMeterResult getTrackerMeterResponse(List<String> datasets,
                                                      List<String> streams,
                                                      int expectedResponse) throws Exception {
-    String response = getServiceResponse(trackerServiceManager,
-                                         "v1/tracker-meter", "POST",
+    String response = TestUtils.getServiceResponse(trackerServiceManager, "v1/tracker-meter", "POST",
                                          GSON.toJson(new TrackerMeterRequest(datasets, streams)),
                                          expectedResponse);
     return GSON.fromJson(response, TrackerMeterResult.class);
@@ -401,61 +395,6 @@ public class TrackerAppTest extends TestBase {
     }
     return new String(text);
   }
-
-
-
-  // Request is GET by default
-  private String getServiceResponse(ServiceManager serviceManager,
-                                    String request,
-                                    int expectedResponseCode) throws Exception {
-    URL url = new URL(serviceManager.getServiceURL(), request);
-    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-    Assert.assertEquals(expectedResponseCode, connection.getResponseCode());
-    String response;
-    try {
-      if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-        response = new String(ByteStreams.toByteArray(connection.getInputStream()), Charsets.UTF_8);
-      } else if (connection.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
-        response = new String(ByteStreams.toByteArray(connection.getErrorStream()), Charsets.UTF_8);
-      } else {
-        throw new Exception("Invalid response code returned: " + connection.getResponseCode());
-      }
-    } finally {
-      connection.disconnect();
-    }
-    return response;
-  }
-
-  // Overload (String Type). For requests other than GET.
-  private String getServiceResponse(ServiceManager serviceManager,
-                                    String request, String type, String postRequest,
-                                    int expectedResponseCode) throws Exception {
-    URL url = new URL(serviceManager.getServiceURL(), request);
-    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-    connection.setRequestMethod(type);
-
-    //Feed JSON data if POST
-    if (type.equals("POST")) {
-      connection.setDoOutput(true);
-      connection.getOutputStream().write(postRequest.getBytes());
-    }
-
-    Assert.assertEquals(expectedResponseCode, connection.getResponseCode());
-    String response;
-    try {
-      if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-        response = new String(ByteStreams.toByteArray(connection.getInputStream()), Charsets.UTF_8);
-      } else if (connection.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
-        response = new String(ByteStreams.toByteArray(connection.getErrorStream()), Charsets.UTF_8);
-      } else {
-        throw new Exception("Invalid response code returned: " + connection.getResponseCode());
-      }
-    } finally {
-      connection.disconnect();
-    }
-    return response;
-  }
-
 
   // Adapted from https://wiki.cask.co/display/CE/Audit+information+publishing
   private List<AuditMessage> generateTestData() {

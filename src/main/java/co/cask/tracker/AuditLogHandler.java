@@ -48,8 +48,6 @@ public final class AuditLogHandler extends AbstractHttpServiceHandler {
   private AuditLogTable auditLogTable;
   private String namespace;
 
-
-
   @Override
   public void initialize(HttpServiceContext context) throws Exception {
     super.initialize(context);
@@ -118,7 +116,6 @@ public final class AuditLogHandler extends AbstractHttpServiceHandler {
     } finally {
       messageIter.close();
     }
-
     AuditLogResponse resp = new AuditLogResponse(totalResults, logList, offset);
     responder.sendJson(200, resp);
   }
