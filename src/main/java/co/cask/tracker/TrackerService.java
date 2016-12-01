@@ -42,5 +42,6 @@ public class TrackerService extends AbstractService {
     addHandler(new TrackerMeterHandler());
     addHandler(new AuditTagsHandler(zookeeperString));
     addHandler(new DataDictionaryHandler(zookeeperString));
+    addHandler(new ConfigurationHandler());
   }
 }

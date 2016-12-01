@@ -71,11 +71,14 @@ public final class TestUtils {
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
     connection.setRequestMethod(type);
     Assert.assertEquals(expectedResponseCode, connection.getResponseCode());
+    List<Integer> expectedCodes = new ArrayList<>();
+    expectedCodes.add(HttpURLConnection.HTTP_BAD_REQUEST);
+    expectedCodes.add(HttpURLConnection.HTTP_NOT_FOUND);
     String response;
     try {
       if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
         response = new String(ByteStreams.toByteArray(connection.getInputStream()), Charsets.UTF_8);
-      } else if (connection.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
+      } else if (expectedCodes.contains(connection.getResponseCode())) {
         response = new String(ByteStreams.toByteArray(connection.getErrorStream()), Charsets.UTF_8);
       } else {
         throw new Exception("Invalid response code returned: " + connection.getResponseCode());
