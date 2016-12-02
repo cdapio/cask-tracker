@@ -16,7 +16,9 @@
 
 package co.cask.tracker;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
@@ -37,6 +39,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Unit tests for DataDictionary
@@ -71,7 +74,7 @@ public class DataDictionaryTest extends TestBase {
 
     // Test for adding a column
     TestUtils.getServiceResponse(dictionaryServiceManager, "v1/dictionary/" + colName,
-                                  "POST", requestJson, HttpResponseStatus.OK.getCode());
+                                 "POST", requestJson, HttpResponseStatus.OK.getCode());
     DataSetManager<Table> outputmanager = getDataset(TrackerApp.DATA_DICTIONARY_DATASET_NAME);
     Get get = new Get(colName.toLowerCase());
     Row result = outputmanager.get().get(get);
@@ -83,7 +86,7 @@ public class DataDictionaryTest extends TestBase {
 
     // Test for duplicate column add
     String response = TestUtils.getServiceResponse(dictionaryServiceManager, "v1/dictionary/" + colName, "POST",
-                                                    requestJson, HttpResponseStatus.BAD_REQUEST.getCode());
+                                                   requestJson, HttpResponseStatus.BAD_REQUEST.getCode());
     Assert.assertEquals("mycol already exists in data dictionary", response);
     outputmanager.flush();
   }
@@ -93,7 +96,7 @@ public class DataDictionaryTest extends TestBase {
     colNameSecond = "colWithNullValues";
     // Test for adding column with optional FieldNames as null
     TestUtils.getServiceResponse(dictionaryServiceManager, "v1/dictionary/" + colNameSecond, "POST", requestJson3,
-                                  HttpResponseStatus.OK.getCode());
+                                 HttpResponseStatus.OK.getCode());
     DataSetManager<Table> outputmanager = getDataset(TrackerApp.DATA_DICTIONARY_DATASET_NAME);
     Row result = outputmanager.get().get(new Get(colNameSecond.toLowerCase()));
     Assert.assertEquals(dictionaryInput3.getColumnType(),
@@ -107,11 +110,11 @@ public class DataDictionaryTest extends TestBase {
     colNameSecond = "secondCol";
 
     TestUtils.getServiceResponse(dictionaryServiceManager, "v1/dictionary/" + colName, "POST", requestJson,
-                                  HttpResponseStatus.OK.getCode());
+                                 HttpResponseStatus.OK.getCode());
     TestUtils.getServiceResponse(dictionaryServiceManager, "v1/dictionary/" + colNameSecond, "POST", requestJson2,
-                                  HttpResponseStatus.OK.getCode());
+                                 HttpResponseStatus.OK.getCode());
     String response = TestUtils.getServiceResponse(dictionaryServiceManager, "v1/dictionary", "GET",
-                                                    HttpResponseStatus.OK.getCode());
+                                                   HttpResponseStatus.OK.getCode());
     Type listType = new TypeToken<ArrayList<DictionaryResult>>() {
     }.getType();
     List<DictionaryResult> dictionaryResults = new Gson().fromJson(response, listType);
@@ -124,9 +127,9 @@ public class DataDictionaryTest extends TestBase {
     colName = "newColUpdate";
 
     TestUtils.getServiceResponse(dictionaryServiceManager, "v1/dictionary/" + colName, "POST", requestJson,
-                                  HttpResponseStatus.OK.getCode());
+                                 HttpResponseStatus.OK.getCode());
     TestUtils.getServiceResponse(dictionaryServiceManager, "v1/dictionary/" + colName, "PUT", requestJson3,
-                                  HttpResponseStatus.OK.getCode());
+                                 HttpResponseStatus.OK.getCode());
 
     DataSetManager<Table> outputmanager = getDataset(TrackerApp.DATA_DICTIONARY_DATASET_NAME);
     Row result = outputmanager.get().get(new Get(colName.toLowerCase()));
@@ -140,18 +143,18 @@ public class DataDictionaryTest extends TestBase {
   @Test
   public void testGetDictionaryFromSchema() throws Exception {
     TestUtils.getServiceResponse(dictionaryServiceManager, "v1/dictionary/" + "col1",
-                                  "POST", requestJson, HttpResponseStatus.OK.getCode());
+                                 "POST", requestJson, HttpResponseStatus.OK.getCode());
     TestUtils.getServiceResponse(dictionaryServiceManager, "v1/dictionary/" + "col2",
-                                  "POST", requestJson2, HttpResponseStatus.OK.getCode());
+                                 "POST", requestJson2, HttpResponseStatus.OK.getCode());
     TestUtils.getServiceResponse(dictionaryServiceManager, "v1/dictionary/" + "col3",
-                                  "POST", requestJson2, HttpResponseStatus.OK.getCode());
+                                 "POST", requestJson2, HttpResponseStatus.OK.getCode());
     List<String> inputColumns = new ArrayList<>();
     inputColumns.add("col1");
     inputColumns.add("col2");
     inputColumns.add("col4");
 
     String response = TestUtils.getServiceResponse(dictionaryServiceManager, "v1/dictionary", "POST",
-                                                    GSON.toJson(inputColumns), HttpResponseStatus.OK.getCode());
+                                                   GSON.toJson(inputColumns), HttpResponseStatus.OK.getCode());
     Type hashMapType = new TypeToken<HashMap<String, List>>() {
     }.getType();
     HashMap result = GSON.fromJson(response, hashMapType);
@@ -169,13 +172,13 @@ public class DataDictionaryTest extends TestBase {
     colNameSecond = "columnValidate2";
     colNameThird = "wrongCol";
     TestUtils.getServiceResponse(dictionaryServiceManager, "v1/dictionary/" + colName, "POST", requestJson,
-                                  HttpResponseStatus.OK.getCode());
+                                 HttpResponseStatus.OK.getCode());
 
     // Assert response for wrong column name
     DictionaryResult dictionaryResult = new DictionaryResult(colNameThird, "Float", false, false, null, null);
     String responseWithWrongCol = TestUtils.getServiceResponse(dictionaryServiceManager, "v1/dictionary/validate",
-                                                                "POST", GSON.toJson(dictionaryResult),
-                                                                HttpResponseStatus.NOT_FOUND.getCode());
+                                                               "POST", GSON.toJson(dictionaryResult),
+                                                               HttpResponseStatus.NOT_FOUND.getCode());
     Type hashMapType = new TypeToken<HashMap<String, String>>() {
     }.getType();
     HashMap results = GSON.fromJson(responseWithWrongCol, hashMapType);
@@ -184,8 +187,8 @@ public class DataDictionaryTest extends TestBase {
     // Assert values with wrong schema
     dictionaryResult = new DictionaryResult(colName, "Float", false, false, null, null);
     String responseWithErrors = TestUtils.getServiceResponse(dictionaryServiceManager, "v1/dictionary/validate",
-                                                              "POST", GSON.toJson(dictionaryResult),
-                                                              HttpResponseStatus.CONFLICT.getCode());
+                                                             "POST", GSON.toJson(dictionaryResult),
+                                                             HttpResponseStatus.CONFLICT.getCode());
     Type linkedHashMapType = new TypeToken<LinkedHashMap<String, Object>>() {
     }.getType();
     HashMap result = GSON.fromJson(responseWithErrors, linkedHashMapType);
@@ -199,6 +202,82 @@ public class DataDictionaryTest extends TestBase {
     // Assert status code with correct schema
     dictionaryResult = new DictionaryResult(colName, "String", false, false, null, null);
     TestUtils.getServiceResponse(dictionaryServiceManager, "v1/dictionary/validate", "POST",
-                                  GSON.toJson(dictionaryResult), HttpResponseStatus.OK.getCode());
+                                 GSON.toJson(dictionaryResult), HttpResponseStatus.OK.getCode());
+  }
+
+  // Tests for configurations
+
+  @Test
+  public void testAddConfiguration() throws Exception {
+    String key = "myKey";
+    String keyValueJson = "{ \"value\" : \"configValue\" }";
+    // Test for adding a configuration
+    TestUtils.getServiceResponse(dictionaryServiceManager, "v1/config/" + key, "POST", keyValueJson,
+                                 HttpResponseStatus.OK.getCode());
+    DataSetManager<KeyValueTable> outputmanager = getDataset(TrackerApp.CONFIG_DATASET_NAME);
+    Assert.assertTrue(Bytes.toString(outputmanager.get().read(key)).equalsIgnoreCase("configValue"));
+
+    // Test for duplicate configurations add
+    String response = TestUtils.getServiceResponse(dictionaryServiceManager, "v1/config/" + key, "POST", keyValueJson,
+                                                   HttpResponseStatus.BAD_REQUEST.getCode());
+    Assert.assertEquals("Configuration for myKey already exists.", response);
+    outputmanager.flush();
+  }
+
+  @Test
+  public void testDeleteConfiguration() throws Exception {
+    String key = "myDeleteKey";
+    String keyValueJson = "{ \"value\" : \"configValue\" }";
+    // Test for Deleting a non existing configuration
+    String response = TestUtils.getServiceResponse(dictionaryServiceManager, "v1/config/" + key, "DELETE",
+                                                   HttpResponseStatus.NOT_FOUND.getCode());
+    Assert.assertEquals("No configuration found for myDeleteKey", response);
+
+    // Test for deletion
+    TestUtils.getServiceResponse(dictionaryServiceManager, "v1/config/" + key, "POST", keyValueJson,
+                                 HttpResponseStatus.OK.getCode());
+    TestUtils.getServiceResponse(dictionaryServiceManager, "v1/config/" + key, "DELETE",
+                                 HttpResponseStatus.OK.getCode());
+  }
+
+  @Test
+  public void testGetConfiguration() throws Exception {
+    String key = "myGetKey";
+    String key2 = "myGetKey2";
+    String dummyKey = "dummyKey";
+    String keyValueJson = "{ \"value\" : \"configValue\" }";
+
+    // Test for retrieving all configurations
+    TestUtils.getServiceResponse(dictionaryServiceManager, "v1/config/" + key, "POST", keyValueJson,
+                                 HttpResponseStatus.OK.getCode());
+    TestUtils.getServiceResponse(dictionaryServiceManager, "v1/config/" + key2, "POST", keyValueJson,
+                                 HttpResponseStatus.OK.getCode());
+    String response = TestUtils.getServiceResponse(dictionaryServiceManager, "v1/config/" + key, "GET",
+                                                   HttpResponseStatus.OK.getCode());
+
+    Type hashMapArrayType = new TypeToken<ArrayList<HashMap<String, String>>>() {
+    }.getType();
+    List<Map<String, String>> result = GSON.fromJson(response, hashMapArrayType);
+    Assert.assertEquals(2, result.size());
+
+    // Test for retrieving an element with strict true
+    response = TestUtils.getServiceResponse(dictionaryServiceManager, "v1/config/" + key + "?strict=true", "GET",
+                                            HttpResponseStatus.OK.getCode());
+    result = GSON.fromJson(response, hashMapArrayType);
+    Assert.assertEquals(1, result.size());
+    Assert.assertEquals("configValue", result.get(0).get(key));
+
+    // Test for retrieving non existing configuration
+    TestUtils.getServiceResponse(dictionaryServiceManager, "v1/config/" + dummyKey + "?strict=true", "GET",
+                                 HttpResponseStatus.NOT_FOUND.getCode());
+    TestUtils.getServiceResponse(dictionaryServiceManager, "v1/config/" + dummyKey, "GET",
+                                 HttpResponseStatus.NOT_FOUND.getCode());
+
+    Type hashMapType = new TypeToken<HashMap<String, String>>() {
+    }.getType();
+    response = TestUtils.getServiceResponse(dictionaryServiceManager, "v1/config/", "GET",
+                                            HttpResponseStatus.OK.getCode());
+    Map<String, String> fullResult = GSON.fromJson(response, hashMapType);
+    Assert.assertTrue(fullResult.size() != 0);
   }
 }

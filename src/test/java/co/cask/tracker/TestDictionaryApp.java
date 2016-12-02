@@ -17,6 +17,7 @@
 package co.cask.tracker;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
 
 /**
@@ -28,6 +29,7 @@ public class TestDictionaryApp extends AbstractApplication {
     setName("TestDataDictionaryApp");
     setDescription("A temp app to test the Data dictionary functionality");
     createDataset(TrackerApp.DATA_DICTIONARY_DATASET_NAME, Table.class);
+    createDataset(TrackerApp.CONFIG_DATASET_NAME, KeyValueTable.class);
     addService(new TrackerService());
   }
 }
