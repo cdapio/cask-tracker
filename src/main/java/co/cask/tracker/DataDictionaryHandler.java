@@ -295,8 +295,8 @@ public final class DataDictionaryHandler extends AbstractHttpServiceHandler {
     String datasetList;
     String columnName = row.getString(FieldNames.COLUMN_NAME.getName());
     String coulmnType = row.getString(FieldNames.COLUMN_TYPE.getName());
-    Boolean isNullable = "true".equals(row.getString(FieldNames.IS_NULLABLE.getName()));
-    Boolean isPII = "true".equals(row.getString(FieldNames.IS_PII.getName()));
+    Boolean isNullable = row.getBoolean(FieldNames.IS_NULLABLE.getName());
+    Boolean isPII = row.getBoolean(FieldNames.IS_PII.getName());
     List<String> datasets;
     if ((datasetList = row.getString(FieldNames.DATA_SETS.getName())) == null) {
       datasets = new ArrayList<>();
