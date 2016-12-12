@@ -194,13 +194,13 @@ public class DataDictionaryTest extends TestBase {
     HashMap result = GSON.fromJson(responseWithErrors, linkedHashMapType);
     List<String> reason = (List<String>) result.get("reason");
 
-    Assert.assertEquals(1, reason.size());
+    Assert.assertEquals(2, reason.size());
     Assert.assertEquals(7, result.size());
     Assert.assertTrue("Float".equalsIgnoreCase(result.get("columnType").toString()));
     Assert.assertTrue("String".equalsIgnoreCase(result.get("expectedType").toString()));
 
     // Assert status code with correct schema
-    dictionaryResult = new DictionaryResult(colName, "String", false, false, null, null);
+    dictionaryResult = new DictionaryResult(colName, "String", true, false, null, null);
     TestUtils.getServiceResponse(dictionaryServiceManager, "v1/dictionary/validate", "POST",
                                  GSON.toJson(dictionaryResult), HttpResponseStatus.OK.getCode());
   }
