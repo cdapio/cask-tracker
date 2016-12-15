@@ -50,9 +50,9 @@ public final class TrackerMeterHandler extends AbstractHttpServiceHandler {
   private String namespace;
 
   // Score % parameters
-  private static final float LOG_MESSAGES_WEIGHT = 40.0f;
-  private static final float UNIQUE_PROGRAM_WEIGHT = 40.0f;
-  private static final float TIME_SINCE_READ_WEIGHT = 20.0f;
+  private static final float LOG_MESSAGES_WEIGHT = 33.0f;
+  private static final float UNIQUE_PROGRAM_WEIGHT = 33.0f;
+  private static final float TIME_SINCE_READ_WEIGHT = 34.0f;
 
   private static final Gson GSON = new Gson();
   private static final String DATASET = EntityType.DATASET.name().toLowerCase();
