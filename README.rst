@@ -34,13 +34,13 @@ Getting Started
 
 Prerequisites
 -------------
-To use the 0.2.0 version of Tracker, you must have CDAP version 3.4.x or higher.
+To use the 0.3.0 version of Tracker, you must have CDAP version 4.0.x or higher.
 
 Audit Publishing to Kafka
 -------------------------
-The Tracker App contains a flow that subscribes to the Kafka topic to which CDAP publishes
+The Tracker App contains a flow that subscribes to the TMS topic to which CDAP publishes
 the audit updates. Before using this application, you should enable publishing of audit updates to
-Kafka by setting the ``audit.enabled`` option in your cdap-site.xml to ``true``.
+TMS by setting the ``audit.enabled`` option in your cdap-site.xml to ``true``.
 
 Building Cask Tracker
 ---------------------
@@ -68,36 +68,33 @@ Step 3: Create a CDAP application using the configuration file::
 
 Application Configuration File
 ------------------------------
-Create an application configuration file that contains the Kafka Audit Log reader configuration (the property
-``auditLogKafkaConfig``). It is the Kafka Consumer Flowlet configuration information.
+Create an application configuration file that contains the Zookeeper Quorum (not required in Standalone mode).
 
 Sample configuration file::
 
   {
     "config": {
-      "auditLogKafkaConfig": {
-        "zookeeperString": "hostname:2181/cdap/kafka"
+      "auditLogConfig": {
+        "zookeeperString": "hostname:2181/cdap"
       }
     }
   }
 
-**Audit Log Kafka Config:**
+**Audit Log Config:**
 
 This key contains a property map with:
 
 Required Properties:
 
-- ``zookeeperString``: Kafka Zookeeper string that can be used to subscribe to the CDAP audit log updates
-- ``brokerString``: Kafka Broker string to which CDAP audit log data is published
-
-*Note:* Specify either the ``zookeeperString`` or the ``brokerString``.
+- ``zookeeperString``: Zookeeper Quorum string that is used by CDAP [required only in Distributed mode]
 
 Optional Properties:
 
-- ``topic``: Kafka Topic to which CDAP audit updates are published; default is ``audit`` which
+- ``topic``: TMS Topic to which CDAP audit updates are published; default is ``audit`` which
   corresponds to the default topic used in CDAP for audit log updates
 - ``numPartitions``: Number of Kafka partitions; default is set to ``10``
-- ``offsetDataset``: Name of the dataset where Kafka offsets are stored; default is ``kafkaOffset``
+- ``offsetDataset``: Name of the dataset where TMS offsets are stored; default is ``_auditOffset``
+- ``limit``: Number of TMS audit messages to read in batch
 
 Mailing Lists
 -------------
