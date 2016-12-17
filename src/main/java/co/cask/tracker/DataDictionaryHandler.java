@@ -47,6 +47,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -75,7 +76,7 @@ public final class DataDictionaryHandler extends AbstractHttpServiceHandler {
   @Property
   private String zookeeperQuorum;
 
-  public DataDictionaryHandler(String zookeeperQuorum) {
+  public DataDictionaryHandler(@Nullable String zookeeperQuorum) {
     this.zookeeperQuorum = zookeeperQuorum;
   }
 

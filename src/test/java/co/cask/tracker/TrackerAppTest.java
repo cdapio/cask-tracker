@@ -17,8 +17,10 @@
 package co.cask.tracker;
 
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
+import co.cask.cdap.api.messaging.MessagePublisher;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.internal.guava.reflect.TypeToken;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.audit.AuditMessage;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
@@ -33,10 +35,10 @@ import co.cask.cdap.proto.id.SystemServiceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.ServiceManager;
-import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.TestConfiguration;
-import co.cask.tracker.config.AuditLogKafkaConfig;
+import co.cask.tracker.config.AuditLogConfig;
+import co.cask.tracker.config.TrackerAppConfig;
 import co.cask.tracker.entity.AuditHistogramResult;
 import co.cask.tracker.entity.AuditLogResponse;
 import co.cask.tracker.entity.TagsResult;
@@ -50,9 +52,10 @@ import co.cask.tracker.utils.ParameterCheck;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -77,6 +80,7 @@ public class TrackerAppTest extends TestBase {
   private static ApplicationManager testAppManager;
   private static ServiceManager trackerServiceManager;
 
+  private static final String TOPIC_NAMESPACE = "testNs";
   private static final Type DATASET_LIST = new TypeToken<List<TopDatasetsResult>>() { }.getType();
   private static final Type PROGRAM_LIST = new TypeToken<List<TopProgramsResult>>() { }.getType();
   private static final Type APPLICATION_LIST = new TypeToken<List<TopApplicationsResult>>() { }.getType();
@@ -87,30 +91,41 @@ public class TrackerAppTest extends TestBase {
   private static final int STRING_LENGTH = 60;
   private static final int SEED = 0;
 
+  public static boolean runBefore = false;
+
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
 
-  @Before
-  public void configureStream() throws Exception {
-    testAppManager = deployApplication(TestAuditLogPublisherApp.class);
-    FlowManager testFlowManager = testAppManager.getFlowManager(StreamToAuditLogFlow.FLOW_NAME).start();
+  @BeforeClass
+  public static void configureStream() throws Exception {
+    AuditLogConfig auditLogConfig = new AuditLogConfig(null, TOPIC_NAMESPACE, null, null, null);
+    TrackerAppConfig trackerAppConfig = new TrackerAppConfig(auditLogConfig);
+    testAppManager = deployApplication(TrackerApp.class, trackerAppConfig);
+    FlowManager testFlowManager = testAppManager.getFlowManager(AuditLogFlow.FLOW_NAME).start();
     testFlowManager.waitForStatus(true);
-
     trackerServiceManager = testAppManager.getServiceManager(TrackerService.SERVICE_NAME).start();
     trackerServiceManager.waitForStatus(true);
-
-    StreamManager streamManager = getStreamManager("testStream");
-    List<AuditMessage> testData = generateTestData();
-    for (AuditMessage auditMessage : testData) {
-      streamManager.send(GSON.toJson(auditMessage));
-
-    }
-    RuntimeMetrics metrics = testFlowManager.getFlowletMetrics("auditLogPublisher");
-    metrics.waitForProcessed(testData.size(), 60L, TimeUnit.SECONDS);
   }
 
-  @After
-  public void destroyApp() throws Exception {
+  @Before
+  public void sendAuditLogs() throws Exception {
+    if (!runBefore) {
+      getNamespaceAdmin().create(new NamespaceMeta.Builder().setName(TOPIC_NAMESPACE).build());
+      getMessagingAdmin(TOPIC_NAMESPACE).createTopic(AuditLogConfig.DEFAULT_TOPIC);
+      MessagePublisher messagePublisher = getMessagingContext().getDirectMessagePublisher();
+      List<AuditMessage> testData = generateTestData();
+      for (AuditMessage auditMessage : testData) {
+        messagePublisher.publish(TOPIC_NAMESPACE, "audit", GSON.toJson(auditMessage));
+      }
+      RuntimeMetrics metrics = testAppManager.getFlowManager(AuditLogFlow.FLOW_NAME)
+        .getFlowletMetrics("auditLogPublisher");
+      metrics.waitForProcessed(testData.size(), 60L, TimeUnit.SECONDS);
+      runBefore = true;
+    }
+  }
+
+  @AfterClass
+  public static void destroyApp() throws Exception {
     testAppManager.stopAll();
     clear();
   }
@@ -253,7 +268,7 @@ public class TrackerAppTest extends TestBase {
 
     response = TestUtils.getServiceResponse(trackerServiceManager,
                                          "v1/auditmetrics/audit-histogram?entityType=dataset&entityName="
-                                           + AuditLogKafkaConfig.DEFAULT_OFFSET_DATASET,
+                                           + AuditLogConfig.DEFAULT_OFFSET_DATASET,
                                          HttpResponseStatus.OK.getCode());
     result = GSON.fromJson(response, AuditHistogramResult.class);
     Assert.assertEquals(0, result.getResults().size());
@@ -530,7 +545,7 @@ public class TrackerAppTest extends TestBase {
                  )
     );
     testData.add(new AuditMessage(1456956659513L,
-                                  NamespaceId.DEFAULT.dataset(AuditLogKafkaConfig.DEFAULT_OFFSET_DATASET),
+                                  NamespaceId.DEFAULT.dataset(AuditLogConfig.DEFAULT_OFFSET_DATASET),
                                   "user4",
                                   AuditType.ACCESS,
                                   new AccessPayload(AccessType.WRITE, ns1.app("b").service("program1"))

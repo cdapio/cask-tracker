@@ -141,8 +141,7 @@ public class DiscoveryMetadataClient extends AbstractMetadataClient {
         // Note that we can't use zookeeper discovery in CDAP standalone.
         LOG.debug("Got error while pinging router. Falling back to DiscoveryMetadataClient.", e);
         LOG.info("Using discovery with zookeeper quorum {}", zookeeperQuorum);
-        //delete "kafka" to make "/cdap/kafka" to "/cdap"
-        ZKClientService zkClient = createZKClient(zookeeperQuorum.replace("/kafka", ""));
+        ZKClientService zkClient = createZKClient(zookeeperQuorum);
         zkClient.startAndWait();
         ZKDiscoveryService zkDiscoveryService = new ZKDiscoveryService(zkClient);
         client = new DiscoveryMetadataClient(zkDiscoveryService);
