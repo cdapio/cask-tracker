@@ -13,8 +13,8 @@ Tracker
 =======
 
 Cask Tracker is one such application built by the team at Cask that provides the ability to track data ingested
-either through Cask Hydrator or through a custom CDAP application and provide input to data governance processes on a cluster.
-It includes this data about "the data":
+either through Cask Hydrator or through a custom CDAP application and provide input to data governance processes
+on a cluster. It includes this data about "the data":
 
 - Metadata
 
@@ -40,7 +40,8 @@ Audit Publishing to Kafka
 -------------------------
 The Tracker App contains a flow that subscribes to the TMS topic to which CDAP publishes
 the audit updates. Before using this application, you should enable publishing of audit updates to
-TMS by setting the ``audit.enabled`` option in your cdap-site.xml to ``true``.
+TMS (Transactional Messaging System, a component of CDAP) by setting the ``audit.enabled`` option
+in your cdap-site.xml to ``true``.
 
 Building Cask Tracker
 ---------------------
@@ -68,7 +69,7 @@ Step 3: Create a CDAP application using the configuration file::
 
 Application Configuration File
 ------------------------------
-Create an application configuration file that contains the Zookeeper Quorum (not required in Standalone mode).
+Create an application configuration file that contains the ZooKeeper quorum (not required in CDAP Standalone mode).
 
 Sample configuration file::
 
@@ -86,7 +87,7 @@ This key contains a property map with:
 
 Required Properties:
 
-- ``zookeeperString``: Zookeeper Quorum string that is used by CDAP [required only in Distributed mode]
+- ``zookeeperString``: ZooKeeper quorum string that is used by CDAP (required only in CDAP Distributed mode)
 
 Optional Properties:
 
