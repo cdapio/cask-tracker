@@ -38,10 +38,9 @@ To use the 0.3.0 version of Tracker, you must have CDAP version 4.0.x or higher.
 
 Audit Publishing to Kafka
 -------------------------
-The Tracker App contains a flow that subscribes to the TMS topic to which CDAP publishes
-the audit updates. Before using this application, you should enable publishing of audit updates to
-TMS (Transactional Messaging System, a component of CDAP) by setting the ``audit.enabled`` option
-in your cdap-site.xml to ``true``.
+The Tracker App contains a flow that subscribes to the TMS (Transactional Messaging System, a component of CDAP)
+topic to which CDAP publishes the audit updates. Before using this application, you should enable publishing of
+audit updates to TMS by setting the ``audit.enabled`` option in your cdap-site.xml to ``true``.
 
 Building Cask Tracker
 ---------------------
