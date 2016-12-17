@@ -20,7 +20,7 @@ import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.tracker.config.TrackerAppConfig;
 
 /**
- * Defines the flow for reading from Kafka and writing to the Audit Log Dataset.
+ * Defines the flow for reading from TMS and writing to the Audit Log Dataset.
  */
 public class AuditLogFlow extends AbstractFlow {
   public static final String FLOW_NAME = "AuditLogFlow";
@@ -34,8 +34,8 @@ public class AuditLogFlow extends AbstractFlow {
   @Override
   public void configure() {
     setName(FLOW_NAME);
-    setDescription("Flow that subscribes to Kafka audit messages and stores them in the AuditLog");
-    addFlowlet("auditLogConsumer", new AuditLogConsumer(trackerAppConfig.getAuditLogKafkaConfig()));
+    setDescription("Flow that subscribes to TMS audit messages and stores them in the AuditLog");
+    addFlowlet("auditLogConsumer", new AuditLogConsumer(trackerAppConfig.getAuditLogConfig()), 1);
     addFlowlet("auditLogPublisher", new AuditLogPublisher());
     connect("auditLogConsumer", "auditLogPublisher");
   }

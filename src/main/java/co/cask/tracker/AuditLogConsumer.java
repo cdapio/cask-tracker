@@ -15,62 +15,54 @@
  */
 package co.cask.tracker;
 
+import co.cask.cdap.api.annotation.Property;
+import co.cask.cdap.api.annotation.Tick;
+import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
+import co.cask.cdap.api.flow.flowlet.FlowletContext;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
-import co.cask.cdap.kafka.flow.Kafka08ConsumerFlowlet;
-import co.cask.cdap.kafka.flow.KafkaConfigurer;
-import co.cask.cdap.kafka.flow.KafkaConsumerConfigurer;
-import co.cask.tracker.config.AuditLogKafkaConfig;
-import co.cask.tracker.config.TrackerAppConfig;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Strings;
-import com.google.gson.Gson;
-import org.apache.twill.kafka.client.TopicPartition;
+import co.cask.cdap.api.messaging.Message;
+import co.cask.cdap.api.messaging.MessageFetcher;
+import co.cask.cdap.api.messaging.TopicNotFoundException;
+import co.cask.tracker.config.AuditLogConfig;
+import com.google.common.base.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.ByteBuffer;
+import java.util.concurrent.TimeUnit;
 
 /**
- * Subscribes to Kafka messages published for the CDAP Platform that contains the Audit log records.
+ * Subscribes to TMS messages published by the CDAP Platform that contains the Audit log records.
  */
-public final class AuditLogConsumer extends Kafka08ConsumerFlowlet<ByteBuffer, String> {
+public final class AuditLogConsumer extends AbstractFlowlet {
   private static final Logger LOG = LoggerFactory.getLogger(AuditLogConsumer.class);
-  private static final Gson GSON = new Gson();
+  private static final String OFFSET = "tms.offset";
 
   // TODO: Add a way to reset the offset
   private KeyValueTable offsetStore;
-
   private OutputEmitter<String> emitter;
-  private AuditLogKafkaConfig auditLogKafkaConfig;
 
-  private String offsetDatasetName;
+  @Property
+  private final String offsetDatasetName;
+  @Property
+  private final String namespace;
+  @Property
+  private final String topic;
+  @Property
+  private final int limit;
 
-  public AuditLogConsumer(AuditLogKafkaConfig auditLogKafkaConfig) {
-    this.offsetDatasetName = auditLogKafkaConfig.getOffsetDataset();
-    verifyConfig(auditLogKafkaConfig);
-  }
+  private Stopwatch stopwatch;
+  private MessageFetcher messageFetcher;
+  private long timeout;
+  private boolean emptyIterator;
 
-  public AuditLogConsumer() {
-    // no-op
-  }
-
-  @VisibleForTesting
-  static void verifyConfig(AuditLogKafkaConfig auditLogKafkaConfig) {
-    // Verify if the configuration is right
-    if (Strings.isNullOrEmpty(auditLogKafkaConfig.getBrokerString()) &&
-            Strings.isNullOrEmpty(auditLogKafkaConfig.getZookeeperString())) {
-      throw new IllegalArgumentException("Should provide either a broker string or a zookeeper string for " +
-              "Kafka Audit Log subscription!");
-    }
-
-    if (Strings.isNullOrEmpty(auditLogKafkaConfig.getTopic())) {
-      throw new IllegalArgumentException("Should provide a Kafka Topic for Kafka Audit Log subscription!");
-    }
-
-    if (auditLogKafkaConfig.getNumPartitions() <= 0) {
-      throw new IllegalArgumentException("Kafka Partitions should be > 0.");
-    }
+  public AuditLogConsumer(AuditLogConfig auditLogConfig) {
+    this.offsetDatasetName = auditLogConfig.getOffsetDataset();
+    this.namespace = auditLogConfig.getNamespace();
+    this.topic = auditLogConfig.getTopic();
+    this.limit = auditLogConfig.getLimit();
   }
 
   @Override
@@ -79,51 +71,61 @@ public final class AuditLogConsumer extends Kafka08ConsumerFlowlet<ByteBuffer, S
   }
 
   @Override
-  protected KeyValueTable getOffsetStore() {
-    return offsetStore;
-  }
-
-  @Override
-  protected void configureKafka(KafkaConfigurer kafkaConfigurer) {
-    TrackerAppConfig appConfig = GSON.fromJson(getContext().getApplicationSpecification().getConfiguration(),
-            TrackerAppConfig.class);
-    auditLogKafkaConfig = appConfig.getAuditLogKafkaConfig();
-    LOG.debug("Configuring Audit Log Kafka Consumer : {}", auditLogKafkaConfig);
-    offsetStore = getContext().getDataset(auditLogKafkaConfig.getOffsetDataset());
-    if (!Strings.isNullOrEmpty(auditLogKafkaConfig.getZookeeperString())) {
-      kafkaConfigurer.setZooKeeper(auditLogKafkaConfig.getZookeeperString());
-    } else if (!Strings.isNullOrEmpty(auditLogKafkaConfig.getBrokerString())) {
-      kafkaConfigurer.setBrokers(auditLogKafkaConfig.getBrokerString());
+  public void initialize(FlowletContext context) throws Exception {
+    super.initialize(context);
+    offsetStore = context.getDataset(offsetDatasetName);
+    String shortTxTimeout = context.getRuntimeArguments().get("data.tx.timeout");
+    if (shortTxTimeout == null) {
+      // If custom tx timeout is not used, assume it is 30 secs
+      shortTxTimeout = "30";
     }
-    setupTopicPartitions(kafkaConfigurer);
+
+    // Reduce 10s from the tx timeout
+    timeout = Long.parseLong(shortTxTimeout) - 10;
+    stopwatch = new Stopwatch();
+    emptyIterator = false;
+    messageFetcher = getContext().getMessageFetcher();
   }
 
-  @Override
-  protected void handleInstancesChanged(KafkaConsumerConfigurer configurer) {
-    setupTopicPartitions(configurer);
-  }
+  @Tick(delay = 1L, unit = TimeUnit.SECONDS)
+  protected void pollAuditTopic() throws Exception {
+    String newOffset = null;
+    byte[] logOffset = offsetStore.read(OFFSET);
+    String fromOffset = null;
 
-  private void setupTopicPartitions(KafkaConsumerConfigurer configurer) {
-    int partitions = auditLogKafkaConfig.getNumPartitions();
-    int instanceId = getContext().getInstanceId();
-    int instances = getContext().getInstanceCount();
-    for (int i = 0; i < partitions; i++) {
-      if ((i % instances) == instanceId) {
-        configurer.addTopicPartition(auditLogKafkaConfig.getTopic(), i);
+    if (logOffset != null) {
+      fromOffset = Bytes.toString(logOffset);
+    }
+
+    // Keep fetching in batches of 'limit' number of messages until, no messages are left or
+    // the stopWatch timeout expires
+    stopwatch.reset();
+    stopwatch.start();
+    do {
+      emptyIterator = true;
+      try (CloseableIterator<Message> auditMessages = messageFetcher.fetch(namespace, topic, limit, fromOffset)) {
+        while (auditMessages.hasNext()) {
+          Message message = auditMessages.next();
+          newOffset = message.getId();
+          emitter.emit(message.getPayloadAsString());
+          emptyIterator = false;
+        }
+      } catch (TopicNotFoundException ex) {
+        LOG.warn("Audit Topic {} was not found.", topic, ex);
+      } finally {
+        if (!emptyIterator) {
+          // If some messages were fetched in this loop, update the new offset and
+          // set fromOffset to the last fetched messageId
+          offsetStore.write(OFFSET, newOffset);
+          fromOffset = newOffset;
+        }
       }
-    }
-  }
 
-  @Override
-  protected void processMessage(String auditLogKafkaMessage) throws Exception {
-    emitter.emit(auditLogKafkaMessage);
-  }
-
-  /**
-   * Overriding the default Returns the key to be used when persisting offsets into a {@link KeyValueTable}.
-   */
-  @Override
-  protected String getStoreKey(TopicPartition topicPartition) {
-    return TrackerApp.APP_NAME + ":" + topicPartition.getTopic() + ":" + topicPartition.getPartition();
+      // If no messages were found in this iteration, then break out of the loop
+      if (emptyIterator) {
+        break;
+      }
+    } while (stopwatch.elapsedTime(TimeUnit.SECONDS) < timeout);
+    stopwatch.stop();
   }
 }

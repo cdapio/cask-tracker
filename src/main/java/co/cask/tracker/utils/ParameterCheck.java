@@ -20,7 +20,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.proto.element.EntityType;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.tracker.TrackerApp;
-import co.cask.tracker.config.AuditLogKafkaConfig;
+import co.cask.tracker.config.AuditLogConfig;
 import com.google.common.base.Strings;
 
 import java.util.concurrent.TimeUnit;
@@ -83,7 +83,7 @@ public class ParameterCheck {
       case TrackerApp.AUDIT_METRICS_DATASET_NAME:
       case TrackerApp.AUDIT_TAGS_DATASET_NAME:
       case TrackerApp.ENTITY_LATEST_TIMESTAMP_DATASET_NAME:
-      case AuditLogKafkaConfig.DEFAULT_OFFSET_DATASET:
+      case AuditLogConfig.DEFAULT_OFFSET_DATASET:
         return true;
       default:
         return false;

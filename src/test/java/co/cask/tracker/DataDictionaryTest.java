@@ -26,12 +26,15 @@ import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.TestBase;
+import co.cask.tracker.config.AuditLogConfig;
+import co.cask.tracker.config.TrackerAppConfig;
 import co.cask.tracker.entity.DictionaryResult;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
@@ -55,16 +58,24 @@ public class DataDictionaryTest extends TestBase {
   private static final DictionaryResult dictionaryInput3 = new DictionaryResult(null, "Int", null, null,
                                                                                 "newDescription", null);
   private static final String requestJson3 = GSON.toJson(dictionaryInput3);
-  private ServiceManager dictionaryServiceManager;
+  private static ApplicationManager testAppManager;
+  private static ServiceManager dictionaryServiceManager;
   private String colName;
   private String colNameSecond;
   private String colNameThird;
 
-  @Before
-  public void configureService() throws Exception {
-    ApplicationManager testAppManager = deployApplication(TestDictionaryApp.class);
+  @BeforeClass
+  public static void configureService() throws Exception {
+    TrackerAppConfig trackerAppConfig = new TrackerAppConfig(new AuditLogConfig());
+    testAppManager = deployApplication(TrackerApp.class, trackerAppConfig);
     dictionaryServiceManager = testAppManager.getServiceManager(TrackerService.SERVICE_NAME).start();
     dictionaryServiceManager.waitForStatus(true);
+  }
+
+  @AfterClass
+  public static void destroyApp() throws Exception {
+    testAppManager.stopAll();
+    clear();
   }
 
   // Tests for Add functionality

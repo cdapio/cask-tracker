@@ -20,59 +20,69 @@ import co.cask.tracker.AuditLogConsumer;
 import com.google.common.base.Objects;
 import com.google.common.base.Strings;
 
-/**
- * Configuration for Audit Log Kafka subscription used by {@link AuditLogConsumer}.
- */
-public class AuditLogKafkaConfig {
+import javax.annotation.Nullable;
 
-  public static final String DEFAULT_OFFSET_DATASET = "_kafkaOffset";
-  private static final String DEFAULT_TOPIC = "audit";
-  private static final Integer DEFAULT_PARTITIONS = 10;
+/**
+ * Configuration for Audit Log TMS subscription used by {@link AuditLogConsumer}.
+ */
+public class AuditLogConfig {
+
+  public static final String DEFAULT_OFFSET_DATASET = "_auditOffset";
+  public static final String DEFAULT_TOPIC = "audit";
+  private static final String DEFAULT_NAMESPACE = "system";
+  private static final int DEFAULT_LIMIT = 120;
 
   private final String zookeeperString;
-  private final String brokerString;
-  private final Integer numPartitions;
+  private final String namespace;
   private final String topic;
-
   private final String offsetDataset;
+  private final Integer limit;
 
-  public AuditLogKafkaConfig(String zookeeperString, String brokerString,
-                             String topic, int numPartitions, String offsetDataset) {
-    this.zookeeperString = zookeeperString;
-    this.brokerString = brokerString;
-    this.topic = topic;
-    this.numPartitions = numPartitions;
-    this.offsetDataset = offsetDataset;
+  public AuditLogConfig() {
+    this.zookeeperString = null;
+    this.namespace = null;
+    this.topic = null;
+    this.offsetDataset = null;
+    this.limit = null;
   }
 
+  public AuditLogConfig(String zookeeperString, String namespace, String topic, String offsetDataset, Integer limit) {
+    this.zookeeperString = zookeeperString;
+    this.namespace = namespace;
+    this.topic = topic;
+    this.offsetDataset = offsetDataset;
+    this.limit = limit;
+  }
+
+  @Nullable
   public String getZookeeperString() {
     return zookeeperString;
   }
 
-  public String getBrokerString() {
-    return brokerString;
+  public String getNamespace() {
+    return Strings.isNullOrEmpty(namespace) ? DEFAULT_NAMESPACE : namespace;
   }
 
   public String getTopic() {
     return Strings.isNullOrEmpty(topic) ? DEFAULT_TOPIC : topic;
   }
 
-  public Integer getNumPartitions() {
-    return Objects.firstNonNull(numPartitions, DEFAULT_PARTITIONS);
-  }
-
   public String getOffsetDataset() {
     return Strings.isNullOrEmpty(offsetDataset) ? DEFAULT_OFFSET_DATASET : offsetDataset;
+  }
+
+  public int getLimit() {
+    return limit == null ? DEFAULT_LIMIT : limit;
   }
 
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("zookeeperString", getZookeeperString())
-      .add("brokerString", getBrokerString())
-      .add("numPartitions", getNumPartitions())
+      .add("zookeeper", getZookeeperString())
+      .add("namespace", getNamespace())
       .add("topic", getTopic())
       .add("offsetDataset", getOffsetDataset())
+      .add("limit", getLimit())
       .toString();
   }
 }
