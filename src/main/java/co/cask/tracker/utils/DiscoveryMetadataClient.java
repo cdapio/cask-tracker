@@ -261,12 +261,18 @@ public class DiscoveryMetadataClient extends AbstractMetadataClient {
       searchMetadata(
         namespace.toId(), column,
         ImmutableSet.of(MetadataSearchTargetType.DATASET, MetadataSearchTargetType.STREAM)).getResults();
+    Schema fieldSchema;
     for (MetadataSearchResultRecord mdsr : metadataSet) {
       Map<String, String> map = getProperties(mdsr.getEntityId().toId());
       HashMap<String, String> record = new HashMap<>();
       Schema datasetSchema = Schema.parseJson(map.get(SCHEMA));
       record.put(DataDictionaryHandler.ENTITY_NAME, mdsr.getEntityId().getEntityName());
-      record.put(DataDictionaryHandler.TYPE, datasetSchema.getField(column).getSchema().getType().toString());
+      fieldSchema = datasetSchema.getField(column).getSchema();
+      if (fieldSchema.isNullable()) {
+        record.put(DataDictionaryHandler.TYPE, fieldSchema.getNonNullable().getType().toString());
+      } else {
+        record.put(DataDictionaryHandler.TYPE, fieldSchema.getType().toString());
+      }
       datasets.add(record);
     }
     return datasets;
