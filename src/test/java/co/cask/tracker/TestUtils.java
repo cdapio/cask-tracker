@@ -17,8 +17,10 @@
 package co.cask.tracker;
 
 import co.cask.cdap.test.ServiceManager;
-import com.google.common.base.Charsets;
-import com.google.common.io.ByteStreams;
+import co.cask.common.http.HttpMethod;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpRequests;
+import co.cask.common.http.HttpResponse;
 import org.junit.Assert;
 
 import java.net.HttpURLConnection;
@@ -37,76 +39,50 @@ public final class TestUtils {
   public static String getServiceResponse(ServiceManager serviceManager, String request, String type,
                                           String postRequest, int expectedResponseCode) throws Exception {
     URL url = new URL(serviceManager.getServiceURL(), request);
-    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-    connection.setRequestMethod(type);
+    HttpRequest httpRequest = new HttpRequest(HttpMethod.valueOf(type), url, null, null, null);
+    HttpResponse response = HttpRequests.execute(httpRequest);
     List<Integer> expectedCodes = new ArrayList<>();
     expectedCodes.add(HttpURLConnection.HTTP_BAD_REQUEST);
     expectedCodes.add(HttpURLConnection.HTTP_CONFLICT);
     expectedCodes.add(HttpURLConnection.HTTP_NOT_FOUND);
-    String response;
-    try {
-      //Feed JSON data if POST
-      if (type.equals("POST") || type.equals("PUT")) {
-        connection.setDoOutput(true);
-        connection.getOutputStream().write(postRequest.getBytes());
-      }
-      Assert.assertEquals(expectedResponseCode, connection.getResponseCode());
-      if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-        response = new String(ByteStreams.toByteArray(connection.getInputStream()), Charsets.UTF_8);
-      } else if (expectedCodes.contains(connection.getResponseCode())) {
-        response = new String(ByteStreams.toByteArray(connection.getErrorStream()), Charsets.UTF_8);
-      } else {
-        throw new Exception("Invalid response code returned: " + connection.getResponseCode());
-      }
-    } finally {
-      connection.disconnect();
+    //Feed JSON data if POST
+    if (type.equals("POST")) {
+      response = HttpRequests.execute(HttpRequest.post(url).withBody(postRequest).build());
+    } else if (type.equals("PUT")) {
+      response = HttpRequests.execute(HttpRequest.put(url).withBody(postRequest).build());
     }
-    return response;
+    return verifyResponseCode(expectedResponseCode, response, expectedCodes);
   }
 
   // Request is GET by default
   public static String getServiceResponse(ServiceManager serviceManager, String request, String type,
                                           int expectedResponseCode) throws Exception {
     URL url = new URL(serviceManager.getServiceURL(), request);
-    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-    connection.setRequestMethod(type);
-    Assert.assertEquals(expectedResponseCode, connection.getResponseCode());
+    HttpRequest httpRequest = new HttpRequest(HttpMethod.valueOf(type), url, null, null, null);
+    HttpResponse response = HttpRequests.execute(httpRequest);
     List<Integer> expectedCodes = new ArrayList<>();
     expectedCodes.add(HttpURLConnection.HTTP_BAD_REQUEST);
     expectedCodes.add(HttpURLConnection.HTTP_NOT_FOUND);
-    String response;
-    try {
-      if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-        response = new String(ByteStreams.toByteArray(connection.getInputStream()), Charsets.UTF_8);
-      } else if (expectedCodes.contains(connection.getResponseCode())) {
-        response = new String(ByteStreams.toByteArray(connection.getErrorStream()), Charsets.UTF_8);
-      } else {
-        throw new Exception("Invalid response code returned: " + connection.getResponseCode());
-      }
-    } finally {
-      connection.disconnect();
-    }
-    return response;
+    return verifyResponseCode(expectedResponseCode, response, expectedCodes);
   }
 
-  public static String getServiceResponse(ServiceManager serviceManager,
-                                          String request,
-                                          int expectedResponseCode) throws Exception {
+  public static String getServiceResponse(ServiceManager serviceManager, String request, int expectedResponseCode)
+    throws Exception {
     URL url = new URL(serviceManager.getServiceURL(), request);
-    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-    Assert.assertEquals(expectedResponseCode, connection.getResponseCode());
-    String response;
-    try {
-      if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-        response = new String(ByteStreams.toByteArray(connection.getInputStream()), Charsets.UTF_8);
-      } else if (connection.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
-        response = new String(ByteStreams.toByteArray(connection.getErrorStream()), Charsets.UTF_8);
-      } else {
-        throw new Exception("Invalid response code returned: " + connection.getResponseCode());
-      }
-    } finally {
-      connection.disconnect();
+    HttpResponse response = HttpRequests.execute(HttpRequest.get(url).build());
+    List<Integer> expectedCodes = new ArrayList<>();
+    expectedCodes.add(HttpURLConnection.HTTP_BAD_REQUEST);
+    return verifyResponseCode(expectedResponseCode, response, expectedCodes);
+  }
+
+  private static String verifyResponseCode(int expectedResponseCode, HttpResponse response, List<Integer> expectedCodes)
+    throws Exception {
+    Assert.assertEquals(expectedResponseCode, response.getResponseCode());
+    if (response.getResponseCode() == HttpURLConnection.HTTP_OK ||
+      expectedCodes.contains(response.getResponseCode())) {
+      return response.getResponseBodyAsString();
+    } else {
+      throw new Exception("Invalid response code returned: " + response.getResponseCode());
     }
-    return response;
   }
 }
