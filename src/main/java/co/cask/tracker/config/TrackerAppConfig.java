@@ -20,16 +20,16 @@ import co.cask.cdap.api.Config;
 import co.cask.tracker.TrackerApp;
 
 /**
- * The configuration for the {@link TrackerApp}. Currently only used for the Kafka config.
+ * The configuration for the {@link TrackerApp}. Currently only used for the AuditLog config.
  */
 public class TrackerAppConfig extends Config {
-  private final AuditLogKafkaConfig auditLogKafkaConfig;
+  private final AuditLogConfig auditLogConfig;
 
-  public TrackerAppConfig(AuditLogKafkaConfig auditLogKafkaConfig) {
-    this.auditLogKafkaConfig = auditLogKafkaConfig;
+  public TrackerAppConfig(AuditLogConfig auditLogConfig) {
+    this.auditLogConfig = auditLogConfig;
   }
 
-  public AuditLogKafkaConfig getAuditLogKafkaConfig() {
-    return auditLogKafkaConfig;
+  public AuditLogConfig getAuditLogConfig() {
+    return auditLogConfig;
   }
 }
