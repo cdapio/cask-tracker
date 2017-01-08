@@ -26,7 +26,7 @@ public class TrackerService extends AbstractService {
   private String zookeeperString;
 
   public TrackerService(TrackerAppConfig trackerAppConfig) {
-    this.zookeeperString = trackerAppConfig.getAuditLogKafkaConfig().getZookeeperString();
+    this.zookeeperString = trackerAppConfig.getAuditLogConfig().getZookeeperString();
   }
 
   public TrackerService() {

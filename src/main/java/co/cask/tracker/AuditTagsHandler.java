@@ -40,6 +40,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -68,7 +69,7 @@ public final class AuditTagsHandler extends AbstractHttpServiceHandler {
 
   private AuditTagsTable auditTagsTable;
 
-  public AuditTagsHandler(String zookeeperQuorum) {
+  public AuditTagsHandler(@Nullable String zookeeperQuorum) {
     this.zookeeperQuorum = zookeeperQuorum;
   }
 

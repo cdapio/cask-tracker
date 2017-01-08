@@ -34,7 +34,6 @@
     <slf4j.version>1.7.5</slf4j.version>
     <guava.version>13.0.1</guava.version>
     <junit.version>4.11</junit.version>
-    <kafka.pack.version>0.9.0</kafka.pack.version>
     <commons.codec.version>1.4</commons.codec.version>
     <commons.net.version>3.1</commons.net.version>
     <httpcomponents.client.version>4.2.5</httpcomponents.client.version>
@@ -43,6 +42,8 @@
     <maven-compiler-source.version>1.7</maven-compiler-source.version>
     <maven-bundle.version>2.3.7</maven-bundle.version>
     <maven-surefire.version>2.14.1</maven-surefire.version>
+    <!--TODO Remove twill dependency as per TRACKER-271-->
+    <twill.version>0.9.0</twill.version>
     <jee.version>7</jee.version>
   </properties>
 
@@ -50,6 +51,10 @@
     <repository>
       <id>sonatype</id>
       <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+    </repository>
+    <repository>
+      <id>snapshot</id>
+      <url>https://repository.apache.org/content/repositories/snapshots/</url>
     </repository>
   </repositories>
 
@@ -141,10 +146,6 @@
           <artifactId>asm</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>org.scala-lang</groupId>
-          <artifactId>scala-library</artifactId>
-        </exclusion>
-        <exclusion>
           <groupId>co.cask.cdap</groupId>
           <artifactId>cdap-explore-jdbc</artifactId>
         </exclusion>
@@ -178,13 +179,19 @@
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-kafka-flow-compat-0.8</artifactId>
-      <version>${kafka.pack.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-proto</artifactId>
       <version>${cdap.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.twill</groupId>
+      <artifactId>twill-discovery-core</artifactId>
+      <version>${twill.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.code.gson</groupId>
+          <artifactId>gson</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
   </dependencies>
 
