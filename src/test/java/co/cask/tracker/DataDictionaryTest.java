@@ -179,41 +179,122 @@ public class DataDictionaryTest extends TestBase {
 
   @Test
   public void testValidate() throws Exception {
-    colName = "columnValidate1";
-    colNameSecond = "columnValidate2";
-    colNameThird = "wrongCol";
-    TestUtils.getServiceResponse(dictionaryServiceManager, "v1/dictionary/" + colName, "POST", requestJson,
+    colName = "stringNullable";
+    colNameSecond = "stringNullable2";
+    colNameThird = "intNonNullable";
+    String colIntNullable = "intNullable";
+    String colNonExistent = "nonExistent";
+    String colStringNonNullable = "colStringNonNullable";
+    String colUserId = "UserId";
+    String coluserid = "userid";
+    String reason = "reason";
+
+    // Add columns to dictionary table
+    Schema sourceRecord = Schema.recordOf("sourceRecord",
+                      Schema.Field.of(colName, Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+                      Schema.Field.of(colNameSecond, Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+                      Schema.Field.of(colNameThird, Schema.of(Schema.Type.INT)),
+                      Schema.Field.of(colStringNonNullable, Schema.of(Schema.Type.STRING)),
+                      Schema.Field.of(colUserId, Schema.of(Schema.Type.STRING)),
+                      Schema.Field.of(colIntNullable, Schema.nullableOf(Schema.of(Schema.Type.INT))));
+
+    DataDictionaryHandler dataDictionaryHandler = new DataDictionaryHandler("");
+    List<DictionaryResult> dictionaryResults = dataDictionaryHandler.getDictionaryResultsfromSchema(sourceRecord);
+    for (DictionaryResult result : dictionaryResults) {
+      //setting description because it is a required field while adding a column
+      result.setDescription(result.getColumnName());
+      TestUtils.getServiceResponse(dictionaryServiceManager, "v1/dictionary/" + result.getColumnName(), "POST",
+                                   GSON.toJson(result), HttpResponseStatus.OK.getCode());
+    }
+
+    //verify multiple records
+    Schema verifyRecord = Schema.recordOf("sourceRecord",
+                      Schema.Field.of(colName, Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+                      Schema.Field.of(colNameSecond, Schema.nullableOf(Schema.of(Schema.Type.INT))),
+                      Schema.Field.of(colNameThird, Schema.of(Schema.Type.STRING)),
+                      Schema.Field.of(colStringNonNullable, Schema.nullableOf(Schema.of(Schema.Type.LONG))),
+                      Schema.Field.of(colNonExistent, Schema.of(Schema.Type.STRING)),
+                      Schema.Field.of(colNonExistent, Schema.of(Schema.Type.STRING)),
+                      Schema.Field.of(colIntNullable, Schema.nullableOf(Schema.of(Schema.Type.INT))));
+
+    String responseWithErrors = TestUtils.getServiceResponse(dictionaryServiceManager, "v1/dictionary/validate",
+                                                             "POST", verifyRecord.toString(),
+                                                             HttpResponseStatus.CONFLICT.getCode());
+    Type listOflinkedHashMapType = new TypeToken<ArrayList<LinkedHashMap<String, Object>>>() {
+    }.getType();
+    List result = GSON.fromJson(responseWithErrors, listOflinkedHashMapType);
+    Assert.assertEquals(4, result.size());
+
+    // Test with non existing column
+    verifyRecord = Schema.recordOf("sourceRecord",
+                                   Schema.Field.of(colName, Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+                                   Schema.Field.of(colNonExistent, Schema.of(Schema.Type.INT)));
+    responseWithErrors = TestUtils.getServiceResponse(dictionaryServiceManager, "v1/dictionary/validate",
+                                                      "POST", verifyRecord.toString(),
+                                                      HttpResponseStatus.CONFLICT.getCode());
+    result = GSON.fromJson(responseWithErrors, listOflinkedHashMapType);
+    Assert.assertEquals(((List) ((Map) result.get(0)).get(reason)).size(), 1);
+    Assert.assertEquals(((List) ((Map) result.get(0)).get(reason)).get(0), "The column does not exist in the data " +
+      "dictionary.");
+
+    // Test with nullable column
+    verifyRecord = Schema.recordOf("sourceRecord",
+                                   Schema.Field.of(colName, (Schema.of(Schema.Type.STRING))));
+    responseWithErrors = TestUtils.getServiceResponse(dictionaryServiceManager, "v1/dictionary/validate",
+                                                      "POST", verifyRecord.toString(),
+                                                      HttpResponseStatus.CONFLICT.getCode());
+    result = GSON.fromJson(responseWithErrors, listOflinkedHashMapType);
+    Assert.assertEquals(((List) ((Map) result.get(0)).get(reason)).size(), 1);
+    Assert.assertEquals(((List) ((Map) result.get(0)).get(reason)).get(0), "IsNullable value did not match the data " +
+      "dictionary.");
+
+    // Test with non-nullable column
+    verifyRecord = Schema.recordOf("sourceRecord",
+                                   Schema.Field.of(colNameThird, Schema.nullableOf(Schema.of(Schema.Type.INT))));
+    responseWithErrors = TestUtils.getServiceResponse(dictionaryServiceManager, "v1/dictionary/validate",
+                                                      "POST", verifyRecord.toString(),
+                                                      HttpResponseStatus.CONFLICT.getCode());
+    result = GSON.fromJson(responseWithErrors, listOflinkedHashMapType);
+    Assert.assertEquals(((List) ((Map) result.get(0)).get(reason)).size(), 1);
+    Assert.assertEquals(((List) ((Map) result.get(0)).get(reason)).get(0), "IsNullable value did not match the data " +
+      "dictionary.");
+
+    // Test with wrong field nullable schema
+    verifyRecord = Schema.recordOf("sourceRecord",
+                                   Schema.Field.of(colName, Schema.nullableOf(Schema.of(Schema.Type.BOOLEAN))));
+    responseWithErrors = TestUtils.getServiceResponse(dictionaryServiceManager, "v1/dictionary/validate",
+                                                      "POST", verifyRecord.toString(),
+                                                      HttpResponseStatus.CONFLICT.getCode());
+    result = GSON.fromJson(responseWithErrors, listOflinkedHashMapType);
+    Assert.assertEquals(((List) ((Map) result.get(0)).get(reason)).size(), 1);
+    Assert.assertEquals(((List) ((Map) result.get(0)).get(reason)).get(0), "The column type did not match the data " +
+      "dictionary.");
+
+    // Test with wrong field non-nullable schema
+    verifyRecord = Schema.recordOf("sourceRecord", Schema.Field.of(colNameThird, (Schema.of(Schema.Type.STRING))));
+    responseWithErrors = TestUtils.getServiceResponse(dictionaryServiceManager, "v1/dictionary/validate",
+                                                      "POST", verifyRecord.toString(),
+                                                      HttpResponseStatus.CONFLICT.getCode());
+    result = GSON.fromJson(responseWithErrors, listOflinkedHashMapType);
+    Assert.assertEquals(((List) ((Map) result.get(0)).get(reason)).size(), 1);
+    Assert.assertEquals(((List) ((Map) result.get(0)).get(reason)).get(0), "The column type did not match the data " +
+      "dictionary.");
+
+    // Test with lower-case columnName
+    verifyRecord = Schema.recordOf("sourceRecord", Schema.Field.of(coluserid, Schema.of(Schema.Type.STRING)));
+    responseWithErrors = TestUtils.getServiceResponse(dictionaryServiceManager, "v1/dictionary/validate",
+                                                      "POST", verifyRecord.toString(),
+                                                      HttpResponseStatus.CONFLICT.getCode());
+    result = GSON.fromJson(responseWithErrors, listOflinkedHashMapType);
+    Assert.assertEquals(((List) ((Map) result.get(0)).get(reason)).size(), 1);
+    Assert.assertEquals(((List) ((Map) result.get(0)).get(reason)).get(0), "The column case did not match the data " +
+      "dictionary.");
+
+    // Test with correct schema
+    TestUtils.getServiceResponse(dictionaryServiceManager, "v1/dictionary/validate", "POST", sourceRecord.toString(),
                                  HttpResponseStatus.OK.getCode());
 
-    // Assert response for wrong column name
-    DictionaryResult dictionaryResult = new DictionaryResult(colNameThird, "Float", false, false, null, null);
-    String responseWithWrongCol = TestUtils.getServiceResponse(dictionaryServiceManager, "v1/dictionary/validate",
-                                                               "POST", GSON.toJson(dictionaryResult),
-                                                               HttpResponseStatus.NOT_FOUND.getCode());
-    Type hashMapType = new TypeToken<HashMap<String, String>>() {
-    }.getType();
-    HashMap results = GSON.fromJson(responseWithWrongCol, hashMapType);
-    Assert.assertEquals(2, results.size());
 
-    // Assert values with wrong schema
-    dictionaryResult = new DictionaryResult(colName, "Float", false, false, null, null);
-    String responseWithErrors = TestUtils.getServiceResponse(dictionaryServiceManager, "v1/dictionary/validate",
-                                                             "POST", GSON.toJson(dictionaryResult),
-                                                             HttpResponseStatus.CONFLICT.getCode());
-    Type linkedHashMapType = new TypeToken<LinkedHashMap<String, Object>>() {
-    }.getType();
-    HashMap result = GSON.fromJson(responseWithErrors, linkedHashMapType);
-    List<String> reason = (List<String>) result.get("reason");
-
-    Assert.assertEquals(2, reason.size());
-    Assert.assertEquals(7, result.size());
-    Assert.assertTrue("Float".equalsIgnoreCase(result.get("columnType").toString()));
-    Assert.assertTrue("String".equalsIgnoreCase(result.get("expectedType").toString()));
-
-    // Assert status code with correct schema
-    dictionaryResult = new DictionaryResult(colName, "String", true, false, null, null);
-    TestUtils.getServiceResponse(dictionaryServiceManager, "v1/dictionary/validate", "POST",
-                                 GSON.toJson(dictionaryResult), HttpResponseStatus.OK.getCode());
   }
 
   // Tests for configurations

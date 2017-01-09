@@ -66,6 +66,10 @@ public class DictionaryResult {
     return description;
   }
 
+  public void setDescription(String description) {
+    this.description = description;
+  }
+
   public String getDatasetsString() {
     return (datasets == null || datasets.isEmpty()) ? "" : Joiner.on(",").join(datasets);
   }
@@ -97,5 +101,4 @@ public class DictionaryResult {
     }
     return result;
   }
-
 }
