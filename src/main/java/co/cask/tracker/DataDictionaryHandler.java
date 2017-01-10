@@ -18,6 +18,7 @@ package co.cask.tracker;
 
 import co.cask.cdap.api.annotation.Property;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
@@ -39,6 +40,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -239,21 +241,39 @@ public final class DataDictionaryHandler extends AbstractHttpServiceHandler {
       return;
     }
     String payload = StandardCharsets.UTF_8.decode(requestContents).toString();
-    DictionaryResult fromSchema = GSON.fromJson(payload, DictionaryResult.class);
-    Row row = dataDictionaryTable.get(new Get(fromSchema.getColumnName().toLowerCase()));
-    Map<String, Object> result = new LinkedHashMap<>();
-    if (row.isEmpty()) {
-      result.put("columnName", fromSchema.getColumnName());
-      result.put("reason", "The column does not exist in the data dictionary.");
-      responder.sendJson(HttpResponseStatus.NOT_FOUND.getCode(), result);
+    Schema recordSchema;
+    try {
+      recordSchema = Schema.parseJson(payload);
+    } catch (IOException e) {
+      LOG.error("Unable to parse schema {}", payload, e);
+      responder.sendError(HttpResponseStatus.BAD_REQUEST.getCode(), String.format("Unable to parse schema %s",
+                                                                                  payload));
       return;
     }
-    DictionaryResult fromTable = createDictionaryResultFromRow(row);
-    result = fromTable.validate(fromSchema);
-    if (result.isEmpty()) {
+
+    List<DictionaryResult> dictionaryResults = getDictionaryResultsfromSchema(recordSchema);
+    List<Map> results = new ArrayList<>();
+    for (DictionaryResult fromSchema: dictionaryResults) {
+      Row row = dataDictionaryTable.get(new Get(fromSchema.getColumnName().toLowerCase()));
+      Map<String, Object> result = new LinkedHashMap<>();
+      if (row.isEmpty()) {
+        result.put("columnName", fromSchema.getColumnName());
+        List<String> reasonList = new ArrayList<>();
+        reasonList.add("The column does not exist in the data dictionary.");
+        result.put("reason", reasonList);
+        results.add(result);
+        continue;
+      }
+      DictionaryResult fromTable = createDictionaryResultFromRow(row);
+      result = fromTable.validate(fromSchema);
+      if (!result.isEmpty()) {
+        results.add(result);
+      }
+    }
+    if (results.isEmpty()) {
       responder.sendStatus(HttpResponseStatus.OK.getCode());
     } else {
-      responder.sendJson(HttpResponseStatus.CONFLICT.getCode(), result);
+      responder.sendJson(HttpResponseStatus.CONFLICT.getCode(), results);
     }
   }
 
@@ -284,6 +304,23 @@ public final class DataDictionaryHandler extends AbstractHttpServiceHandler {
       results.put(ERROR, errors);
     }
     responder.sendJson(HttpResponseStatus.OK.getCode(), results);
+  }
+
+  public List<DictionaryResult> getDictionaryResultsfromSchema(Schema schema) {
+    List<DictionaryResult> dictionaryResultList = new ArrayList<>();
+    for (Schema.Field field : schema.getFields()) {
+      dictionaryResultList.add(createDictionaryResultFromFieldSchema(field));
+    }
+    return dictionaryResultList;
+  }
+
+  private DictionaryResult createDictionaryResultFromFieldSchema(Schema.Field field) {
+    String columnName = field.getName();
+    Schema fieldSchema = field.getSchema();
+    String coulmnType = (fieldSchema.isNullable() ? fieldSchema.getNonNullable().getType() : fieldSchema.getType())
+      .toString();
+    Boolean isNullable = fieldSchema.isNullable();
+    return new DictionaryResult(columnName, coulmnType, isNullable, null, null, null);
   }
 
   /**
