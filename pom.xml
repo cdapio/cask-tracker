@@ -20,7 +20,7 @@
 
   <groupId>co.cask.tracker</groupId>
   <artifactId>tracker</artifactId>
-  <version>0.3.0</version>
+  <version>0.3.1</version>
   <packaging>jar</packaging>
 
   <name>Tracker App</name>
