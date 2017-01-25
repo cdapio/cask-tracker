@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2014 Cask Data, Inc.
+  Copyright © 2014-2017 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -334,6 +334,18 @@
             </plugin>
 
             <plugin>
+              <groupId>org.sonatype.plugins</groupId>
+              <artifactId>nexus-staging-maven-plugin</artifactId>
+              <version>1.6.2</version>
+              <extensions>true</extensions>
+              <configuration>
+                <nexusUrl>https://oss.sonatype.org</nexusUrl>
+                <serverId>sonatype.release</serverId>
+                <stagingProfileId>655dc88dc770c3</stagingProfileId>
+              </configuration>
+            </plugin>
+
+            <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-gpg-plugin</artifactId>
               <version>1.5</version>
@@ -363,6 +375,10 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>
+          </plugin>
+          <plugin>
+            <groupId>org.sonatype.plugins</groupId>
+            <artifactId>nexus-staging-maven-plugin</artifactId>
           </plugin>
         </plugins>
       </build>
