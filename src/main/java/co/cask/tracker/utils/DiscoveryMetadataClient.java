@@ -32,12 +32,12 @@ import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.metadata.AbstractMetadataClient;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
-import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
@@ -199,7 +199,7 @@ public class DiscoveryMetadataClient extends AbstractMetadataClient {
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
     return searchMetadata(
       namespace.toId(), tag,
-      ImmutableSet.of(MetadataSearchTargetType.DATASET, MetadataSearchTargetType.STREAM)).getResults().size();
+      ImmutableSet.of(EntityTypeSimpleName.DATASET, EntityTypeSimpleName.STREAM)).getResults().size();
   }
 
   public Set<String> getTags(NamespaceId namespace)
@@ -207,7 +207,7 @@ public class DiscoveryMetadataClient extends AbstractMetadataClient {
     Set<MetadataSearchResultRecord> metadataSet =
       searchMetadata(
         namespace.toId(), "*",
-        ImmutableSet.of(MetadataSearchTargetType.DATASET, MetadataSearchTargetType.STREAM)).getResults();
+        ImmutableSet.of(EntityTypeSimpleName.DATASET, EntityTypeSimpleName.STREAM)).getResults();
     Set<String> tagSet = new HashSet<>();
     for (MetadataSearchResultRecord mdsr : metadataSet) {
       Set<String> set = getTags(mdsr.getEntityId().toId(), MetadataScope.USER);
@@ -260,7 +260,7 @@ public class DiscoveryMetadataClient extends AbstractMetadataClient {
     Set<MetadataSearchResultRecord> metadataSet =
       searchMetadata(
         namespace.toId(), column,
-        ImmutableSet.of(MetadataSearchTargetType.DATASET, MetadataSearchTargetType.STREAM)).getResults();
+        ImmutableSet.of(EntityTypeSimpleName.DATASET, EntityTypeSimpleName.STREAM)).getResults();
     Schema fieldSchema;
     for (MetadataSearchResultRecord mdsr : metadataSet) {
       Map<String, String> map = getProperties(mdsr.getEntityId().toId());
