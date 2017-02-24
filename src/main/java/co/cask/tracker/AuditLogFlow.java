@@ -28,7 +28,7 @@ public class AuditLogFlow extends AbstractFlow {
   private final TrackerAppConfig trackerAppConfig;
 
   public AuditLogFlow(TrackerAppConfig trackerAppConfig) {
-    this.trackerAppConfig = trackerAppConfig;
+    this.trackerAppConfig = (trackerAppConfig == null) ? new TrackerAppConfig() : trackerAppConfig;
   }
 
   @Override
