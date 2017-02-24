@@ -25,6 +25,10 @@ import co.cask.tracker.TrackerApp;
 public class TrackerAppConfig extends Config {
   private final AuditLogConfig auditLogConfig;
 
+  public TrackerAppConfig() {
+    this.auditLogConfig = new AuditLogConfig();
+  }
+
   public TrackerAppConfig(AuditLogConfig auditLogConfig) {
     this.auditLogConfig = auditLogConfig;
   }
