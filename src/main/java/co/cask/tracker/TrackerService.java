@@ -18,6 +18,8 @@ package co.cask.tracker;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.tracker.config.TrackerAppConfig;
 
+import javax.annotation.Nullable;
+
 /**
  * A service for accessing the Tracker endpoints through a RESTful API.
  */
@@ -25,8 +27,9 @@ public class TrackerService extends AbstractService {
   public static final String SERVICE_NAME = "TrackerService";
   private String zookeeperString;
 
-  public TrackerService(TrackerAppConfig trackerAppConfig) {
-    this.zookeeperString = trackerAppConfig.getAuditLogConfig().getZookeeperString();
+  public TrackerService(@Nullable TrackerAppConfig trackerAppConfig) {
+    this.zookeeperString = (trackerAppConfig == null) ? new TrackerAppConfig().getAuditLogConfig().getZookeeperString()
+                                                      : trackerAppConfig.getAuditLogConfig().getZookeeperString();
   }
 
   public TrackerService() {
