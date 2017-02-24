@@ -19,6 +19,8 @@ package co.cask.tracker;
 import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.tracker.config.TrackerAppConfig;
 
+import javax.annotation.Nullable;
+
 /**
  * Defines the flow for reading from TMS and writing to the Audit Log Dataset.
  */
@@ -27,7 +29,7 @@ public class AuditLogFlow extends AbstractFlow {
 
   private final TrackerAppConfig trackerAppConfig;
 
-  public AuditLogFlow(TrackerAppConfig trackerAppConfig) {
+  public AuditLogFlow(@Nullable TrackerAppConfig trackerAppConfig) {
     this.trackerAppConfig = (trackerAppConfig == null) ? new TrackerAppConfig() : trackerAppConfig;
   }
 
