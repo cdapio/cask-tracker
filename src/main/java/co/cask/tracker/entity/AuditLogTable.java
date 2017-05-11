@@ -92,7 +92,7 @@ public final class AuditLogTable extends AbstractDataset {
 
     }
     String namespace = ((NamespacedEntityId) entityId).getNamespace();
-    EntityType entityType = entityId.getEntity();
+    EntityType entityType = entityId.getEntityType();
     AuditType auditType = auditMessage.getType();
     String type = entityType.name().toLowerCase();
     String name = entityId.getEntityName();

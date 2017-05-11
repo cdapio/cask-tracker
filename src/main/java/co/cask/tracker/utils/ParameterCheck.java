@@ -75,7 +75,7 @@ public class ParameterCheck {
   }
 
   public static boolean isTrackerDataset(EntityId entityId) {
-    if (entityId.getEntity() != EntityType.DATASET) {
+    if (entityId.getEntityType() != EntityType.DATASET) {
       return false;
     }
     switch (entityId.getEntityName()) {
