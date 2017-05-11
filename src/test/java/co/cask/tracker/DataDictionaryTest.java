@@ -35,6 +35,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
@@ -47,6 +48,7 @@ import java.util.Map;
 /**
  * Unit tests for DataDictionary
  */
+@Ignore
 public class DataDictionaryTest extends TestBase {
   private static final Gson GSON = new Gson();
   private static final DictionaryResult dictionaryInput = new DictionaryResult(null, "String", true, false,
