@@ -36,7 +36,7 @@ public class EntityIdHelper {
    * Get the parent application name of an entity if it has one. Returns empty String otherwise.
    */
   public static String getParentApplicationName(EntityId entityId) {
-    EntityType entityType = entityId.getEntity();
+    EntityType entityType = entityId.getEntityType();
     String name;
     switch (entityType) {
       case APPLICATION:
