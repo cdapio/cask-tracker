@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package co.cask.tracker.utils;
 
 
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.client.MetaClient;
 import co.cask.cdap.client.config.ClientConfig;
@@ -31,12 +32,10 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.metadata.AbstractMetadataClient;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
-import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpRequest;
@@ -174,11 +173,12 @@ public class DiscoveryMetadataClient extends AbstractMetadataClient {
   }
 
   @Override
-  protected URL resolve(Id.Namespace namespace, String path) throws MalformedURLException {
+  protected URL resolve(NamespaceId namespace, String path) throws MalformedURLException {
     if (mode == DISCOVERY) {
       InetSocketAddress addr = getMetadataServiceAddress();
       String url = String.format("http://%s:%d%s/%s/%s", addr.getHostName(), addr.getPort(),
-                                 Constants.Gateway.API_VERSION_3, String.format("namespaces/%s", namespace.getId()),
+                                 Constants.Gateway.API_VERSION_3,
+                                 String.format("namespaces/%s", namespace.getNamespace()),
                                  path);
       return new URL(url);
     } else {
@@ -198,7 +198,7 @@ public class DiscoveryMetadataClient extends AbstractMetadataClient {
   public int getEntityNum(String tag, NamespaceId namespace)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
     return searchMetadata(
-      namespace.toId(), tag,
+      namespace, tag,
       ImmutableSet.of(EntityTypeSimpleName.DATASET, EntityTypeSimpleName.STREAM)).getResults().size();
   }
 
@@ -206,11 +206,11 @@ public class DiscoveryMetadataClient extends AbstractMetadataClient {
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
     Set<MetadataSearchResultRecord> metadataSet =
       searchMetadata(
-        namespace.toId(), "*",
+        namespace, "*",
         ImmutableSet.of(EntityTypeSimpleName.DATASET, EntityTypeSimpleName.STREAM)).getResults();
     Set<String> tagSet = new HashSet<>();
     for (MetadataSearchResultRecord mdsr : metadataSet) {
-      Set<String> set = getTags(mdsr.getEntityId().toId(), MetadataScope.USER);
+      Set<String> set = getTags(mdsr.getEntityId(), MetadataScope.USER);
       tagSet.addAll(set);
     }
     return tagSet;
@@ -221,10 +221,10 @@ public class DiscoveryMetadataClient extends AbstractMetadataClient {
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
     if (entityType.toLowerCase().equals("dataset")) {
       DatasetId datasetId = new DatasetId(namespace.getNamespace(), entityName);
-      return getTags(datasetId.toId(), MetadataScope.USER);
+      return getTags(datasetId, MetadataScope.USER);
     } else {
       StreamId streamId = new StreamId(namespace.getNamespace(), entityName);
-      return getTags(streamId.toId(), MetadataScope.USER);
+      return getTags(streamId, MetadataScope.USER);
     }
   }
 
@@ -232,10 +232,10 @@ public class DiscoveryMetadataClient extends AbstractMetadataClient {
     throws UnauthenticatedException, BadRequestException, NotFoundException, IOException, UnauthorizedException {
     if (entityType.toLowerCase().equals("dataset")) {
       DatasetId datasetId = new DatasetId(namespace.getNamespace(), entityName);
-      addTags(datasetId.toId(), new HashSet<>(tagList));
+      addTags(datasetId, new HashSet<>(tagList));
     } else {
       StreamId streamId = new StreamId(namespace.getNamespace(), entityName);
-      addTags(streamId.toId(), new HashSet<>(tagList));
+      addTags(streamId, new HashSet<>(tagList));
     }
   }
 
@@ -243,10 +243,10 @@ public class DiscoveryMetadataClient extends AbstractMetadataClient {
     try {
       if (entityType.toLowerCase().equals("dataset")) {
         DatasetId datasetId = new DatasetId(namespace.getNamespace(), entityName);
-        removeTag(datasetId.toId(), tagName);
+        removeTag(datasetId, tagName);
       } else {
         StreamId streamId = new StreamId(namespace.getNamespace(), entityName);
-        removeTag(streamId.toId(), tagName);
+        removeTag(streamId, tagName);
       }
       return true;
     } catch (Exception e) {
@@ -259,11 +259,11 @@ public class DiscoveryMetadataClient extends AbstractMetadataClient {
     List<HashMap<String, String>> datasets = new ArrayList<>();
     Set<MetadataSearchResultRecord> metadataSet =
       searchMetadata(
-        namespace.toId(), column,
+        namespace, column,
         ImmutableSet.of(EntityTypeSimpleName.DATASET, EntityTypeSimpleName.STREAM)).getResults();
     Schema fieldSchema;
     for (MetadataSearchResultRecord mdsr : metadataSet) {
-      Map<String, String> map = getProperties(mdsr.getEntityId().toId());
+      Map<String, String> map = getProperties(mdsr.getEntityId());
       HashMap<String, String> record = new HashMap<>();
       Schema datasetSchema = Schema.parseJson(map.get(SCHEMA));
       record.put(DataDictionaryHandler.ENTITY_NAME, mdsr.getEntityId().getEntityName());

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -89,15 +89,14 @@ public final class AuditLogHandler extends AbstractHttpServiceHandler {
     List<AuditMessage> logList = new ArrayList<>();
     int totalResults = 0;
     AuditMessage message;
-    CloseableIterator<AuditMessage> messageIter = auditLogTable.scan(namespace,
-            entityType,
-            name,
-            startTimeLongMillis,
-            endTimeLongMillis);
-    try {
+    try (CloseableIterator<AuditMessage> messageIter = auditLogTable.scan(namespace,
+                                                                          entityType,
+                                                                          name,
+                                                                          startTimeLongMillis,
+                                                                          endTimeLongMillis)) {
       // First skip to the offset
       if (offset > 0) {
-        while (totalResults < offset && (message = messageIter.next()) != null) {
+        while (totalResults < offset && messageIter.next() != null) {
           totalResults++;
         }
       }
@@ -113,8 +112,6 @@ public final class AuditLogHandler extends AbstractHttpServiceHandler {
       }
     } catch (NoSuchElementException e) {
       //no-op
-    } finally {
-      messageIter.close();
     }
     AuditLogResponse resp = new AuditLogResponse(totalResults, logList, offset);
     responder.sendJson(200, resp);
