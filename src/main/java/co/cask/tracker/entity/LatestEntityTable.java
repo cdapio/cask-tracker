@@ -23,11 +23,10 @@ import co.cask.cdap.api.dataset.module.EmbeddedDataset;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.proto.audit.AuditMessage;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.audit.payload.access.AccessPayload;
-import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.tracker.utils.ParameterCheck;
 
 import java.io.IOException;
@@ -54,19 +53,19 @@ public final class LatestEntityTable extends AbstractDataset {
     if (auditMessage.getType() == AuditType.CREATE || auditMessage.getType() == AuditType.DELETE) {
       return;
     }
-    EntityId entityId = auditMessage.getEntityId();
-    if (!(entityId instanceof NamespacedEntityId)) {
+    MetadataEntity metadataEntity = auditMessage.getEntity();
+    if (!metadataEntity.containsKey(MetadataEntity.NAMESPACE)) {
       throw
         new IllegalStateException(String.format("Entity '%s' does not have a namespace " +
                                                   "and was not written to LatestEntityTable",
-                                                entityId));
+                                                metadataEntity));
     }
-    if (ParameterCheck.isTrackerDataset(entityId)) {
+    if (ParameterCheck.isTrackerDataset(metadataEntity)) {
       return;
     }
-    String namespace = ((NamespacedEntityId) entityId).getNamespace();
-    String entityName = entityId.getEntityName();
-    String entityType = entityId.getEntityType().name();
+    String namespace = metadataEntity.getValue(MetadataEntity.NAMESPACE);
+    String entityType = metadataEntity.getType();
+    String entityName = metadataEntity.getValue(entityType);
     String key = getKey(namespace, entityType, entityName);
     String timeSinceType = auditMessage.getType().name().toLowerCase();
     if (auditMessage.getType() == AuditType.ACCESS) {

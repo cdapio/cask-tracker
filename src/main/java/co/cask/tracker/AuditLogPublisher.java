@@ -20,11 +20,11 @@ import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.proto.audit.AuditMessage;
 import co.cask.cdap.proto.codec.AuditMessageTypeAdapter;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.tracker.entity.AuditLogTable;
 import co.cask.tracker.entity.AuditMetricsCube;
 import co.cask.tracker.entity.LatestEntityTable;
@@ -64,13 +64,13 @@ public final class AuditLogPublisher extends AbstractFlowlet {
     if (!event.isEmpty()) {
       AuditMessage message = GSON.fromJson(event, AuditMessage.class);
       String currentNamespace = this.getContext().getNamespace();
-      EntityId entityId = message.getEntityId();
-      if (!(entityId instanceof NamespacedEntityId)) {
+      MetadataEntity metadataEntity = message.getEntity();
+      if (!metadataEntity.containsKey(MetadataEntity.NAMESPACE)) {
         throw new IllegalStateException(String.format("Entity '%s' in event '%s' does not have a namespace " +
                                                         "and was not written to Tracker",
-                                                      entityId, event));
+                                                      metadataEntity, event));
       }
-      if (!((NamespacedEntityId) (entityId)).getNamespace().equals(currentNamespace)) {
+      if (!(metadataEntity.getValue(MetadataEntity.NAMESPACE).equals(currentNamespace))) {
         return;
       }
       try {

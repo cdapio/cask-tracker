@@ -186,6 +186,11 @@ public class DiscoveryMetadataClient extends AbstractMetadataClient {
     }
   }
 
+  @Override
+  protected URL resolve(String s) throws IOException {
+    return clientConfig.resolveURLV3(s);
+  }
+
 
   private InetSocketAddress getMetadataServiceAddress() {
     Discoverable discoverable = endpointStrategySupplier.get().pick(3L, TimeUnit.SECONDS);
