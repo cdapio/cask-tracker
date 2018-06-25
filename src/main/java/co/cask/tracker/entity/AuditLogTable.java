@@ -27,6 +27,7 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.proto.audit.AuditMessage;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
@@ -34,9 +35,8 @@ import co.cask.cdap.proto.audit.payload.access.AccessPayload;
 import co.cask.cdap.proto.audit.payload.metadata.MetadataPayload;
 import co.cask.cdap.proto.codec.AuditMessageTypeAdapter;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
-import co.cask.cdap.proto.element.EntityType;
 import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.NamespacedEntityId;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -83,34 +83,38 @@ public final class AuditLogTable extends AbstractDataset {
   }
 
   public void write(AuditMessage auditMessage) throws IOException {
-    EntityId entityId = auditMessage.getEntityId();
-    if (!(entityId instanceof NamespacedEntityId)) {
+    auditLog.put(writeHelper(auditMessage));
+  }
+
+  @VisibleForTesting
+  Put writeHelper(AuditMessage auditMessage) throws IOException {
+    MetadataEntity metadataEntity = auditMessage.getEntity();
+    if (!metadataEntity.containsKey(MetadataEntity.NAMESPACE)) {
       throw
         new IllegalStateException(String.format("Entity '%s' does not have a namespace " +
                                                   "and was not written to AuditLogTable",
-                                                entityId));
+                                                metadataEntity));
 
     }
-    String namespace = ((NamespacedEntityId) entityId).getNamespace();
-    EntityType entityType = entityId.getEntityType();
+    String namespace = metadataEntity.getValue(MetadataEntity.NAMESPACE);
+    String type = metadataEntity.getType().toLowerCase();
     AuditType auditType = auditMessage.getType();
-    String type = entityType.name().toLowerCase();
-    String name = entityId.getEntityName();
+    String name = metadataEntity.getValue(type);
     String user = auditMessage.getUser();
     if (Strings.isNullOrEmpty(user)) {
       user = DEFAULT_USER;
     }
     // The key allows for scanning by namespace, entity, and time. A UUID
     // is added to ensure the key is unique.
-    auditLog.put(
-      new Put(getKey(namespace, type, name, auditMessage.getTime()))
-        .add("timestamp", auditMessage.getTime())
-        .add("entityId", GSON.toJson(auditMessage.getEntityId()))
-        .add("user", user)
-        .add("actionType", auditType.name())
-        .add("entityType", type)
-        .add("entityName", name)
-        .add("metadata", GSON.toJson(auditMessage.getPayload())));
+    return new Put(getKey(namespace, type, name, auditMessage.getTime()))
+      .add("timestamp", auditMessage.getTime())
+      .add("entity", GSON.toJson(auditMessage.getEntity()))
+      .add("user", user)
+      .add("actionType", auditType.name())
+      .add("entityType", type)
+      .add("entityName", name)
+      .add("metadata", GSON.toJson(auditMessage.getPayload()));
+
   }
 
   /**
@@ -122,7 +126,8 @@ public final class AuditLogTable extends AbstractDataset {
    * @param timestamp  the timestamp of the entity to search for
    * @return A string that can be used as a key in the dataset
    */
-  private byte[] getKey(String namespace, String entityType, String entityName, long timestamp) {
+  @VisibleForTesting
+  byte[] getKey(String namespace, String entityType, String entityName, long timestamp) {
     String uuid = UUID.randomUUID().toString();
     int byteBufferSize = namespace.length() +
       entityType.length() +
@@ -166,7 +171,8 @@ public final class AuditLogTable extends AbstractDataset {
    * @param entityName     Entity Name
    * @return a ByteBuffer allocated to byteBufferSize with entity elements put in
    */
-  private ByteBuffer createEntityKeyPart(int byteBufferSize, String namespace, String entityType, String entityName) {
+  private ByteBuffer createEntityKeyPart(int byteBufferSize, String namespace, String entityType,
+                                                String entityName) {
     ByteBuffer bb = ByteBuffer.allocate(byteBufferSize);
     bb.put(Bytes.toBytes(namespace))
       .put(KEY_DELIMITER)
@@ -197,8 +203,18 @@ public final class AuditLogTable extends AbstractDataset {
    * @param row the row from the scanner to build the AuditMessage from
    * @return a new AuditMessage based on the information in the row
    */
-  private static AuditMessage createAuditMessage(Row row) {
-    EntityId entityId = GSON.fromJson(row.getString("entityId"), EntityId.class);
+  @VisibleForTesting
+  static AuditMessage createAuditMessage(Row row) {
+    // backward compatibility CDAP-13088
+    MetadataEntity metadataEntity;
+    String josn = row.getString("entityId");
+    if (josn != null) {
+      metadataEntity = GSON.fromJson(josn, EntityId.class).toMetadataEntity();
+    } else {
+      josn = row.getString("entity");
+      metadataEntity = GSON.fromJson(josn, MetadataEntity.class);
+    }
+
     AuditType messageType = AuditType.valueOf(row.getString("actionType"));
     AuditPayload payload;
     switch (messageType) {
@@ -211,7 +227,7 @@ public final class AuditLogTable extends AbstractDataset {
       default:
         payload = AuditPayload.EMPTY_PAYLOAD;
     }
-    return new AuditMessage(row.getLong("timestamp"), entityId, row.getString("user"), messageType, payload);
+    return new AuditMessage(row.getLong("timestamp"), metadataEntity, row.getString("user"), messageType, payload);
   }
 
   /**

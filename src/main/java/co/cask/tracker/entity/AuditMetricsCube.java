@@ -26,6 +26,7 @@ import co.cask.cdap.api.dataset.lib.cube.MeasureType;
 import co.cask.cdap.api.dataset.lib.cube.TimeSeries;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.dataset.module.EmbeddedDataset;
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.proto.audit.AuditMessage;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.audit.payload.access.AccessPayload;
@@ -85,21 +86,20 @@ public class AuditMetricsCube extends AbstractDataset {
    * @throws IOException if for some reason, it cannot find the name of the entity
    */
   public void write(AuditMessage auditMessage) throws IOException {
-    EntityId entityId = auditMessage.getEntityId();
+    MetadataEntity metadataEntity = auditMessage.getEntity();
 
-    if (!(entityId instanceof NamespacedEntityId)) {
+    if (!metadataEntity.containsKey(MetadataEntity.NAMESPACE)) {
       throw
         new IllegalStateException(String.format("Entity '%s' does not have a namespace " +
                                                   "and was not written to AuditMetricsCube",
-                                                entityId));
+                                                metadataEntity));
     }
-    if (ParameterCheck.isTrackerDataset(entityId)) {
+    if (ParameterCheck.isTrackerDataset(metadataEntity)) {
       return;
     }
-    String namespace = ((NamespacedEntityId) entityId).getNamespace();
-    EntityType entityType = entityId.getEntityType();
-    String type = entityType.name().toLowerCase();
-    String name = entityId.getEntityName();
+    String namespace = metadataEntity.getValue(MetadataEntity.NAMESPACE);
+    String type = metadataEntity.getType().toLowerCase();
+    String name = metadataEntity.getValue(type);
 
     long ts = System.currentTimeMillis() / 1000;
     CubeFact fact = new CubeFact(ts);

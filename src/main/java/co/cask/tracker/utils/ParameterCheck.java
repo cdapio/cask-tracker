@@ -17,6 +17,7 @@
 package co.cask.tracker.utils;
 
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.proto.element.EntityType;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.tracker.TrackerApp;
@@ -74,11 +75,11 @@ public class ParameterCheck {
     return timeStamp;
   }
 
-  public static boolean isTrackerDataset(EntityId entityId) {
-    if (entityId.getEntityType() != EntityType.DATASET) {
+  public static boolean isTrackerDataset(MetadataEntity metadataEntity) {
+    if (!metadataEntity.getType().equalsIgnoreCase(EntityType.DATASET.toString())) {
       return false;
     }
-    switch (entityId.getEntityName()) {
+    switch (metadataEntity.getValue(MetadataEntity.DATASET)) {
       case TrackerApp.AUDIT_LOG_DATASET_NAME:
       case TrackerApp.AUDIT_METRICS_DATASET_NAME:
       case TrackerApp.AUDIT_TAGS_DATASET_NAME:
