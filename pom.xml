@@ -39,7 +39,7 @@
     <httpcomponents.client.version>4.2.5</httpcomponents.client.version>
     <netty.version>3.6.6.Final</netty.version>
     <maven-compiler.version>3.1</maven-compiler.version>
-    <maven-compiler-source.version>1.7</maven-compiler-source.version>
+    <maven-compiler-source.version>1.8</maven-compiler-source.version>
     <maven-bundle.version>3.0.1</maven-bundle.version>
     <maven-surefire.version>2.14.1</maven-surefire.version>
     <!--TODO Remove twill dependency as per TRACKER-271-->
